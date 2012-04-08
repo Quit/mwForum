@@ -1,0 +1,235 @@
+<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01//EN' 'http://www.w3.org/TR/html4/strict.dtd'>
+<html lang='en'>
+<head>
+  <meta http-equiv='content-type' content='text/html; charset=utf-8'>
+  <title>mwForum Installation</title>
+  <link rel='stylesheet' href='doc.css' type='text/css'>
+</head>
+<body>
+
+<h1>mwForum Installation</h1>
+
+<p>Before reading any further, please make sure you're actually reading the right version of the documentation, i.e. the one that came with your download. If you're installing a development release, the docs linked from the mwforum.org main page are NOT the correct version.</p>
+
+
+<h2>Contents</h2>
+
+<ul>
+<li><a href='#reqs'>Requirements</a></li>
+<li><a href='#install'>Installation</a></li>
+<li><a href='#config'>Configuration</a></li>
+<li><a href='#modperl'>mod_perl Notes</a></li>
+<li><a href='#windows'>Windows Notes</a></li>
+<li><a href='#cgierr'>Common CGI Errors</a></li>
+</ul>
+
+
+<h2 id='reqs'>Requirements</h2>
+
+<h3>Operating system</h3>
+
+<p>mwForum should be able to run on any platform with Perl and a webserver.</p>
+
+<h3>Language: Perl 5.8.1</h3>
+
+<p>Perl is usually already installed as part of Unix-like systems. Windows versions are available from <a href='http://www.activestate.com/'>ActiveState</a>.</p>
+
+<h3>Database server: MySQL 4.1 or PostgreSQL 8.0 or SQLite 3.2.3</h3>
+
+<p><a href='http://www.mysql.com/'>MySQL</a> is the most widely used option. If you want to use <a href='http://www.postgresql.org/'>PostgreSQL</a> or <a href='http://www.sqlite.org/'>SQLite</a>, see <a href='FAQ.html#pgsql'>FAQ.html</a> first, the database installation instructions below are only for MySQL.</p>
+
+<h3>Database interface Perl modules: DBI, DBD::mysql or DBD::Pg or DBD::SQLite</h3>
+
+<p><a href='http://search.cpan.org/dist/DBI/'>DBI</a> and, depending on the chosen database server, <a href='http://search.cpan.org/dist/DBD-mysql/'>DBD::mysql</a> or <a href='http://search.cpan.org/dist/DBD-Pg/'>DBD::Pg</a> or <a href='http://search.cpan.org/dist/DBD-SQLite/'>DBD::SQLite</a> can be installed as packages for most Unix-like systems. For ActivePerl on Windows, the modules can be downloaded with ActivePerl's package manager PPM. Most webhosters should have them installed already. Otherwise, they can be downloaded from <a href='http://www.cpan.org/'>CPAN</a>.</p>
+
+<h3>Webserver</h3>
+
+<p>Every CGI-capable webserver should do the job, though the optimal platform consists of <a href='http://httpd.apache.org/'>Apache</a> with <a href='http://perl.apache.org/'>mod_perl</a> 2.x.</p>
+
+
+<h2 id='install'>Installation</h2>
+
+<p>Since the spectrum of possible installation environments is very broad, no installation guide could possibly give exact and foolproof instructions for all existing environments. This problem is aggravated by the fact that both webhosters and Linux packagers almost always make the installation of Perl applications more complicated than that of e.g. PHP applications by the way they set up the webserver.</p>
+
+<p>The example commands below assume an installation performed by a root user using Linux, Apache and MySQL. If your platform differs from that, and it most likely will, you'll have to improvise (or ask your local administrator or guru for help). This is especially true if you don't have shell (aka console or command line) access, but have to configure things using some kind of Web interface and/or FTP client. There are also more specific instructions for some platforms available in the support forum.</p>
+
+
+<h3>CGI Installation</h3>
+
+<ol class='ext'>
+<li>Unpack the contents of mwforum-x.x.x.tar.gz into your home directory.
+<pre><kbd>
+shell&gt; cd ~
+shell&gt; tar -xzf mwforum-x.x.x.tar.gz
+</kbd></pre>
+</li>
+
+<li>Create a subdirectory for mwForum in your server's CGI directory. This will be called the <dfn>script</dfn> directory.
+<pre><kbd>
+shell&gt; mkdir /usr/local/apache/cgi-bin/mwf/
+</kbd></pre>
+</li>
+
+<li>Copy the contents of the extracted script directory into your created script directory.
+<pre><kbd>
+shell&gt; cp mwforum-x.x.x/script/* /usr/local/apache/cgi-bin/mwf/
+</kbd></pre>
+</li>
+
+<li>Make all Perl scripts executable by the user the webserver is running as.
+<pre><kbd>
+shell&gt; chmod 755 /usr/local/apache/cgi-bin/mwf/*.pl
+</kbd></pre>
+</li>
+
+<li>Create a subdirectory in your server's documents directory. This will be called the <dfn>data</dfn> directory, and contains images and stylesheets.
+<pre><kbd>
+shell&gt; mkdir /usr/local/apache/htdocs/mwf/
+</kbd></pre>
+</li>
+
+<li>Recursively copy the contents of the extracted data directory into the created data directory.
+<pre><kbd>
+shell&gt; cp -r mwforum-x.x.x/data/* /usr/local/apache/htdocs/mwf/
+</kbd></pre>
+</li>
+
+<li>If the Perl interpreter (or a link to it) isn't located at /usr/bin/perl, you'll have to change the first line of each .pl script or use other methods of linking the scripts to the Perl interpreter.</li>
+
+<li>Inside the created script directory, rename MwfConfigGlobalDefault.pm to MwfConfigGlobal.pm and ignore it for now.</li>
+
+<li>Rename MwfConfigDefault.pm to MwfConfig.pm and edit it. The file contains comments with info about its options. This file only contains the basic configuration options necessary to start the forum, the rest of the options will be loaded from the database and can be configured in the Web interface. If you have a shared hosting account, you should get the values for the MySQL database server, name, username and password from your provider.</li>
+
+<li>Make sure MwfConfig.pm can't be downloaded through the webserver. Downloading will often be impossible by default if you use a dedicated cgi-bin directory, but on other setups, especially where script and data files are mixed in the same directory, you might have to deny downloading explicitly. The script.htaccess file contains an example on how to do this. Test if MwfConfig.pm is safe by trying to download it yourself.</li>
+</ol>
+
+
+<h3>Database Installation</h3>
+
+<p>The first two steps assume that you have installed your own MySQL server and have root access. If you're using your provider's database server, skip those two steps. You'll usually need the MySQL root password for these. The MySQL root password is empty by default, but you should change it to something else ASAP. Values that you have to adapt to your specific situation are written in <i>italic</i>.</p>
+
+<ol class='ext'>
+<li>To create the database, execute something like the following command: 
+<pre><kbd>
+shell&gt; mysql -e "CREATE DATABASE <i>mwforum</i> CHARSET=utf8"
+</kbd></pre>
+</li>
+
+<li>To grant the necessary access rights, execute something like: 
+<pre><kbd>
+shell&gt; mysql -e "GRANT ALL ON <i>mwforum</i>.* TO <i>mwforum</i>@<i>localhost</i> IDENTIFIED BY '<i>password</i>'"
+</kbd></pre>
+</li>
+
+<li>To create the tables, execute "<kbd>perl install.pl</kbd>" from your forum's script directory. Afterwards, delete install.pl and upgrade.pl. If there are error messages, double-check your settings in MwfConfig.pm, and if that doesn't help, ask in the support forum.</li>
+</ol>
+
+
+<h3>Cronjob Installation</h3>
+
+<p>The following features of mwForum require regular execution of the mwForum cronjobs (scheduled tasks, files cron_jobs.pl, cron_subscriptions.pl, cron_bounce.pl and cron_rss.pl). If you don't use any of them, you can skip this section, although the use of the main cronjob (cron_jobs.pl) is highly recommended for the database table defragmentation and optimization alone.</p>
+
+<ul>
+<li>Optimization and repairing of databases</li>
+<li>Expiration of various things</li>
+<li>Locking of old/huge topics, polls</li>
+<li>Emailing of digest subscriptions (cron_subscriptions.pl)</li>
+<li>Handling of bounced emails (cron_bounce.pl)</li>
+<li>Generation of feed files (cron_rss.pl)</li>
+</ul>
+
+<p>Once again, the actual setup depends on your platform, but the typical installation on a Unix system looks something like the following when executing the main cronjob nightly at 03:10 (don't run it more often than once a day) and the subscriptions cronjob at 03:20. The last line shows an example of how to backup your forum database with mysqldump. See <a href='FAQ.html#feeds'>FAQ.html</a> for more info on the feeds cronjob.</p>
+
+<pre><code>
+# Crontab
+10 3 * * *   user   cd /usr/local/apache/cgi-bin/mwf &amp;&amp; perl cron_jobs.pl
+20 3 * * *   user   cd /usr/local/apache/cgi-bin/mwf &amp;&amp; perl cron_subscriptions.pl
+00 4 * * *   user   mysqldump mwforum | gzip &gt; ~/mwforum.sql.gz
+</code></pre>
+
+<p>If your forum is hosted by a provider that doesn't provide cronjobs or similar means of task scheduling, and you want to use any of the above features, you have to either manually start the cronjob(s) on a regular basis, or use the cron emulation feature that starts the main cronjob on the first page request of every day. Cron emulation is enabled with the <var>cronEmu</var> forum option. Either workaround also requires the <var>$cfg-&gt;{scriptFsPath}</var> and <var>$cfg-&gt;{perlBinary}</var> options in MwfConfig.pm to be set up.</p>
+
+
+<h2 id='config'>Configuration</h2>
+
+<ol class='ext'>
+<li>Enter the forum through forum.pl and register a user account. As the first user you'll get forum administrator status automatically. Since at this point you haven't had a chance to configure the forum's email options yet, you won't get your password through email like normal users. It's hardcoded to "admin" instead.</li>
+
+<li>Log in with your chosen username and the hardcoded password. Near the top of the forum page there's the link to your user options and profile pages, where you can configure your preferences and fill in profile information. On the options page, there's also the link to the password page from where you can change your password to a different one.</li>
+
+<li>In the page bar (second bar from the top) you'll see an additional row of administration link buttons (normal users won't). Enter the forum options page and edit whatever forum options you want to change now. Since there are a lot of options, it's ok to only change the email options and some of the display options, and look at the rest later. Note that the internal names of the options are listed at the end of the respective option's headline. These names are sometimes referred to in the documentation and in the support forum.</li>
+
+<li>Enter the category admin page and create one or more categories.</li>
+
+<li>Enter the board admin page, create one or more boards and configure their options. Please note that newly created boards are not visible and writable to normal users by default, so make sure to change those options if the board is supposed to be public.</li>
+
+<li>If you want to change the visual styling of the forum, read the CSS Styling section of <a href='FAQ.html#styles'>FAQ.html</a>.
+</ol>
+
+
+<h2 id='modperl'>mod_perl Notes</h2>
+
+<p>If you intend to run mwForum under plain CGI, or have never heard of mod_perl anyway, you can skip this section. Apache/mod_perl is only necessary for running high traffic sites (as it makes the Perl script execution <em>much</em> faster). mwForum supports mod_perl 1.x (for Apache 1.x) and mod_perl 2.x (for Apache 2.x). Apache 1.x is very old at this point, though, and is not getting tested anymore.</p>
+
+<p>For more information on mod_perl, read its <a href='http://perl.apache.org/docs/index.html'>documentation</a>. Installation of mod_perl itself is beyond the scope of this text, the following steps are only those specific to mwForum:</p>
+
+<ol class='ext'>
+<li>Install <a href='http://httpd.apache.org/apreq/'>libapreq</a> (also known as Apache::Request), which is used for efficient CGI parameter and upload handling. For mod_perl 2.x, libapreq2 2.05 (aka Apache2::Request) is required.</li>
+
+<li>Add "<code>use lib '/usr/local/apache/mwf';</code>" to your startup.pl (set the path to your script directory), so that the scripts can find their modules. If you don't use a startup.pl, you can also add "<code>PerlSwitches -I/usr/local/apache/mwf</code>" to the Apache configuration instead.</li>
+
+<li>If you want to use a separate Apache configuration section for mwForum, it could look something like the following for mod_perl 2.x:
+
+<pre><code>
+PerlRequire /usr/local/apache/conf/startup.pl
+Alias /forum/ /usr/local/apache/forum/
+&lt;Location /forum/&gt;
+  Options +ExecCGI
+  SetHandler perl-script
+  PerlResponseHandler ModPerl::Registry
+  PerlOptions -SetupEnv -ParseHeaders
+&lt;/Location&gt;
+</code></pre>
+</li>
+</ol>
+
+<p>If you want to host multiple forums, see <a href='FAQ.html#multi'>FAQ.html</a> for details.</p>
+
+<p>Any changes to configuration files (and the default forum options in MwfDefaults.pm during upgrades) won't take effect until an Apache reload/restart, even with Apache::Reload or similar enabled for those files.</p>
+
+
+<h2 id='windows'>Windows Notes</h2>
+
+<p>mwForum has been tested and works with Apache 2.2 on Windows XP and Windows 7, including mod_perl 2.</p>
+
+<p>Depending on your webserver and configuration, you'll usually have to adjust the "<code>#!/usr/bin/perl</code>" line in all .pl scripts to something like "<code>#!perl</code>" (if the perl executable is in the <var>PATH</var>), or "<code>#!c:\perl\bin\perl.exe</code>" (if not), unless you use other means of linking .pl files to the Perl interpreter (like mod_perl). Under Apache 2.x, you might also be able to use the <a href='http://httpd.apache.org/docs-2.2/mod/core.html#scriptinterpretersource'>ScriptInterpreterSource</a> directive.</p>
+
+<p>For configuration options in MwfConfig.pm that are specifying filesystem paths, use forward slashes (c:/forum/) instead of the usual DOS backslashes.</p>
+
+
+
+<h2 id='cgierr'>Common CGI Errors</h2>
+
+<p>These CGI problems sometimes occur after installation:</p>
+
+<h3>500 Internal Server Error</h3>
+
+<p>This is a generic HTTP error message displayed by the browser that by itself isn't very helpful. The actual Perl error message can usually be found in the webserver's error log. If you don't have access to the error log, you can try adding "<code>use CGI::Carp qw(fatalsToBrowser);</code>" somewhere near the top of the script that gives you the 500 error. This will then hopefully print a more useful error message to the browser. Remove the CGI::Carp line after resolving the problem.</p>
+
+<p>One of the possible reasons triggering this message is a syntax error in a configuration or language file that you have edited. You can test the syntax of these files by calling "<kbd>perl -c file.pm</kbd>".</p>
+
+<p>If you ask about error 500 on the support forum without having found a more specific error message, there isn't much we can do to help you.</p>
+
+<h3>Premature end of script headers</h3>
+
+<p>This log error message, which usually appears as error 500 in the browser, means that a script has failed before it could print the HTTP headers. Alone, this message is not very helpful either, but it's typically preceded or followed by a more specific error message that points to the real problem.</p>
+
+<p>When there are no additional error messages, this error may also be caused by script files that have been garbled or truncated during upload, or that have the wrong (DOS/Unix) linefeed format. If possible, compare the local and the remote versions of the script to see whether they're the same, or whether the remote script is garbled or truncated. The linefeed format can be converted during upload from DOS to Unix with most FTP programs, or on some servers with "<kbd>recode l1/cl..l1 *.pm *.pl</kbd>".</p>
+
+
+<h2>Where to Go From Here</h2>
+
+<p>Check the online help page and <a href='FAQ.html'>FAQ.html</a> for more information on features and administration, and ask in the support forum if any questions remain. There is no extensive guide to each and every feature, but who has time to read or write that anyway.</p>
+
+</body>
+</html>

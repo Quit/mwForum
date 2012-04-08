@@ -1,0 +1,1400 @@
+<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01//EN' 'http://www.w3.org/TR/html4/strict.dtd'>
+<html lang='en'>
+<head>
+  <meta http-equiv='content-type' content='text/html; charset=utf-8'>
+  <title>mwForum Administration FAQ</title>
+  <link rel='stylesheet' href='doc.css' type='text/css'>
+</head>
+<body>
+
+<h1>mwForum Administration FAQ</h1>
+
+<p>This file contains miscellaneous administration notes and explanations.</p>
+
+<h2>Contents</h2>
+
+<ul>
+<li><a href='#common'>Common User Problems</a></li>
+<li><a href='#attach'>Attachment Directory</a></li>
+<li><a href='#postattach'>Post Attachments</a></li>
+<li><a href='#innodb'>InnoDB</a></li>
+<li><a href='#pgsql'>PostgreSQL</a></li>
+<li><a href='#sqlite'>SQLite</a></li>
+<li><a href='#newold'>New/Old Unread/Read</a></li>
+<li><a href='#time'>Time Formatting</a></li>
+<li><a href='#logging'>Logging</a></li>
+<li><a href='#perform'>Performance Tuning</a></li>
+<li><a href='#search'>Indexed Search</a></li>
+<li><a href='#localstr'>Local Strings</a></li>
+<li><a href='#localopt'>Local Options</a></li>
+<li><a href='#hiddenopt'>Hidden Options</a></li>
+<li><a href='#usertitles'>User Titles</a></li>
+<li><a href='#userranks'>User Ranks</a></li>
+<li><a href='#userbadges'>User Badges</a></li>
+<li><a href='#topictags'>Topic Tags</a></li>
+<li><a href='#snippets'>Text Snippets</a></li>
+<li><a href='#multi'>Multi-Forums</a></li>
+<li><a href='#polls'>Polls</a></li>
+<li><a href='#avatars'>Avatars</a></li>
+<li><a href='#smtpauth'>SMTP Authentication</a></li>
+<li><a href='#bounces'>Bounced Emails</a></li>
+<li><a href='#openpgp'>OpenPGP Emails</a></li>
+<li><a href='#massmail'>Mass-Emailing</a></li>
+<li><a href='#feeds'>Atom/RSS Feeds</a></li>
+<li><a href='#styles'>CSS Styling</a></li>
+<li><a href='#geoip'>GeoIP</a></li>
+<li><a href='#flags'>Country Flags</a></li>
+<li><a href='#maps'>Google Maps</a></li>
+<li><a href='#quoting'>Quoting</a></li>
+<li><a href='#fcgi'>FastCGI</a></li>
+<li><a href='#openid'>OpenID</a></li>
+<li><a href='#ldap'>LDAP</a></li>
+<li><a href='#captcha'>Captcha</a></li>
+<li><a href='#cookies'>Cookies</a></li>
+<li><a href='#seo'>Search Engine Optimization</a></li>
+<li><a href='#archive'>Archiving</a></li>
+<li><a href='#ui'>Misc. UI Issues</a></li>
+<li><a href='#limits'>Limitations</a></li>
+<li><a href='#dataver'>Browser Cache Refreshing</a></li>
+<li><a href='#mobile'>Mobile Browsing</a></li>
+</ul>
+
+
+<h2 id='common'>Common User Problems</h2>
+
+<p>The #1 problem users are having is bookmarking forum_show.pl instead of the correct forum.pl, resulting in posts from the previous session not getting marked as old. Make sure that at least you as the admin understand this problem, so that you don't increase confusion by putting wrong links on your website and are able to help your users when they're complaining about new posts that don't go away etc. A common error of users (and admins) is that even when told to bookmark forum.pl, they first click on that link and then bookmark - but that way, because of the redirection, they'll end up with a bookmark for forum_show.pl. Tell them to drag &amp; drop the forum.pl link to their bookmarks/favorites bar/menu, that's usually the simplest way to add a correct bookmark.</p>
+
+<p>A close second is the general problem of not understanding the dual nature of the new/old and unread/read status, which is somewhat unique to mwForum (although other applications like newsreaders aren't much different). Make sure to have read and understood the icon legend on the forum's help page. It's about as short and precise as I can explain the system.</p>
+
+
+<h2 id='attach'>Attachment Directory</h2>
+
+<p>The attachment directory's original purpose is for file attachments to posts. Now it is also used by other features as a general storage directory for various files (incl. avatar images, feed XML files, captcha images, PGP keys, OpenID caches). If you only need the directory for those purposes, you don't have to enable post attachments themselves. It would make sense to rename the directory to a more general name such as "storage" or "dynamic data" directory, but that would also create upgrade work and confusion, as the old term would remain in many posts in the support forum and in option names, etc.</p>
+
+<p>To set up an attachment directory, first create the directory and set its permissions so that the executed Perl scripts can write in it. Example:</p>
+
+<pre><kbd>
+shell&gt; mkdir /usr/local/apache/htdocs/mwf/attach
+shell&gt; chmod 777 /usr/local/apache/htdocs/mwf/attach
+</kbd></pre>
+
+<p>Set the <var>$cfg-&gt;{attachFsPath}</var> option in MwfConfig.pm to the filesystem path of the created directory. Set the <var>attachUrlPath</var> option on the forum options page to the corresponding URL path, which will often be the part after "htdocs" in the filesystem path, but may be completely different.</p>
+
+<p>Unfortunately, figuring out what the filesystem path, URL path and permissions should be may be difficult for people with little webmastering knowledge. In documentation by hosting providers and server software, others terms for "filesystem path" as used in mwForum may be "file path", "disk path", "physical path", "absolute path" and the like, whereas alternative terms for "URL path" may be "virtual path", "relative path" and others.</p>
+
+
+<h2 id='postattach'>Post Attachments</h2>
+
+<p>Security warning: letting untrusted users upload files to a webserver is always a serious risk. Unless you know a good deal about web security, and are also willing to commit some time to a secure webserver configuration, I strongly recommend that you don't enable attachments (or uploaded avatars).</p>
+
+<p>If you want to enable post attachments, create an attachment directory and set the related options as documented <a href='#attach'>above</a>. In addition, enable the <var>attachments</var> option on the forum options page. Attachments also need to be enabled per board on the respective board options page.</p>
+
+<p>Make absolutely sure that files in the attachment directory cannot be executed over CGI, PHP etc! Failing to do so will make your server easy prey for any wannabe hacker. If you're not sure, don't enable attachments in forums with untrusted users.</p> 
+
+<p>Put the attach.htaccess file from the example directory into your attachment directory and rename it to ".htaccess" (mind the leading dot). Unfortunately, not all webservers understand all of the included options (a default Apache installation does). Also, webserver admins can restrict which options can be used in .htaccess files. If any of the unimportant of these options are causing errors, remove them, but keep the rest. If the important ones or the whole file don't work, don't enable attachments in forums with untrusted users.</p>
+
+<p>Note that since attachments are stored in a filesystem directory and not in the database, attachments to posts in private boards are not strictly private themselves, everybody can theoretically download them. If your webserver is configured to not allow browsing the attachment directory, and the filenames are not easy to guess, the files should be reasonably safe, though. Also see the related option in the .htaccess file.</p>
+
+<p>For security and compatibility reasons, only 7-bit ASCII alphanumeric characters (plus <code>.</code> and <code>_</code>) are accepted for filenames, all others are removed. Be very careful if you want to loosen those restrictions.</p>
+
+<p>Try to make use of the possibility to serve the attachments from a different domain or at least subdomain by setting the <var>attachUrlPath</var> forum option accordingly. A different subdomain will of course only prevent cookie theft if the cookie path doesn't allow access from every subdomain.</p>
+
+<p>mwForum will not try to filter out malicious content, as that is a hopeless task that would just give a false sense of security.</p>
+
+
+<h2 id='innodb'>InnoDB</h2>
+
+<p>MySQL supports a useful storage engine called "InnoDB" beside MySQL's native MyISAM engine. It's basically a different database system with it's own performance and stability characteristics, running embedded in the MySQL daemon and getting its input through the MySQL frontend.</p>
+
+<p>InnoDB uses multiversioning instead of table or row locking, making it theoretically a good choice for forums with many writers, where MyISAM's table locking might lead to lock contention. InnoDB's benchmarks look great, even somewhat faster than MyISAM's for inserting and about the same speed for reading. Unfortunately, InnoDB tables don't support fulltext indexes for fast searching, which somewhat limits the scaling advantages.</p>
+
+<p>I don't recommend using InnoDB tables unless you're familiar with MySQL administration and have read the relevant documentation, since InnoDB tables require a bit more MySQL configuration file tweaking. For example, setting <var>innodb_flush_log_at_trx_commit</var> to 0 is required for full performance.</p>
+
+<p>To convert a forum to InnoDB, you can use the SQL in the file util_tables2engine.sql as a template (replace "XXXX" with "InnoDB"). Some MySQL installations may also use InnoDB as the default storage engine.</p>
+
+
+<h2 id='pgsql'>PostgreSQL</h2>
+
+<blockquote><p>"<a href='http://www.postgresql.org/'>PostgreSQL</a> is a powerful, open source relational database system. It has more than 15 years of active development and a proven architecture that has earned it a strong reputation for reliability, data integrity, and correctness."</p></blockquote>
+
+<p>The PostgreSQL support is meant to be used by admins with PostgreSQL experience, as there will be less hand-holding.</p>
+
+<h3>Installation</h3>
+
+<ol class='ext'>
+<li>Ignore the MySQL-specific instructions in Install.html and create the database, user account and permissions yourself. The database should use "<code>ENCODING='UTF8'</code>", otherwise users will get error messages when they try to insert text containing characters outside the chosen encoding's coverage.</li>
+
+<li>Install the <a href='http://search.cpan.org/dist/DBD-Pg/'>DBD::Pg</a> Perl module.</li>
+
+<li>Set <var>$cfg-&gt;{dbDriver}</var> in MwfConfig.pm to "<code>Pg</code>".</li>
+
+<li>If you want to use Unix sockets instead of TCP/IP connections, set <var>$cfg-&gt;{dbServer}</var> to the socket directory, e.g. "<code>/tmp</code>".</li>
+
+<li>If you want to put the tables into a schema other than "public" (mainly in the case of a multi-forum installation), set <var>$cfg-&gt;{dbSchema}</var> to the name of that schema.</li>
+
+<li>Continue with the "<kbd>perl install.pl</kbd>" step from the normal instructions in Install.html.</li>
+</ol>
+
+<h3>Notes</h3>
+
+<p>You might want to enable auto-vacuuming in PostgreSQL 8.1 and newer or perform frequent cronjob-controlled vacuuming in 8.0, since the database may otherwise grow very fast. Due to the way the multi-versioning works in PostgreSQL, it will copy rows every time they're changed, and not automatically reuse old copies. And rows in some tables like the user table are updated on every page hit. mwForum's cron_jobs.pl performs VACUUM ANALYZE for all tables, and should usually be run nightly anyway, but may not be enough for busy forums.</p>
+
+<p>Equality string comparisons in PostgreSQL are normally case-sensitive, which means that for example usernames have to be spelled with the correct case during login, user search etc. PostgreSQL 8.4 includes a custom datatype "citext" in the contrib directory. If this type is installed and the type of mwForum's VARCHAR and TEXT columns changed to it, the behaviour should match the more convenient case-insensitive behaviour of MySQL. Similar extensions probably exist for older PostgreSQL versions somewhere. If <var>$cfg-&gt;{dbCitext}</var> is set to 1 or if the install.pl and upgrade.pl scripts are passed an "-i" option, they will use citext instead of VARCHAR and TEXT columns. Existing databases can be converted with the help of util_citext.pl.</p>
+
+<p>For forum search and some substring search features of the user admin page (i.e. everything using ILIKE), it depends on the database cluster's locale settings how case comparison is handled. Case-insensitive search in UTF-8-encoded databases only works starting with PostgreSQL 8.2. In PostgreSQL 8.4 and newer, the locale settings can finally be set on the database level instead of the cluster level.</p>
+
+<p>The connection overhead of PostgreSQL is significant compared to MySQL. Using mod_perl and persistent database connections (Apache::DBI) is recommended.</p>
+
+<p>Some of the aggregated views on the user admin page require a GROUP_CONCAT() function. The file util_groupconcat4pg.sql contains custom functions that you can install into the database for this purpose.</p>
+
+
+<h2 id='sqlite'>SQLite</h2>
+
+<blockquote><p>"<a href='http://www.sqlite.org/'>SQLite</a> is a software library that implements a self-contained, serverless, zero-configuration, transactional SQL database engine. SQLite is the most widely deployed SQL database engine in the world."</p></blockquote>
+
+<p>SQLite isn't meant to be a database system for many concurrent users. I don't know how well it scales in practice, but it might only be suitable for smaller forums.</p>
+
+<h3>Installation</h3>
+
+<ol class='ext'>
+<li>Ignore the MySQL-specific instructions in Install.html.</li>
+
+<li>Install the <a href='http://search.cpan.org/dist/DBD-SQLite/'>DBD::SQLite</a> Perl module. It comes bundled with the SQLite library itself.</li>
+
+<li>Set <var>$cfg-&gt;{dbName}</var> in MwfConfig.pm to a full file path instead of just the database name, e.g. "<code>/var/db/mwforum.db</code>". The directory in which this will be located must be writable by the webserver user account (and therefore shouldn't be the same as the script directory). The database file will be automatically created later.</li>
+
+<li>Set <var>$cfg-&gt;{dbDriver}</var> to "<code>SQLite</code>". Other <var>db</var> options don't matter.</li>
+
+<li>Continue with the "<kbd>perl install.pl</kbd>" step from the normal instructions in Install.html.</li>
+</ol>
+
+<h3>Notes</h3>
+
+<p>String comparisons are case-sensitive in SQLite, which means that for example usernames have to be spelled with the correct case wherever usernames need to be typed in. If you put the option "<code>$cfg-&gt;{sqliteCollate} = 1;</code>" into your MwfConfig.pm before running install.pl, mwForum provides a custom function to SQLite that makes comparisons and ordering case-insensitive. This requires at least DBD::SQLite 1.20, has a performance impact and has the additional disadvantage of making many queries on the database outside of mwForum impossible.</p>
+
+<p>Substring searching with the LIKE operator, used for e.g. the forum search, is also case-sensitive for non-ASCII characters, which can be a real problem for non-English languages. If you enable the <var>sqliteLike</var> forum option, the forum provides a custom function to SQLite that makes forum search and user admin page search case-insensitive, but has a serious performance impact.</p>     
+
+<p>Since at the time of this writing, no SQLite release supports dropping columns, obsolete columns may remain in the database as dead weight after an upgrade. The util_migratedb.pl script can be used to get rid of these, but I'll leave the details as an exercise to advanced admins.</p>
+
+<p>With older versions of SQLite and DBD::SQLite I got "closing dbh with active statement handles" error messages at times. These seem to be bogus and can be ignored.</p>
+
+<p>Some of the non-essential views on the user admin page require a newer SQLite version that includes GROUP_CONCAT().</p>
+
+<p>If using SQLite 3.7.0 or later, you should probably enable <a href='http://www.sqlite.org/wal.html'>Write-Ahead Logging</a> for the database, by opening the database file in the sqlite3 tool once and using the pragma command:</p>
+
+<pre><kbd>
+shell&gt; sqlite3 mwforum.db
+</kbd></pre>
+
+<pre><kbd>
+sqlite&gt; PRAGMA journal_mode = WAL;
+sqlite&gt; .q
+</kbd></pre>
+
+
+<h2 id='newold'>New/Old Unread/Read</h2>
+
+<p>This text explains some of the technical details of the new/old and unread/read computation.</p>
+
+<p>"New" computation (yellow icons): Posts are treated as new if they have been added since the user's last visit to the forum.</p>
+
+<p>A single <var>prevOnTime</var> value is saved in the user's database record. All posts with a newer post time are counted as new, all others are counted as old. The <var>prevOnTime</var> value is updated each time the user enters the forum through forum.pl (it's set to the <var>lastOnTime</var> value, which in turn is set to the current time each time the user hits a page on the forum).</p>
+
+<p>"Read" computation (checkmarked icons): A topic and all posts within are rated as read after the topic is displayed by the user - whether the user actually read any of the posts is beyond the forum's knowledge, of course.</p>
+
+<p>For each user and topic that he reads, a <var>lastReadTime</var> value is stored in a separate table. Posts (and topics with the latest post newer) than that value are rated as unread, all others are rated as read. Each time a topic is displayed, the <var>lastReadTime</var> value for that topic is updated.</p>
+
+<p>Unfortunately, the fact that topics can be spread over multiple pages makes things a little more complicated than described above. Since we don't want to see all posts of a topic as read when switching to another page inside the same topic, backups of the last visited topic id and related lastReadTime value are stored in the user's record, and used instead of the data from the extra table when the user switches to another page in the same topic. There are also a few other optimizations that make unread post tracking the most complicated part of the code.</p>
+
+<p>For performance reasons, the read status is only stored in the way described above, not per user and individual post, which would generate a huge amount of data and slow down database queries. This has some consequences, e.g. new posts by a user cannot be marked as read if there were other posts in that topic posted in parallel, and once you "leave" a topic or open another topic in another tab, posts on other topic pages are rated as read even though they've never been on screen. Also, to keep the table size down, posts which are older than a certain threshold value (30 days by default) are treated as read, too.</p>
+
+
+<h2 id='time'>Time Formatting</h2>
+
+<p>An excerpt from a POSIX strftime manpage, showing possible formatting parameters. Your platform's library might differ, especially with the more exotic parameters.</p>
+
+<pre><samp>
+%a - The abbreviated weekday name according to the current locale.
+%A - The full weekday name according to the current locale.
+%b - The abbreviated month name according to the current locale.
+%B - The full month name according to the current locale.
+%c - The preferred date and time representation for the current locale.
+%C - The century number (year/100) as a 2-digit integer.
+%d - The day of the month as a decimal number (range 01 to 31).
+%D - Equivalent to %m/%d/%y. (Some people confuse this with %d/%m/%y)
+%e - Like %d, the day of the month as a decimal number, but a leading zero
+     is replaced by a space.
+%G - The ISO 8601 year with century as a decimal number.
+%g - Like %G, but without century, i.e., with a 2-digit year (00-99).
+%h - Equivalent to %b.
+%H - The hour as a decimal number using a 24-hour clock (range 00 to 23).
+%I - The hour as a decimal number using a 12-hour clock (range 01 to 12).
+%j - The day of the year as a decimal number (range 001 to 366).
+%k - The hour (24-hour clock) as a decimal number (range 0 to 23); single
+     digits are preceded by a blank. (See also %H.)
+%l - The hour (12-hour clock) as a decimal number (range 1 to 12); single
+     digits are preceded by a blank. (See also %I.)
+%m - The month as a decimal number (range 01 to 12).
+%M - The minute as a decimal number (range 00 to 59).
+%O - Modifier: use alternative format, see below.
+%p - Either 'AM' or 'PM' according to the given time value, or the
+     corresponding strings for the current locale.  Noon is treated as
+     'pm' and midnight as 'am'.
+%P - Like %p but in lowercase: 'am' or 'pm' or a corresponding string for
+     the current locale.
+%r - The time in a.m. or p.m. notation. In the POSIX locale this is
+     equivalent to '%I:%M:%S %p'.
+%R - The time in 24-hour notation (%H:%M). For a version including the
+     seconds, see %T below.
+%S - The second as a decimal number (range 00 to 61).
+%T - The time in 24-hour notation (%H:%M:%S).
+%u - The day of the week as a decimal, range 1 to 7, Monday being 1.
+     See also %w.
+%U - The week number of the current year as a decimal number, range 00 to
+     53, starting with the first Sunday as the first day of week 01.
+     See also %V and %W.
+%V - The ISO 8601:1988 week number of the current year as a decimal
+     number, range 01 to 53, where week 1 is the first week that has at
+     least 4 days in the current year, and with Monday as the first
+     day of the week. See also %U and %W.
+%w - The day of the week as a decimal, range 0 to 6, Sunday being 0.
+     See also %u.
+%W - The week number of the current year as a decimal number, range 00 to
+     53, starting with the first Monday as the first day of week 01.
+%x - The preferred date representation for the current locale without the
+     time.
+%X - The preferred time representation for the current locale without the
+     date.
+%y - The year as a decimal number without a century (range 00 to 99).
+%Y - The year as a decimal number including the century.
+%+ - The date and time in date(1) format.
+</samp></pre>
+
+<p>Users have to manually adjust their timezone to Daylight Saving Time (aka Summer Time), since there's way too many different and complex DST rules to implement, and many of them often change.</p>
+
+
+<h2 id='logging'>Logging</h2>
+
+<p>Logging is done to the "log" table in the database, and needs to be enabled with the <var>logLevel</var> forum option. Unless actually needed, it should be left disabled. Different logging methods (e.g. to a plaintext file) could be implemented via an Event plugin.</p>
+
+<p>The forum provides a log view page with some filtering and sorting options. More advanced statistical analysis and manipulation etc. has to be done manually with a database client application on the SQL level.</p>
+
+<p>If you need to know the exact details about which action/event uses which log level, action names and other parameters, you'll have to look at the code (search for logAction). Generally, the actions that actually modify the database are log level 1. Also logged with this level are requests denied due to user bans and IP/hostname blocks. Some display scripts like those that display actual content like the forum, board and topic pages are level 2. Actions that just display forms or less important info pages are level 3.</p>
+
+<h3>Example: Basic log dump</h3>
+
+<pre><kbd>
+sql&gt; SELECT * FROM log ORDER BY logTime;
+</kbd></pre>
+
+<p>Example output (various columns hidden to make table fit on page):</p>
+
+<pre><samp>
++-------+--------+---------+--------+---------+---------+--------+
+| level | entity | action  | userId | boardId | topicId | postId |
++-------+--------+---------+--------+---------+---------+--------+
+|     1 | user   | delete  |      1 |       0 |       0 |      0 |
+|     1 | forum  | search  |      1 |       0 |       0 |      0 |
+|     1 | user   | delete  |      1 |       0 |       0 |      0 |
+|     1 | board  | options |      1 |       5 |       0 |      0 |
+|     1 | post   | edit    |      1 |       8 |     538 |   4390 |
++-------+--------+---------+--------+---------+---------+--------+
+</samp></pre>
+
+<h3>Example: Who killed post #4451?</h3>
+
+<pre><kbd>
+sql&gt; SELECT userId
+sql&gt; FROM log
+sql&gt; WHERE entity = 'post'
+sql&gt;   AND action = 'delete'
+sql&gt;   AND postId = 4451;
+</kbd></pre>
+
+<h3>Example: Full log with resolved user/board/topic names and the first 20 characters of involved posts</h3>
+
+<pre><kbd>
+sql&gt; SELECT log.logTime, log.entity, log.action, users.userName,
+sql&gt;   boards.title, topics.subject, LEFT(posts.body, 20)
+sql&gt; FROM log
+sql&gt;   LEFT JOIN users ON log.userId = users.id
+sql&gt;   LEFT JOIN boards ON log.boardId = boards.id
+sql&gt;   LEFT JOIN topics ON log.topicId = topics.id
+sql&gt;   LEFT JOIN posts ON log.postId = posts.id
+sql&gt; ORDER BY log.logTime;
+</kbd></pre>
+
+
+<h2 id='perform'>Performance Tuning</h2>
+
+<p>Things to consider when running big and/or high traffic forums:</p>
+
+<p>When I say high traffic, I'm talking about more than one request per second. Big forums have at least 100,000 posts, really big ones a lot more.</p>
+
+<p>If your forum is hosted on a shared server, especially with cheap mass hosters, there usually isn't very much you can do about performance, since your forum is only one of many processes on an often overloaded server. Some providers host as many as tens of thousands of accounts on a single server.</p>
+
+<p>For high traffic forums, using mod_perl (which embeds a Perl interpreter in the Apache webserver and keeps the Perl scripts compiled in memory) makes a big difference. Many Linux distributions come with easily installable Apache/mod_perl packages, which are already an improvement, but the way they're used is not quite the most efficient. Experienced webmasters might want to use a frontend/backend approach (aka. "reverse proxy") for maximum efficiency, as it's for example described in the mod_perl Guide. Without this approach, mod_perl will waste a good deal of RAM. This is not a mod_perl-specific issue by the way, but also true for PHP and other Apache-embedded interpreters.</p>
+
+<p>Especially with the RAM-hungry mod_perl, it goes without saying that you have to make sure that your server has enough RAM. If the system starts swapping, or if the database doesn't fit into RAM anymore, performance will go down the drain.</p>
+
+<p>If you have really high concurrency, you might want to try using PostgreSQL or the InnoDB engine of MySQL. They use multiversioning, and thus don't lock tables the way the MyISAM engine does. InnoDB doesn't support fulltext indexes however, and normal tablescan searching is also quite a bit slower than with MyISAM. Having mod_perl processes wait several seconds for a query can be a problem. See the PostgreSQL and InnoDB sections in this file for more info.</p>
+
+<p>Big databases need regular maintenance (defragmentation, optimization, and sometimes even repairs). mwForum's cronjob uses the OPTIMIZE command on all tables (except the log), and it's recommended that you run it daily.</p>
+
+<p>Certain modifications that go beyond the intended purpose of features, such as hundreds or thousands of dynamically created boards (yes, more than one person did that) will definitely kill performance if the database format/indexes and other parts of the code aren't properly adapted.</p>
+
+<p>The performance of the forum/main page is dependent on the overall number of posts. So if you keep the expiration time of topics low, even high traffic forums can be fast. Big archives of old topics are only useful if your users actually search them, which only experienced users tend to do anyway.</p>
+
+<p>There are various other performance-relevant options in the configuration. They're usually marked as such.</p>
+
+<p>If you have a dedicated server, even an ancient CPU with enough RAM, Linux/*BSD and a properly tuned Apache/mod_perl setup is easily up to the task of running a fairly big forum. But even a small forum can get you kicked from an ISP whose CGI/MySQL services weren't meant to be used for anything real.</p>
+
+
+<h2 id='search'>Indexed Search</h2>
+
+<p>mwForum's indexed search mode uses <a href='http://dev.mysql.com/doc/mysql/en/fulltext-search.html'>MySQL's Boolean Full-Text Search</a> or <a href='http://www.postgresql.org/docs/9.0/static/textsearch.html'>PostgreSQL's Full Text Search</a> feature to speed up searching compared to the normal search mode. More details can be found in the linked MySQL/PgSQL documentation.</p>
+
+<h3>MySQL</h3>
+
+<p>As of MySQL 5.5, Full-Text Search can only be used with MyISAM. Starting with 5.6, InnoDB may also be supported.</p>
+
+<p>Activate the indexed search mode with the <var>advSearch</var> forum option. The SQL commands for creating and removing full-text indexes for post bodies are:</p>
+
+<pre><kbd>
+mysql&gt; CREATE FULLTEXT INDEX posts_body ON posts (body);
+mysql&gt; DROP INDEX posts_body ON posts;
+</kbd></pre>
+
+<p>There are two operators that people can use, the usual quotes to group a phrase, and the - prefix operator to skip any results that include the prefixed word or phrase.</p>
+
+<p>MySQL by default doesn't index or find words with less than four characters. This can and should be changed to three characters with the <var>ft_min_word_len</var> option in the MySQL configuration (fulltext indexes need to be recreated after changing that number).</p>
+
+<p>If you replace or amend MySQL's stopword list (which is also included in mwForum to show feedback about non-searchable words), you can supply mwForum with the same list by putting it in MwfConfig.pm, e.g. "<code>$cfg->{stopWords} = [ "hi", "blah", "lulz" ];</code>".</p>
+
+<p>There are various limitations, some of which lie in the nature of full-text indexes, some in MySQL's implementation. It only works for word-like strings, not any random strings with special characters etc. It's therefore not ideal for forums where people often search for technical expressions, like programming or Web design forums. It will only find words that start with the typed characters, not words that have those characters in the middle or end.</p>
+
+<p>For those familiar with mwForum's previous advanced search mode or MySQL's boolean search operators: in mwForum 2.7.3, indexed search mode replaced the advanced search mode, since the latter required explicit use of + and * operators to get useful results, which was too complicated for most users, and inconvenient even for experienced users. mwForum now automatically prefixes all words and quoted phrases with + operators, and postfixes all words with * operators. It removes all special characters outside of quoted phrases, except for the - prefix operator, which is passed on to MySQL. Users will see the stripped search string in the input field, which should hopefully tell them something about what kind of strings MySQL can't find anyway. Advanced users can't manually use any additional operators like &lt;&gt;~() anymore, but those are seldomly useful anyway.</p>
+
+<h3>PostgreSQL</h3>
+
+<p>PostgreSQL's Full Text Search (available since version 8.3) is more advanced than MySQL's. The main advantage worth mentioning here is the built-in support for word stemming in various languages. Some reading of the PostgreSQL documentation linked above is recommended. At a minimum, read about the available "configurations", and choose one ("english" is used below as an example).</p>
+
+<p>Activate the indexed search mode with the <var>advSearch</var> forum option. The SQL commands for creating and removing full-text indexes for post bodies are:</p>
+
+<pre><kbd>
+psql&gt; CREATE INDEX posts_body ON posts USING gin(to_tsvector('<i>english</i>', body));
+psql&gt; DROP INDEX posts_body;
+</kbd></pre>
+
+<p>Put the name of the chosen configuration into <var>$cfg-&gt;{pgFtsConfig}</var> in MwfConfig.pm if it's different from "english". Make sure the configuration name is the same as during index creation, or the index won't be used.</p>
+
+<p>The are currently no operators like quotes supported, as the typed search is parsed with <code>plainto_tsquery()</code>. </p>
+
+<h3>Notes for both DBMS</h3>
+
+<p>The search expression used internally (the input stripped of special characters and stopwords, with words stemmed in the case of PostgreSQL) is shown in an info box below the search form, unless it is identical to the input. Both words from the input and this expression are highlighted in the found posts. mwForum doesn't highlight exactly the same words that the DBMS have actually found, since they don't give us that information.</p>
+
+<p>Indexed search is only used for normal post bodies. Raw post bodies and topic subjects are searched with the standard LIKE-based method. In the case of raw post bodies, this makes it possible to find "technical" content that couldn't be found easily or at all with full-text search geared towards human language.</p>
+
+<p>While searching for less common words is accelerated, searching for common words may be slower.</p>
+
+<p>The feature can actually be used with or without actually creating a full-text index, but using it without is slow and mostly pointless.</p>
+
+<p>Upgrade and other scripts that do a lot of searching and replacing may take a lot longer with a full-text index present.</p>
+
+
+<h2 id='localstr'>Local Strings</h2>
+
+<p>If you want to change one or more user interface strings without modifying the original language modules, you can create modules that override certain strings. These modules must be named by appending "Local" to the language name, as in "MwfEnglishLocal.pm". Inside, they should look like:</p>
+
+<pre><code>
+$lng-&gt;{hdrWelcome} = "Hello,";
+$lng-&gt;{errUser}    = "Oops!";
+1;
+</code></pre>
+
+<p>Instead of completely overriding the original string, you could also add more text, e.g. to add new questions to the FAQ. This can be done by using the <code>.=</code> operator instead of the <code>=</code> operator.</p>
+
+
+<h2 id='localopt'>Local Options</h2>
+
+<p>If you want to add your own options or those of plugins to the forum options page, you can create a file called MwfDefaultsLocal.pm, and add options there. The module needs to push new options onto the options array as shown in the following example. For more examples of valid fields, look at MwfDefaults.pm.</p>
+
+<pre><code>
+push @$options, {
+  section  => "Secret Options",
+  id       => "s3cr3t",
+};
+
+push @$options, {
+  name     => 'firefoxAd',
+  type     => 'checkbox',
+  title    => "Show Firefox button to MSIE users?",
+  help     => "You need to supply your own firefox.gif.",
+  default  => 0,
+};
+</code></pre>
+
+
+<h2 id='hiddenopt'>Hidden Options</h2>
+
+<p>Some options are too unimportant, obscure or experimental to be added to the already long list on the forum options page. Some of these options are listed here. Due to its nature, this list will be incomplete and may contain obsolete entries. Any of these options can be added to MwfConfig.pm. Options documented in context elsewhere won't be repeated here.</p>
+
+<dl class='ids'>
+<dt>hostNames</dt>
+<dd>Bar-separated list (a regexp actually) of valid hostnames (domains) for the forum, e.g "<code>example\.org|www\.example\.org|example\.com|www\.example\.com</code>". This is currently only used to recognize internal forum links posted by users, and add session ids to them for the few users not allowing cookies. It's generally recommended to only allow a single canonical hostname, as that avoids problems with cookies, search engines, SSL and other stuff, but most admins don't have the knowledge or capability to enforce that, and once a website has been established for a while, changing it may cause too many problems.</dd>
+
+<dt>replHtmlEnt</dt>
+<dd>Set to <code>1</code> to replace all HTML entities (aka "character entity references" and "numeric character references") in input with proper Unicode characters. Otherwise, they get escaped like all HTML, and show up verbatim in posts. Requires HTML::Entities Perl module from the <a href='http://search.cpan.org/dist/HTML-Parser/'>HTML::Parser</a> distribution.</dd>
+
+<dt>pageIcons</dt>
+<dd>Set to <code>1</code> to print HTML for page icons, a design gimmick abandoned due to lack of fitting icons, but still used by some.</dd>
+
+<dt>nph</dt>
+<dd>Set to <code>1</code> to enable "no-parsed-headers" mode, for non-standard environments that require the CGI script to print the whole HTTP response verbatim. Experimental and not maintained.</dd>
+
+<dt>maxOnlUserNum</dt>
+<dd>Max. number of online users listed on forum page.</dd>
+
+<dt>maxOnlUserAge</dt>
+<dd>Max. time in seconds that users are considered online and listed as such on forum page.</dd>
+
+<dt>maxNewUserNum</dt>
+<dd>Max. number of new users listed on forum page.</dd>
+
+<dt>maxNewUserAge</dt>
+<dd>Max. time in days that users are considered new and listed as such on forum page.</dd>
+
+<dt>maxUserListNum</dt>
+<dd>Max. number of members/moderators/subscribers listed on board/group info pages.</dd>
+
+<dt>usersPP</dt>
+<dd>Number of users per page on user list and user admin pages.</dd>
+
+<dt>attachPP</dt>
+<dd>Number of attachments per page on attachments list page.</dd>
+
+<dt>attachGallPP</dt>
+<dd>Number of images per page on attachments list page in gallery mode.</dd>
+
+<dt>attachImgThbW, attachImgThbH, attachImgThbS</dt>
+<dd>Max. allowed width, height and file size for embedded attached images before they get thumbnailed if the <var>attachImgThb</var> forum option is enabled. Defaults are <code>150</code> pixels respectively and <code>15360</code> bytes.</dd>
+
+<dt>attachImgThbQ</dt>
+<dd>JPEG quality of thumbnails for attached images. <code>1</code> = min. quality, <code>100</code> = max. quality. Default is <code>90</code>, was <code>70</code> in earlier releases.</dd>
+
+<dt>attachImgRszW, attachImgRszH, attachImgRszS</dt>
+<dd>Max. allowed width, height and file size for attached images before they get resized if the <var>attachImgRsz</var> option is enabled. Defaults are <code>1280</code> pixels, <code>1024</code> pixels and <code>153600</code> bytes.</dd>
+
+<dt>attachImgRszQ</dt>
+<dd>JPEG quality of thumbnails for resized images. <code>1</code> = min. quality, <code>100</code> = max. quality. Default is <code>80</code>.</dd>
+
+<dt>noGd, noImager, noGMagick, noIMagick</dt>
+<dd>Set either to <code>1</code> to disable the use of the GD, Imager, Graphics::Magick or Image::Magick Perl modules, e.g. for debugging purposes or if an installed module version is buggy. Normally, mwForum will try to use the listed modules in that order.</dd>
+
+<dt>userFlagSkip</dt>
+<dd>Set to two-letter country code of a country for which no flags should be shown on topic pages. Can be used if the majority of users comes from a single country and only the rest should be highlighted.</dd>
+
+<dt>geoIpCacheMode</dt>
+<dd>Caching mode of Geo::IP module, GEOIP_STANDARD = <code>0</code>, GEOIP_MEMORY_CACHE = <code>1</code>, GEOIP_INDEX_CACHE = <code>4</code>, GEOIP_MMAP_CACHE = <code>8</code>. You have to specify the number, as the constants are unavailable. Some modes may fail without a useful error message. Default is GEOIP_MEMORY_CACHE.</dd>
+
+<dt>uaGraphType</dt>
+<dd>"<code>none</code>" = hide the pie charts on the user agent statistics page. "<code>GD::Graph</code>" = use that Perl module to generate images. "<code>Imager::Graph</code>" = use that module to generate images. Both these methods include their output inline as data URLs and require a readable font configured with the <var>ttf</var> option below. "<code>GoogleVis</code>" = use the <a href='http://code.google.com/apis/visualization/'>Google Visualization API</a> (<a href='http://code.google.com/apis/visualization/terms.html'>Terms of Use</a>) to generate SVG (VML for MSIE) pie charts with Javascript. "<code>GoogleChart</code>" (the default) = use the <a href='http://code.google.com/apis/chart/'>Google Chart API</a> (<a href='http://code.google.com/apis/chart/terms.html'>Terms of Use</a>) to generate PNG images. Neither Google-provided method requires any Perl modules and both also work in outdated browsers. They do however include Javascript resp. images from Google's servers, which may not be acceptable for security reasons.</dd>
+
+<dt>ttf</dt>
+<dd>Set to the filesystem path of a TrueType font file for any features that might require one and use this option (currently only the GD::Graph and Imager::Graph flavors of the chart feature above).</dd>
+
+<dt>postEditStTime</dt>
+<dd>Number of seconds that users can edit a post after posting without an edit timestamp showing up. Default is <code>120</code> seconds.</dd>
+
+<dt>oldSpawnMethod</dt>
+<dd>Set to <code>1</code> to enable pre-2.19.3 way of spawning processes for manual cronjob starting and cron emulation (i.e. use system() call and wait for child process instead of using fork() and exec() with background execution). Only use if the new method doesn't work even if <var>$cfg-&gt;{perlBinary}</var> and <var>$cfg-&gt;{scriptFsPath}</var> are configured correctly.</dd>
+
+<dt>dbSync</dt>
+<dd>Value for SQLite's "<a href='http://www.sqlite.org/pragma.html#pragma_synchronous'>synchronous</a>" pragma (default is "<code>OFF</code>"), or value of PostgreSQL's "<a href='http://www.postgresql.org/docs/current/static/runtime-config-wal.html#GUC-SYNCHRONOUS-COMMIT'>synchronous_commit</a>" parameter (default determined by cluster configuration).</dd>
+
+<dt>queryLog</dt>
+<dd>Location of a file where all performed SQL queries are logged, e.g. "<code>/var/log/forum_query.log</code>". For performance reasons, only leave this enabled while debugging.</dd>
+
+<dt>runLog</dt>
+<dd>Location of a file where all invocations of IPC::Run are logged, e.g. "<code>/var/log/forum_run.log</code>". Currently IPC::Run is only used for calling GnuPG.</dd>
+
+<dt>fScriptUrlPath</dt>
+<dd>Set to <code>1</code> to force use of <var>scriptUrlPath</var> for all constructed URLs, not just those in shell/cron/spawned scripts. Might be useful for certain path masking situations.</dd>
+
+<dt>noArchive, noSnippet</dt>
+<dd>Set to <code>1</code> to add these to the robots meta tag to keep some search engines from archiving full pages resp. snippets. Also see <var>noIndex</var> forum option.</dd>
+</dl>
+
+
+<h2 id='usertitles'>User Titles</h2>
+
+<p>User titles are strings (plaintext, images or HTML) added after the username on the topic and user info pages (most other places are space-limited). A typical example would be "JohnDoe (Admin)" instead of the plain "JohnDoe".</p>
+
+<p>Only forum admins can set these titles on the user admin options pages (user_admopt.pl), so they can be used for example to authenticate employees in a corporate forum. Since the title isn't part of the clickable username link, no user can choose his name to look like a real user title.</p>
+
+<p>On the user admin options page, a user's title can be selected from a listbox filled with predefined user titles, or an individual title can be typed into the text field below the list. The list selection takes precedence if anything except "(individual title below)" is selected. The list of predefined titles can be configured with the <var>userTitles</var> forum option.</p>
+
+<p>Plaintext titles are put into parentheses automatically when displayed, unless the string already contains parentheses. Certain characters that are special in HTML (apostrophes, ampersands, angled brackets) must be manually HTML-escaped. Example:</p>
+
+<pre><code>
+Owner
+Administrator
+Moderator
+</code></pre>
+
+<p>If the title starts with an image filename, the forum automatically transforms it into an HTML image tag. In this case the image file must reside in the forum's data directory. If there's text after the filename, it will be used for the title and alt attributes. Example:</p>
+
+<pre><code>
+owner.png  Owner
+admin.png  Admin
+mod.png    Mod
+</code></pre>
+
+<p>A user title string can also be raw HTML. Use this for images or other stuff if you need full control over the HTML attributes, want an image to be a link, etc. Example:</p>
+
+<pre><code>
+&lt;img class='utl' src='owner.png' alt='Owner' title='Owner'&gt;
+&lt;img class='utl' src='admin.png' alt='Admin' title='Administrator'&gt;
+&lt;img class='utl' src='mod.png'   alt='Mod'   title='Moderator'&gt;
+</code></pre>
+
+
+<h2 id='userranks'>User Ranks</h2>
+
+<p>User ranks are strings (plaintext, images or HTML) shown after the username on topic pages and user info pages (most other places are space-limited and/or can do without the additional performance hit). The rank depends on the number of posts the user has made.</p>
+
+<p>The list of existing ranks is defined with the <var>userRanks</var> forum option. There are no default ranks defined or images bundled with mwForum. The format of user rank definitions is similar to that of user titles (see above), except that every line starts with a minimum post count required to attain the rank. The order of ranks must always be descending. If a user has both a title and a rank, only the title will be displayed on topic pages for space reasons. Simple example for plain textual titles:</p>
+
+<pre><code>
+5000 Postmaster
+3000 Postal Inspector
+1000 Senior Postman
+100  Junior Postman
+0    Nobody
+</code></pre>
+
+<p>Example using images and text for the title/alt HTML attributes:</p>
+
+<pre><code>
+3000 5stars.png *****
+1000 4stars.png ****
+250  3stars.png ***
+50   2stars.png **
+10   1stars.png *
+</code></pre>
+
+
+<h2 id='userbadges'>User Badges</h2>
+
+<p>User badges have some functionality overlap with user titles, but have more use cases, and more than one badge can be assigned per user. Badges are displayed as small icons after the username on topic pages (with a short text as icon tooltip), and as big icons with description text on user info pages. Example use cases:</p>
+
+<ul>
+<li>User rank/status (not dependent on post numbers)</li>
+<li>Awards for helpful community members</li>
+<li>Customers' owned products on a company support forum</li>
+<li>Manually selected country flags, if only few are required</li>
+<li>Users showing areas of interest, used products etc.</li>
+</ul>
+
+<p>The list of available badges is defined with the <var>badges</var> forum option. There are no default badges defined or images bundled with mwForum. Example with badges for multiple uses:</p>
+
+<pre><code>
+mod    group group_mod.png   group_mod_big.png   "Moderator"   "User is a global moderator."
+gold   admin star_gold.png   star_gold_big.png   "Gold Star"   "User has been awarded the Gold Star Badge."
+silver admin star_silver.png star_silver_big.png "Silver Star" "User has been awarded the Silver Star Badge."
+bronze admin star_bronze.png star_bronze_big.png "Bronze Star" "User has been awarded the Bronze Star Badge."
+basket user  -               sport_basket.png    "Basketball"  "User plays basketball."
+tennis user  -               sport_tennis.png    "Tennis"      "User plays tennis."
+golf   user  -               sport_golf.png      "Golf"        "User plays golf."
+foo    ext   owner_foo.png   owner_foo_big.png   "Foo Owner"   "User is a registered owner of Foo."
+bar    ext   owner_bar.png   owner_bar_big.png   "Bar Owner"   "User is a registered owner of Bar."
+</code></pre>
+
+<p>The first column is the badge's identifier. As usual, identifiers should only consist of the characters a-z_0-9.</p>
+
+<p>The second column is the type: <code>admin</code> badges can only be awarded by administrators, <code>user</code> badges can also be selected by users for themselves, <code>group</code> badges are automatically assigned according to users' group memberships, and <code>ext</code> means badges of this type are assigned by addon code only, which will usually be syncing the badges with some kind of external database.</p>
+
+<p>The third and fourth columns are the small and big icon filenames. If the small icon is "<code>-</code>", the badge doesn't appear on topic pages, only on user info pages. The big icon can be the same as the small icon, and multiple badges can also share the same icons.</p>
+
+<p>The sixth and seventh columns are the title and description texts. Both can contain spaces and therefore need to be limited with quotes. Both are HTML-enabled, which allows you to e.g. insert paragraphs into description texts, but also requires you to to manually HTML-escape stuff that needs escaping, like e.g. apostrophes in the title.</p>
+
+<p>Admins (and users, if allowed to) can select badges from the user_badges.pl page, linked from the user profile page. Admins can set the badge awarded by group membership on the group option pages.</p>
+
+<h3>Notes</h3>
+
+<ul>
+<li>Don't use badges for stuff that can be done easily with user titles, which are faster.</li>
+<li>The order of badges is preserved everywhere, unlike with e.g. topic tags and some other stuff.</li>
+<li>The Show Decoration user option applies to badges, too.</li>
+<li>Groups can't share the same badge.</li>
+</ul>
+
+
+<h2 id='topictags'>Topic Tags</h2>
+
+<p>Topic tags are strings (plaintext, images or HTML) shown after the topic subject on the board pages. They can be used to classify, categorize or rank topics, depending on what tags the admin defines. Tagging should normally be limited to admins and moderators, as normal users will seldomly use tags in a consistent and useful way, but the feature can also be enabled for all registered users who started the respective topic. Tags are set via the "Tag" link button on the topic page of existing topics.</p>
+
+<p>Topic tags are enabled with the <var>allowTopicTags</var> forum option. The list of existing tags is defined with the <var>topicTags</var> forum option. There are no default tags defined or images bundled with mwForum. The format of topic tag definitions is the same as for user titles (see above), except that every line starts with a short identifier followed by a "=" sign, and that plaintext tags aren't put into parentheses automatically. Example for images with title/alt text:</p>
+
+<pre><code>
+howto    = howto.png    HowTo
+readme   = readme.png   Readme
+question = question.png Question
+</code></pre>
+
+
+<h2 id='snippets'>Text Snippets</h2>
+
+<p>Text snippets are simple pieces of text that can be inserted into posts and private messages by selecting them from a list. They are also called "templates", "boilerplate text" or "text building blocks" in other applications. The typical use case is any situation where posts should follow a standardized format, and where the snippet contains the outline for that format, e.g. the various bits of information required for a useful bug report.</p>
+
+<p>Available text snippets are defined with the <var>textSnippets</var> forum option as follows: the snippet title comes on its own line surrounded by "[[" and  "]]", with no whitespace before or after. The snippet can optionally be limited to certain boards by putting a comma-separated list of numeric board IDs between a "=" and the "]]", as shown in the second example. After that follow the lines of text that are to be inserted into posts. Empty lines are allowed and part of the text.</p>
+
+<pre><code>
+[[Bug Report]]
+Synopsis:
+Application Version:
+Operating System:
+Severity:
+Bug Description:
+
+[[Feature Request=7,8]]
+Synopsis:
+Priority:
+Feature Description:
+</code></pre>
+
+<p>The snippet list is shown after the tag insertion buttons above post/message body fields. It requires the display of those buttons to be enabled with the <var>tagButtons</var> forum option, and will only be shown if there are snippets defined for the current board. Snippets can be limited to private messages by using the fake board ID 0.</p>
+
+
+<h2 id='multi'>Multi-Forums</h2>
+
+<p>Using the multi-forum feature, multiple forums can be run from a single set of Perl source code files. This feature is meant to be used with mod_perl installations, where multiple copies of the scripts would take up a lot of RAM and database connections, and where multiple copies of Perl modules with the same name can't co-exist. Each forum still uses its own database, i.e. there's no shared user table or anything like that.</p>
+
+<p>Different forums need to use either different hostnames or different URL paths, because those are used to distinguish between the forums. No additional forum ID parameter is used in URL query strings (that would have been the cleaner solution, but would have required many more changes and would also have reduced database performance). If you want to identify the forums by different URL paths, you have to use your webserver's aliasing features to map the different URL paths to the same physical directory. Example (mod_perl 2.x):</p>
+
+<pre><code>
+Alias /forum1 /usr/local/apache2/forum
+Alias /forum2 /usr/local/apache2/forum
+&lt;Directory /usr/local/apache2/forum&gt;
+  Options +ExecCGI
+  SetHandler perl-script
+  PerlResponseHandler ModPerl::RegistryBB
+  PerlOptions -GlobalRequest -SetupEnv -ParseHeaders
+&lt;/Directory&gt;
+</code></pre>
+
+<h3>Installation</h3>
+
+<ol class='ext'>
+<li>Edit the MwfConfigGlobal.pm file. The <var>$gcfg-&gt;{forums}</var> option contains the mapping from hostnames or URL paths to different forum configuration files. The example should be mostly self-explanatory. URL paths must not end with a slash.</li>
+
+<li>Create the configuration files by copying the original MwfConfig.pm. Change the <code>package</code> declaration at the top of each file to match the filename without extension (easy to forget).</li>
+
+<li>
+Optionally, enable sharing of persistent database connections (with Apache::DBI):
+<p>MySQL: set <var>$gcfg-&gt;{dbName}</var> in MwfConfigGlobal.pm to one of the used database names. All forums need to use the same database user account.</p>
+<p>PostgreSQL: Create a schema for every forum in the same database. Set <var>$cfg-&gt;{dbSchema}</var> in the config files to the respective schema name. All forums need to use the same database user account.</p>
+</li>
+</ol>
+
+<h3>Shell Scripts</h3>
+
+<p>Shell scripts get the forum's identifying hostname or URL path via the -f parameter (previously, it used to be passed as the first argument, but that was confusing for the majority of admins, who don't use multi-forums). Examples:</p>
+
+<p>Crontab, using hostnames:</p>
+
+<pre><code>
+10 3 * * *   user   cd /usr/local/apache/forum &amp;&amp; perl cron_jobs.pl -f forum1.example.com 
+20 3 * * *   user   cd /usr/local/apache/forum &amp;&amp; perl cron_jobs.pl -f forum2.example.com
+</code></pre>
+
+<p>Calling utility scripts, using URL paths:</p>
+
+<pre><kbd>
+shell&gt; perl util_replace.pl -x -f /forum1 replacethis withthis
+shell&gt; perl util_replace.pl -x -f /forum2 replacethis withthis
+</kbd></pre>
+
+
+<h2 id='polls'>Polls</h2>
+
+<p>Like in most other forum applications, polls are added at the top of topics. Polls can be globally disabled and their creation can be limited to admins and moderators. Only the topic's creator or an admin may add a poll to the topic. They can be deleted by the topic creator as long as there haven't been any votes, only admins and moderators can delete them afterwards.</p>
+
+<p>There are single-vote and multi-vote polls. In single-vote polls, each user can only vote once per poll. In multi-vote polls, multiple votes can be cast per poll, one per option, at different points in time.</p>
+
+<p>Polls can be closed by the topic creator and by admins/moderators. This irreversibly consolidates the sum of the votes from the <var>pollVotes</var> table into the <var>pollOptions.votes</var> field, which makes displaying the poll faster and removes the individually trackable votes (that are necessary to prevent cheating in multi-vote polls).</p>
+
+
+<h2 id='avatars'>Avatars</h2>
+
+<p>Avatar images are supported as uploads and/or as a selection from a local gallery. Users can choose their avatar by following the Avatar link on their user profile page.</p>
+
+<p>mwForum only allows local avatars, as remote images couldn't be limited to a sane size and they would also allow their respective owners to monitor topic access. Last not least they'd cause issues with SSL.</p>
+
+<p>Since avatars can waste a good deal of bandwidth, users can switch them off in their user options. They're also off by default.</p>
+
+<p>Uploaded avatar images have a configurable maximum file size and configurable width/height. Unless auto-reformatting is enabled (see below), the avatar images must match these width/height values exactly, they're not maximum values like in many other forum applications. This is required because differently sized avatars would cause a more ragged layout the way they're embedded in the text. There isn't enough space in threaded topics for user info/avatars cells on the left side of the posts as in most non-threaded forum applications.</p>
+
+<p>Animated uploaded avatars are not allowed, since animated avatars are every bit as annoying and distracting as animated ads. The <a href='http://search.cpan.org/dist/Image-Info/'>Image::Info</a> Perl module is used to check these parameters, and is required if avatar uploading is enabled.</p>
+
+<p>If you want to enable avatar uploading, set the related forum options in the Avatar section, install the Image::Info Perl module and make sure there's an <a href='#attach'>attachment</a> directory.</p>
+
+<p>Security warning: letting untrusted users upload files to a webserver is always a serious risk. Unless you know a good deal about web security, and are also willing to commit some time to a secure webserver configuration, I strongly recommend that you don't enable uploadable avatars.</p>
+
+<p>If you want to enable gallery avatars, create a directory named "avatars" inside the attachment directory (unless that already exists) and a directory named "gallery" inside the "avatars" directory. The images inside won't be checked for type and size, but the displayed avatars will be zoomed to the same dimensions as the uploaded avatars, so you'd better stick to those dimensions, since images zoomed by the browser don't look all that great.</p>
+
+<p>If you want to enable the auto-reformatting feature for avatars that don't conform to the specified restrictions (filesize, dimensions, no animation), you either need the GD, Imager, Graphics::Magick or Image::Magick Perl modules installed, and they (or rather the underlying libraries) must include support for the web image formats JPG, PNG and GIF.</p>
+
+
+<h2 id='smtpauth'>SMTP Authentication</h2>
+
+<p>Some CGI hosts may require SMTP authentication if a web application wants to send email. Also, some people might want to host forums on their dialup connections, but use their ISP's email server, since some providers don't accept emails from dynamic IPs.</p>
+
+<p>mwForum supports SMTP authentication (<a href='http://www.faqs.org/rfcs/rfc2554.html'>RFC 2554</a>) with the PLAIN, LOGIN and CRAM-MD5 methods. The <a href='http://search.cpan.org/dist/Mail-Sender/'>Mail::Sender</a> Perl module is required and used instead of the other available mailers if authentication is to be used. The CRAM-MD5 method also requires <a href='http://search.cpan.org/dist/Digest-HMAC/'>Digest::HMAC_MD5</a>. If available, CRAM-MD5 should be used, as it's the only method that doesn't transmit the password unencrypted.</p>
+
+<p>To test which authentication methods an email server supports, use a command like the following:</p>
+
+<pre><kbd>
+shell&gt; perl -MMail::Sender -e "Mail::Sender-&gt;printAuthProtocols('smtp.example.com')"
+</kbd><samp>
+smtp.example.com supports: PLAIN, LOGIN, CRAM-MD5
+</samp></pre>
+
+
+<p>To enable authentication if the requirements are fulfilled, set the <var>mailer</var> option to the correct value and also configure the additional <var>estmp...</var> forum options.</p>
+
+
+<h2 id='bounces'>Bounced Emails</h2>
+
+<p>A good many of the emails the forum software sends will bounce back for various reasons, the main reasons being misspelled addresses, addresses that become invalid, jammed mailboxes and as of late also spam filters that fake bounces when they erroneously classify forum emails as spam.</p>
+
+<p>The simplest solution for handling these would be routing all emails that go to the forum email address to /dev/null or ignore/delete them some other way. But that way, you will send email subscriptions to dead and jammed mailboxes over and over again, which probably violates any number of RFCs, unwritten netiquette rules and maybe badly written anti-spam laws. Last not least it wastes your server's precious resources.</p>
+
+<p>Since the task of recognizing MTA bounce formats is better left to Sisyphus, mwForum has the following simpler solution:</p>
+
+<ol class='ext'>
+<li>All emails are sent with an existing sender address that nobody should normally send email to, such as noreply@example.com or bounce@example.org</li>
+
+<li>An <code>X-mwForum-BounceAuth: 123456789</code> header is added to all emails, where the number is a static random number taken from the user's database record. Since this value is secret, bounces can't be faked by malicious users.</li>
+
+<li>All emails arriving for above email address get retrieved via POP3, and are checked for the header which is mirrored in most (but unfortunately not all) of them, and if there's an auth value matching an existing user's, a bounce counter is incremented in the user's database record. If there's no matching auth value, the email is ignored and gets deleted.</li>
+
+<li>If the bounce counter reaches configurable treshold values, countermeasures are taken, like warning the user, canceling subscriptions and email notifications or disabling all email sending to that user (users.dontEmail flag).</li>
+
+<li>Every day during the cronjob run, users' bounce counters are decremented. If the treshold for disabling email sending is reached, email sending to that user is re-enabled. Every received bounce internally counts as 3, whereas the daily decrement is by 1.</li>
+</ol>
+
+<p>The POP3 part of the code requires the <a href='http://search.cpan.org/dist/Mail-POP3Client/'>Mail::POP3Client</a> Perl module and is located in cron_bounce.pl. It needs to be installed similarly to the main cronjob. If you get a huge amount of bounces, you could run the script more than once daily.</p>
+
+<p>If the POP3 account is on a remote host and you want to protect the password, you can use password hashing via APOP or CRAM-MD5. Set the <var>bouncePopAuth</var> option to the respective value (if supported by the POP3 server). Or you can use SSL, which is activated via the <var>bouncePopSsl</var> option. CRAM-MD5 requires <a href='http://search.cpan.org/dist/Digest-HMAC/'>Digest::HMAC_MD5</a> and SSL requires <a href='http://search.cpan.org/dist/IO-Socket-SSL/'>IO::Socket::SSL</a>.</p>
+
+<p>If you have problems with POP3, you can enable debug output by setting the <var>bouncePopDbg</var> option and then start cron_bounce.pl from the command line. Finally, you can set the POP3 port and timeout values with the <var>bouncePopPort</var> option and the <var>bouncePopTout</var> option, respectively.</p>
+
+<p>Bounces usually go back to the address specified in the Return-Path header field, not the From header field. If you use the SMTP/ESMTP mailers, both headers should be the same, but if you use the sendmail mailer, you might have to add an <kbd>-f</kbd> parameter to <var>$cfg-&gt;{sendmail}</var> so that it looks something like "<code>/usr/sbin/sendmail -oi -oeq -t -f bounce\@example.com</code>". This might not work everywhere.</p>
+
+
+<h2 id='openpgp'>OpenPGP Emails</h2>
+
+<p>With this feature you can sign all outgoing emails in Inline-PGP format via GnuPG, and users can optionally upload their public keys to encrypt them, too. This text assumes that you're familiar with <a href='http://www.ietf.org/rfc/rfc4880.txt'>(Open)PGP</a> and <a href='http://gnupg.org/'>GnuPG</a>.</p>
+
+<h3>Installation</h3>
+
+<ol class='ext'>
+<li>Make sure GnuPG is installed and working.</li>
+
+<li>Create a dedicated key used for signing all outgoing emails in the default keyring of the webserver's account. Since you'll have to add its passphrase to the configuration file, it's not exactly 100% safe, so never use an important key for this. Post the public key somewhere in the forum so that interested people can import it into their keyrings.</li>
+
+<li>Install the <a href='http://search.cpan.org/dist/IPC-Run/'>IPC::Run</a> module (I would have preferred to use a smaller alternative like backticks or IPC::Run3, however this was the only method of running GnuPG and capturing the output that I got to work under Apache 2.0).</li>
+
+<li>If you haven't used an attachment directory before, set it up following the <a href='#attach'>instructions</a>. The keyrings for users will be stored in an automatically created subdirectory.</li>
+
+<li>Configure the forum key ID and passphrase with entries like "<code>$cfg-&gt;{gpgSignKeyId} = '0x12345678';</code>" and "<code>$cfg-&gt;{gpgSignKeyPwd} = 'secret';</code>" in MwfConfig.pm.</li>
+
+<li>To test if the installation works, go to the OpenPGP page (user_key.pl) linked from your profile page. Upload your public key and check the keyring output below the upload form. Set your key ID to enable encryption and then trigger an email, e.g. by using the Forgot Password feature on the login page.</li>
+</ol>
+
+<h3>Notes</h3>
+
+<p>If your gpg executable is not in the PATH, or the wrong version is found first, you can specify the one to be used by adding something like "<code>$cfg-&gt;{gpgPath} = "/usr/local/bin/gpg";</code>" to MwfConfig.pm.
+
+<p>Sometimes you might have to set additional options for GnuPG. Most of them can be put into the default configuration file of the webserver's account (e.g. /home/apache/.gnupg/gpg.conf). If you have to set the GnuPG home directory for some reason (e.g. if GnuPG doesn't see the HOME environment variable and therefore won't find its config file either), you can add it to MwfConfig.pm like this: "<code>$cfg-&gt;{gpgOptions} = [ "--homedir" =&gt; "/home/foo/.gnupg" ];</code>".</p>
+
+<p>If signing or encrypting fails, emails will be sent anyway, and an error message will be logged.</p>
+
+<p>The feature is currently untranslated. I may translate it if any non-English forums are actually using it.</p>
+
+
+<h2 id='massmail'>Mass-Emailing</h2>
+
+<p>A feature that is sometimes requested but intentionally not implemented as such is mass-emailing of all registered users. The reason it's not directly available is that not giving users a possibility to opt-out is just a bad idea, and against anti-spam laws in many countries.</p>
+
+<p>However mwForum already has email subscription features, so there's no need to reinvent the wheel. With the help of a little plugin, we can automatically subscribe new users to a dedicated announcement/newsletter board, and with a one-time manual SQL query, we can  subscribe any existing users. This approach requires a little bit more technical expertise than a ready-made mass-emailing form, but leaves users the option to unsubscribe, and the admin the option to automatically unsubscribe users that have been absent for a long time. Other mwForum subscription features inherited are bounced email handling and excluding users with broken email addresses or accounts. The plugin would look like the following:</p>
+
+<pre><code>
+package MwfPlgSubscribe;
+
+sub subscribe
+{
+  my %params = @_;
+  my $m = $params{m};
+
+  if ($params{level} == 1 && $params{entity} eq 'user' && $params{action} eq 'register') {
+    $m-&gt;dbDo("
+      INSERT INTO boardSubscriptions (userId, boardId) VALUES (?, ?)", $params{userId}, 42);
+  }
+}
+1;
+</code></pre>
+
+<p>The example value "42" would have to be replaced with the board ID of your actual announcement board. Put the above into a file named MwfPlgSubscribe.pm in your script directory, and put a line "<code>MwfPlgSubscribe::subscribe</code>" into your <var>logPlg</var> forum option.</p>
+
+<p>The SQL to subscribe any existing users to that board would look like the following. Again, replace "42" with the actual board ID. The SQL has to be fed to the database using the usual means, e.g. the "mysql" command line client, phpMyAdmin or whatever is available. PostgreSQL users will have to slightly alter the query.</p>
+
+<pre><code>
+REPLACE INTO boardSubscriptions (userId, boardId) (SELECT id, 42 FROM users);
+</code></pre>
+
+<p>If you don't already use a cronjob to send email subscriptions, you can trigger the sending of any new posts in your announcement board by either starting the cron_subscriptions.pl script from the command line, or by clicking the Subscriptions button on the cron_admin.pl page, though the latter isn't recommended if you have many users, as the email delivery may take time and a CGI script may time out.</p>
+
+
+<h2 id='feeds'>Atom/RSS Feeds</h2>
+
+<p>mwForum supports <a href='http://en.wikipedia.org/wiki/Atom_%28standard%29'>Atom</a> 1.0 and <a href='http://en.wikipedia.org/wiki/RSS'>RSS</a> 2.0 feeds. The feeds are static files generated by the cron_rss.pl script. It should be called every few minutes as a cronjob like in this example:</p>
+
+<pre><code>
+*/5 * * * *   user   cd /usr/local/apache/forum &amp;&amp; perl cron_rss.pl
+</code></pre>
+
+<p>The files are written to an "xml" subdirectory of the attachment directory. If you haven't used an attachment directory so far, set it up following the <a href='#attach'>instructions</a>. Also make sure you have configured the <var>scriptUrlPath</var> forum option, otherwise the links in the feeds will be wrong.</p>
+
+<p>The feeds could also have been implemented as a script that dynamically generates the feed content on every request, but this way a lot of performance is saved if many users request this file regularly (as feed readers tend to do). If there haven't been any new or edited posts since the last cronjob run, no new file will be written. This allows the webserver to send the appropriate 304 response for unchanged files, saving bandwidth.</p>
+
+<p>For private boards (limited read access), no feeds will be generated. Posts in moderated boards that still await approval will not be included in feeds either.</p>
+
+<p>You can put the hidden forum option "<code>$cfg-&gt;{rssDiscovery}= 1;</code>" into MwfConfig.pm to have the forum print &lt;link&gt; elements in the HTML header that make browser address bar icons for feeds appear. Widely used by other websites, but not recommended by me, as there are various stupid browser extensions that always fetch every linked feed on every page request.</p>
+
+
+<h2 id='styles'>CSS Styling</h2>
+
+<p>mwForum's HTML is valid HTML5 (or optionally XHTML5), rendered in standards compliance mode where available. All styling is done with CSS.</p>
+
+<p>Admins can install multiple styles (consisting of a CSS file and images), from which users can select one. Users can also independently select their font face and size (with correctly done styles at least).</p>
+
+<p>Check the support forum for more discussion and questions about this topic. There's also a topic that lists changes to the default style between releases. If you create your own styles, and they're not completely site-specific, please share them.</p>
+
+<p>There are three principal ways to customize the forum design:</p>
+
+<h4>Include your own CSS file with the <var>forumStyle</var> option which overrides some of the default style declarations</h4>
+
+<p>Advantages: Your customizations survive upgrades without extra manual work.</p>
+
+<p>Disadvantages: You can't provide separate customizations for multiple styles. Making major changes by overriding can be inconvenient.</p>
+
+<h4>Append your customizations to the default and/or third-party styles</h4>
+
+<p>Advantages: You can provide customizations for multiple styles.</p>
+
+<p>Disadvantages: You have to re-append your customizations to the styles after forum upgrades. Making major changes by overriding can be inconvenient.</p>
+
+<h4>Change mwForum/third-party styles completely, creating your own style</h4>
+
+<p>Advantages: If you want to seriously customize the design (do more than just change a few colors), overriding/resetting default/third-party styles might be inconvenient if not impossible, so this might be the only way to do major changes.</p>
+
+<p>Disadvantages: Upgrading can be somewhat labor-intensive if new mwForum versions include their own major style/class changes, but that shouldn't happen too often, and pure style changes (no new or changed classes) can often be ignored.</p>
+
+<h3>Style Installation</h3>
+
+<p>Styles and their dependent files live in subdirectories of the data directory. The name of the subdirectory needs to be the same as that of the respective stylesheet file without the ".css" extension.</p>
+
+<p>To install a new or downloaded style, make a copy of the "default2" style directory with its contents and name it something else, e.g. in the case of the downloaded Rybka styke, name it "rybka". Then copy all the files of your new or downloaded style into that directory, overwriting any files with identical names. There may be a few unused files in the new directory left after that, but that doesn't matter.</p>
+
+<p>Add a line like "<code>Name=identifier</code>" to the <var>styles</var> forum option, enabling users to select the style. "Name" is the name visible to users on their options page. It can be freely chosen (incl. non-ASCII characters), but should not be changed once it has been selected by users, as it's what is stored in the users table of the database (design error, sorry). "identifier" is the name of the directory and CSS file without extension.</p>
+
+<h3>Style Snippets</h3>
+
+<p>In addition to the methods above, you might want to give your users more individual display options, options that may not always warrant hardcoded changes to the code and database layout. Enter the Style Snippets feature. You can install CSS snippets like this:</p>
+
+<ol class='ext'>
+<li>Add to the <var>styleSnippets</var> forum option lines with id=cssrule pairs like in the following example, which moves avatar images to the left side of posts: "<code>styAvaLft=div.pst img.ava { float: left; margin: 0 5px 0 0; }</code>".</li>
+
+<li>To associate readable and language-specific descriptions with the rule IDs, use the <a href='#localstr'>Local Strings</a> feature described above. For example, put the following line in MwfEnglishLocal.pm: "<code>$lng-&gt;{styAvaLft} = 'Avatar on left side';</code>".</li>
+</ol>
+
+<p>Users will now see a new display option checkbox: "[ ] Avatar on left side". If they enable the option, every generated page will contain the "<code>div.pst img.ava { float: left; margin: 0 5px 0 0; }</code>" rule in the inline style element.</p>
+
+<p>Rule IDs must start with "sty", and have max. 10 characters.</p>
+
+<p>Style rules and options are ordered by ID, so you might want to reserve the fourth character of the ID for ordering purposes, if your rule order might become relevant.</p>
+
+<h3>Style Options</h3>
+
+<p>There are currently four style-specific options that can be set with the <var>styleOptions</var> forum option. This feature is somewhat obscure and most admins will probably just ignore it, but it's there if you want full control.</p>
+
+<p><var>excludeUA</var> can be used to signal that a style won't work properly with certain browsers, e.g. setting the option to "<code>MSIE (?:5|6)</code>" will prevent the style from being used in legacy versions of Internet Explorer. The value is a Perl regular expression that will be matched against the User Agent string of the browser. <var>includeUA</var> is the opposite and signals that a style requires one or more specific browsers.</p>
+
+<p><var>buttonIcons</var> must be set to "<code>1</code>" to enable the display of button icons (see below) with the style. This doesn't happen by default as the icons don't necessarily look good with every style out there.</p>
+
+<p>Setting <var>wrapperDivs</var> to "<code>1</code>" enables three additional &lt;div&gt; elements around the main part of every page. This is used by some styles for effects like block shadows.</p>
+
+<p>The overall configuration format of style options is shown in the examples on the forum options page. If you're installing someone else's style, any options required or recommended for that style should be listed near the top of the CSS file (the forum doesn't read the options from that location itself for performance reasons) and should be copy&amp;pasted to the forum options page.</p>
+
+<h3>Button Icons</h3>
+
+<p>For the button icons to be visible to a user, the <var>buttonIcons</var> style option must be enabled per installed style by an admin, and the user's "Show decoration" option must be enabled as well.</p>
+
+<p>Unlike the other icons in mwForum, the button icons are shared between all installed styles, because it doesn't seem likely that anyone will come up with an alternative, style-specific set of icons, given their number.</p>
+
+<h3>CSS Sprites</h3>
+
+<p>Since version 2.19.0, mwForum uses the CSS Sprite technique, which in short means combining many small images into bigger images to save on the considerable overhead of HTTP requests for many small files. If you want to modify the affected images for your own styles, you will need to understand and use this technique. If you're not already familiar with it, you can probably get the background by googling one of the many available articles, here's just a quick list for the steps I use to create the sprite images and CSS rules:</p>
+
+<ol>
+<li>Go to the <a href='http://spritegen.website-performance.org/'>CSS Sprite Generator</a> website</li>
+<li>Zip all style images that are not backgrounds together and select that archive for upload</li>
+<li>Set the offsets to "<code>1</code>" and "<code>1</code>", no need to waste space</li>
+<li>Check "Compress Image with OptiPNG"</li>
+<li>Set "Class Prefix" to "<code>sic_</code>"</li>
+<li>Submit</li>
+<li>Copy generated CSS to your style</li>
+<li>Add a "<code>.sic</code>" rule (e.g. as in Default2) with at least "<code>width</code>", "<code>height</code>" and "<code>background-image: url(icons.png)</code>"</li>
+<li>Download the generated csg-*.png, put it in your style directory and rename it to "icons.png"</li>
+</ol>
+
+<p>You can of course also modify the combined images, but keeping the original small images and regenerating the combined images can be more convenient, depending on the situation. You can also keep any of your own additional images separate, only the built-in icons need to be sprites.</p>
+
+<h3>Custom Style Tag</h3>
+
+<p>If you want to add additional inline formatting styles that can be applied to text with [tags], for example colors, strike-through or the like, you can use the Custom Style Tag feature. It's simpler to use for admins than creating a display plugin with similar functionality. It's also faster, and doesn't break the HTML validity like most naive display plugins will usually do, given random user input. The feature doesn't allow anything fancy like structured nested tags ("<samp>&lt;ul&gt;&lt;li&gt;&lt;/li&gt;&lt;/ul&gt;</samp>") or semantic HTML though.</p>
+
+<p>Available custom styles for the tag and their CSS declarations are defined in the <var>customStyles</var> forum option as shown in the accompanying examples. The markup to be used in posts looks like the following:</p>
+
+<pre><code>
+PHP [c=strike]rules[/c]sucks
+</code></pre>
+
+<p>Admittedly not the most compact markup, but using a common tag name for all custom styles has performance and other internal advantages that something like "<code>[strike]blah[/strike]</code>" doesn't, and it doesn't collide with unrelated tag types or other uses of brackets.</p>
+
+<p>There's also a forum option to enable tag insertion buttons for either the generic [c=][/c] syntax where the user would have to type in the style name manually, or separate buttons for all available custom styles. It's possible to create an Include plugin that provides tag insertion buttons for whatever specific custom styles the admin might consider worthy.</p>
+
+
+<h2 id='geoip'>GeoIP</h2>
+
+<p>A <a href='http://www.maxmind.com/app/geolitecountry'>GeoLite Country</a> database (commonly called GeoIP by its original shorter name) supplies IP-address-to-country mapping for forum features like country flags and Google Maps support. A user's location is determined by looking up the user's IP address in the database, which is a binary file, not a slowish web service or DNS-based system. The location will of course not always be correct.</p>
+
+<p>mwForum can access a GeoIP database through either the <a href='http://search.cpan.org/dist/Geo-IP/'>Geo::IP</a> module, which is written in C and therefore very fast, but needs a compiler and also a separate C API library installed, or the <a href='http://search.cpan.org/dist/Geo-IP-PurePerl/'>Geo::IP::PurePerl</a> module, which is written in Perl and therefore slower, but can be installed where C libraries and modules can't be installed.
+
+<p>The GeoIP <a href='http://www.maxmind.com/download/geoip/database/LICENSE.txt'>license</a> mandates inclusion of this acknowledgement in mwForum's documentation: <i>"This product includes GeoLite data created by MaxMind, available from <a href='http://maxmind.com/'>http://maxmind.com/</a>"</i>. Note however that mwForum doesn't actually include any of the data or source code, it only uses installed databases and modules.</p>
+
+<h3>Installation</h3>
+
+<ol class='ext'>
+	<li>If you want to use the C library and C-based Geo::IP module:
+	<ol class='ext'>
+		<li>Download and install the C library from the GeoIP site following its instructions. This will also install the database file GeoIP.dat.</li>
+		<li>Install the Geo::IP module.</li>
+	</ol>
+	If you have to use the Geo::IP::PurePerl module:
+	<ol class='ext'>
+		<li>Install the Geo::IP::PurePerl module.</li>
+		<li>Download the GeoIP.dat.gz database file from the GeoIP site, ungzip it and put it somewhere.</li>
+	</ol>
+	<li>Set the <var>geoIp</var> forum option to the filesystem path of the database file.</li>
+</ol>
+
+<p>The database file is updated monthly, so you might want to fetch those updates every now and then.</p>
+
+<h3>GeoLite City</h3>
+
+<p>mwForum can also use a <a href='http://www.maxmind.com/app/geolitecity'>GeoLite City</a> database, which includes city and region information (which is, naturally, less accurate than the country information). This database is a lot bigger (around 42MB, vs. around 1MB for GeoLite Country), therefore I wouldn't generally recommend it for a forum with limited resources. The feature is configured simply by setting the forum option to the path of the GeoLiteCity.dat file instead of the GeoIP.dat file. "City" must be part of the filename for mwForum to recognize the different format. Before you use the City database, you might want to inform your users and mention the Privacy user option that hides the IP-based location, as well as set the default of the Privacy option to enabled.</p>
+
+
+<h2 id='flags'>Country Flags</h2>
+
+<p>The Country Flags feature, when enabled, displays users' country flags and the country names as tooltips of the flag images, on topic and user info pages. To enable the feature, set up a GeoIP database as explained in the previous section, and check the <var>userFlags</var> forum option. The optional city/region information is only shown on user info pages, not on topic pages.</p>
+
+<p>Now you need to obtain flag images. At the time of this writing, there are two sets of world flags with 18x12 pixels at <a href='http://flags.blogpotato.de/'>this site</a>. Another set with 16x11 flags can be found at <a href='http://www.famfamfam.com/lab/icons/flags/'>this site</a>, and is recommended. If you want to use flags in other sizes than 16x11, you need to copy the flag CSS rules from mwforum.css into your own CSS file included with the <var>forumStyle</var> forum option, and modify the height/width declarations. Any images in GIF format need to be converted to PNG format. Put the flag images into a subdirectory of your data directory called "flags".</p>
+
+
+<h2 id='maps'>Google Maps</h2>
+
+<p>The map feature shows Google-powered maps on user info pages when location info is available, and is enabled with the <var>userInfoMap</var> forum option.</p>
+
+<p>If the Location profile field is filled in, that data is used to determine the location. If GeoIP country information is available using the feature explained above, it is sent along to help resolve ambiguities (e.g. when only a city is named but exists in multiple countries). If the field contains garbage or inadequate data, the map won't be shown. If the field is empty and the user's Privacy option isn't checked, the GeoIP-based location is used directly instead.</p>
+
+<p>The linked title above the map shows the "formatted address" as determined by Google, shown in the browser's language. Clicking it will zoom the map to the viewport recommended by Google for that location (if the location only consists of a big country, it may actually zoom out). There is also a marker on the map pointing at the location, which will just be the middle of the country, city or other area if no exact street address is given.</p>
+
+<p>If Google finds multiple matches for the location info, the first match will be centered and shown in the title, but other locations will also be highlighted with markers, which may be outside of the current viewport. The markers have tooltips with the address of the matched location. Users wanting one exact match can simply test their address specifications with the search field on the normal <a href='http://maps.google.com/'>Google Maps</a> site.</p>
+
+<p>Even though Google recommends the use of XHTML on pages that embed Maps, what they really mean is "fake" XHTML, because the maps don't actually work on pages with real XHTML (sent with MIME type application/xhtml+xml) as optionally provided my mwForum.</p>
+
+<p>Please observe the Google Maps API <a href='http://www.google.com/apis/maps/terms.html'>Terms of Service</a> (summed up in the <a href='http://code.google.com/apis/maps/faq.html'>FAQ</a>). The feature uses the v3 API which doesn't require an "API key" like earlier versions.</p>
+
+
+<h2 id='quoting'>Quoting</h2>
+
+<p>mwForum uses traditional email-style inline quoting, where quoted lines are prefixed with greater-than (&gt;) signs. Users can always manually copy and paste and then prefix lines from the parent post with &gt; characters to highlight them with light grey color (or whatever the selected style does with the quote text). This includes very long lines that will be wrapped to paragraphs by browsers at display time.</p>
+
+<p>Ideally users should only copy short parts of the parent post to make clear what they're referring to in their answer. Since the parent post is usually not far away in a nested/threaded forum like mwForum, it's not necessary to quote huge tracts of original text for reference. That unfortunately common practice just bloats topics, making them hard to read and clogging up the database.</p>
+
+<p>However, since mwForum also supports flat, non-threaded topics, there's an optional automatic quoting feature. It requires the <a href='http://search.cpan.org/dist/Text-Flowed/'>Text::Flowed</a> Perl module, and works just like the automatic quoting in most email applications (at least when they're not used in HTML mode). It actually works somewhat better than many email apps, since it can properly reflow multi-level quotes thanks to Text::Flowed, which was written by Philip Mak for mwForum.</p>
+
+<pre><samp>
+&gt;&gt; Lorem ipsum dolor sit amet, consectetur 
+&gt;&gt; adipisicing elit, sed do eiusmod tempor incididunt 
+&gt;&gt; ut labore et dolore magna aliqua.
+&gt; Lorem ipsum dolor sit amet, consectetur adipisicing 
+&gt; elit, sed do eiusmod tempor incididunt ut labore et 
+&gt; dolore magna aliqua.
+</samp></pre>
+
+<p>I don't recommend to actually use this feature, though. The Flying Spaghetti Monster simply hasn't designed humanity to properly use it, and topics will end up consisting of huge amounts of quoted text with one new line added below. Many people don't seem to mind, but I think it's really annoying. In any case, you can enable the feature for non-threaded boards only, or for both non-threaded and threaded boards. The latter option is recommended even less, since in very indented posts in threaded topics, quoted text, even when quoted with very limited line lengths, might be wrapped in the ugly "camel" style at display time (depending on the respective user's font and browser window size of course).</p>
+
+<pre><samp>
+&gt; Lorem ipsum dolor sit amet, consectetur 
+adipisicing 
+&gt; elit, sed do eiusmod tempor incididunt ut 
+labore et 
+&gt; dolore magna aliqua.
+</samp></pre>
+
+<p>So what about [quote] markup tags instead? Historical reasons aside, copying, pasting and &gt;-prefixing quotes is simply faster than bracketing quotes with tags. Javascript tag insertion buttons make using tags more convenient, but they're not perfect. In some browers like Opera, only very recent browser releases make those buttons work (more or less). In other browsers like MSIE, they've worked for longer, but have other problems. Also, since this method has been established in mwForum for so long now, changing it would be a major pain, as would be mixing of both methods.</p>
+
+
+<h2 id='fcgi'>FastCGI</h2>
+
+<p>I'm no FastCGI expert and have never used it before. But here's how I got mwForum to work with FastCGI and <a href='http://www.lighttpd.net/'>lighttpd</a>, a nice lightweight webserver. I haven't tested that installation all that much, though.</p>
+
+<p>Since mwForum has no FastCGI accept loop built-in, it needs a dispatcher script. An <a href='http://redmine.lighttpd.net/wiki/lighttpd/ApplicationsUsingLighttpd'>example</a> on the lighttpd site served as a starter, but didn't work out of the box for mwForum, as CGI.pm was somehow screwing up package names or whatever, at least creating MwfMain objects didn't work anymore. But I don't like that bloated piece of code anyway, so I've changed the script to use FCGI directly. I also did a few other small changes, like removing that pointless (?) top level block and wrapping another line in <code>eval{}</code>. The resulting script looks like this:</p>
+
+<pre><code>
+#!/usr/bin/perl
+
+use lib "/usr/local/lighttpd/htdocs/forum";
+
+use strict;
+use FCGI;
+use Embed::Persistent;
+
+my $fcgi = FCGI::Request();
+my $p = Embed::Persistent-&gt;new();
+
+while ($fcgi-&gt;Accept() &gt;= 0) {
+  my $filename = $ENV{SCRIPT_FILENAME};
+  my $package = $p-&gt;valid_package_name($filename);
+  my $mtime;
+  if ($p-&gt;cached($filename, $package, \$mtime)) {
+    eval { $package-&gt;handler() };
+  }
+  else {
+    eval { $p-&gt;eval_file($filename) };
+  }
+}
+</code></pre>
+
+<p>You need to adjust the "<code>use lib</code>" line to point to your script directory. Put the dispatch.pl script either into your forum script directory or somewhere else in your webserver's directories. I have no idea whether the script will work with other Perl FastCGI apps.</p>
+
+<p>Then you need to install the <a href='http://search.cpan.org/dist/FCGI/'>FCGI</a> module. It's old, probably not maintained anymore, and not easily found using the CPAN search, so use the provided link if necessary. It also requires compilation, but if you're using FastCGI, you probably already have it installed or at least know what you're doing.</p>
+
+<p>Also required is the <a href='http://search.cpan.org/src/DOUGM/ExtUtils-Embed-1.14/lib/Embed/Persistent.pm'>Embed::Persistent</a> module. Now that one is positively ancient and its Makefile didn't work for me at all. But you can manually install the pure-Perl Persistent.pm file the usual way, e.g. by downloading it directly without the rest of the ExtUtils-Embed distribution from the link provided and by copying it into a subdirectory of your script directory called "Embed".</p>
+
+<p>My lighttpd test configuration spawns a single Perl FastCGI process from lighttpd itself:</p>
+
+<pre><code>
+fastcgi.server = ( 
+  ".pl" => (( 
+    "socket"       => "/tmp/perl.fcgi.socket",
+    "bin-path"     => "/usr/local/lighttpd/sbin/dispatch.pl",
+    "min-procs"    => 1,
+    "max-procs"    => 1,
+    "idle-timeout" => 300,
+  ))
+)
+</code></pre>
+
+<p>The only lines I changed in the actual mwForum code to support FastCGI are a few instances of <code>exit()</code> that I replaced with <code>die()</code>, since <code>exit()</code> kills the FastCGI processes, but <code>die()</code> exceptions can be caught by the <code>eval{}</code> in the dispatcher.</p>
+
+
+<h2 id='openid'>OpenID</h2>
+
+<blockquote><p>"<a href='http://openid.net/'>OpenID</a> is a free and easy way to use a single digital identity across the Internet"</p></blockquote>
+
+<p>mwForum can act as a OpenID Relying Party (aka OpenID Consumer). It will create a normal user account the first time someone logs in using their OpenID identity. The OpenID URL will be stored and displayed on the user info page as well as in a title tooltip for the username on topic pages. Optionally, the list of accepted OpenID providers can be limited with a whitelist, and registration/login can be limited to OpenID only.</p>
+
+<p>Even though OpenID is billed as a lightweight protocol, the list of required Perl modules for this feature is unfortunately rather long, and includes modules that require compilation. The principal modules required are <a href='http://search.cpan.org/dist/Net-OpenID-Consumer/'>Net::OpenID::Consumer</a>, <a href='http://search.cpan.org/dist/Cache-FastMmap/'>Cache::FastMmap</a> and <a href='http://search.cpan.org/dist/LWPx-ParanoidAgent/'>LWPx::ParanoidAgent</a>. <a href='http://search.cpan.org/dist/Crypt-SSLeay/'>Crypt::SSLeay</a> is required for https-based URLs, which are common. The <a href='http://gmplib.org/'>libgmp</a> system library and <a href='http://search.cpan.org/dist/Math-BigInt-GMP/'>Math::BigInt::GMP</a> module are strongly recommended, as without them the performance of some of the involved cryptography would be quite bad. The modules listed have many module dependencies of their own, which I won't list explicitely. It's probably best to install the modules using the CPAN shell to semi-automatically install the dependencies. To complicate matters, some of the modules may fail their test suites even though they will work fine for our purposes, so you may have to use the "<kbd>force install</kbd>" command (this happened with URI::Fetch and HTML::Parser in my case).</p>
+
+<p>Aside from installing the requirements, you need to activate the <var>openId</var> forum option and set the <var>maxUserNameLen</var> forum option to something bigger (maybe 40). The feature also requires the  attachment directory for caching purposes. If you haven't used an attachment directory before, set it up following the <a href='#attach'>instructions</a>.</p>
+
+<h3>Notes</h3>
+
+<p>The supported OpenID protocol version depends on the version of the installed Net::OpenID::Consumer module. The current version at the time of this writing supports OpenID 2.0. Some providers such as Google and Yahoo require 2.0.</p>
+
+<p>The username of OpenID users will either be the nickname transmitted via the Simple Registration protocol extension, or if there's no or no valid and unique nickname transmitted, an abbreviated form of the OpenID URL itself will be used. If even that is not unique, the full URL will be used as username. Users who end up with an abbreviated or full OpenID URL as username can rename themselves to something shorter by following the Name link on the user profile page (OpenID users with URLs as usernames get one more chance to change their name than other users, who get a configurable number of changes, 0 by default).</p>
+
+<p>The Simple Registration protocol extension, if available from the OpenID provider, is also used to copy the full name, date of birth and country into mwForum's user profile.</p>
+
+<p>On a mod_perl server, you might want to use advanced tricks to not execute user_openid.pl under mod_perl, as the number of required modules inflates the RAM usage a lot (on my forum-only server, it doubled the process size from 10MB to 20MB). The fact that the HTTP communication going on in the background may take several seconds would also make this advisable, at least for reverse proxy mod_perl setups.</p>
+
+<p>Allowing multiple domain names for the forum might cause trouble (incl. "bad_mode" error messages). Even if your site has multiple domains, you should generally enforce (via redirection) a single domain for the forum, to avoid problems with this, cookies and whatnot.</p>
+
+
+<h2 id='ldap'>LDAP</h2>
+
+<p>LDAP is supported in the form of an example login authentication plugin in MwfPlgAuthen::authenLoginLdap(). This plugin takes the username/password from the login page and validates them against an LDAP server. If the credentials are correct, and there is not yet an mwForum user account for that username, an account is automatically created and the user logged in. If an account already exists, the user is simply logged in as that user.</p>
+
+<p>LDAP is only provided as an example and not a fully fledged plugin as the requirements of admins for all things authentication tend to be so different that it's hard to cover everything, especially as I've never actually employed LDAP myself. Therefore the example might need some modifications and additions to suit your specific needs.</p>
+
+<h3>Installation</h3>
+
+<ol class='ext'>
+<li>Install the Net::LDAP Perl module and its dependencies.</li>
+<li>Edit the <var>$cfg-&gt;{ldap...}</var> options in the MwfPlgAuthen::authenLoginLdap() function (optionally move them to your MwfConfig.pm). Their meaning is hopefully obvious to people familiar with LDAP.</li>
+<li>Put MwfPlgAuthen.pm into your script directory, after editing it to your needs and removing unrelated example functions.</li>
+<li>Put "login=MwfPlgAuthen::authenLoginLdap" into the <var>authenPlg</var> forum option.</li>
+</ol>
+
+<h3>Notes</h3>
+
+<p>The plugin example doesn't revoke access to the forum if the LDAP entry is deleted or changed. As long as the user has a valid cookie for the forum, they're still logged in. If forum access needs to be revoked, this could be handled by a cronjob that empties the mwForum users.password column periodically, or by some kind of hook script that is called from the site's user administration system and instantly wipes the password column.</p>
+
+<p>SASL and SSL/TLS support would require a few changes/additions.</p>
+
+<p>The code assumes that the LDAP directory has the user password as cleartext. If it doesn't, code would have to be added to do the hashing etc.</p>
+
+<p>The only profile fields copied from the user's LDAP entry are the real name and email address. This could also be extended.</p>
+
+<p>I've tested this example against a public LDAP server. As I didn't have access to any real passwords that way of course, I simply used some other attribute as password.</p>
+
+<p>If you've checked this out, please provide feedback, whether it worked for you or not. People asking for LDAP on the support forum have made a habit of vanishing without giving any, leaving us none the wiser.</p>
+
+
+<h2 id='captcha'>Captcha</h2>
+
+<blockquote><p>"A <a href='http://www.captcha.net/'>CAPTCHA</a> is a program that protects websites against bots by generating and grading tests that humans can pass but current computer programs cannot."</p></blockquote>
+
+<p><a href='http://en.wikipedia.org/wiki/Captcha'>Captchas</a> are used to prevent spambots from registering and/or posting. With the <var>captcha</var> forum option, captcha input fields or images can be added to various forms. There are several different captcha implementations with varying degrees of complexity.</p>
+
+<p>It should be noted that at the time of this writing and as far as I know, only mwForum installations that allow unregistered posting have been spammed by bots. No forums that require registration with email verification (the default) have received any spam by bots, only manual spam by human beings, which can't be stopped by captcha. While some bots do register accounts, they never seem to receive and evaluate the registration emails. So, if you don't allow unregistered posting or email-less registration, you may not have to deal with any of this. You might want to set the <var>acctExpiration</var> forum option to a few days though, to get rid of unused bot accounts.</p>
+
+<h3>Invisible Honeypot Field</h3>
+
+<p>This simple and convenient captcha adds a text input field that is set to be invisible to humans by means of CSS (unless some exotic or crappy browser is used). Since no known spambot interprets CSS, and most of them have the habit of filling in every text field, most bot submissions can be weeded out easily. Since there's no caption for this field, even humans with exotic non-CSS browsers should hopefully leave it empty.</p>
+
+<h3>Question/Answer</h3>
+
+<p>This simple captcha let's you pose a question, usually something to do with your forum, which the user must answer. The question and answer must be configured in MwfConfig.pm as seen below. The answer is case-independent. Don't make it a math question like "What's 1+2?", spambots might be on to these. Giving strong hints like the first and last characters of the word should be ok, though.</p>
+
+<pre><code>
+$cfg-&gt;{captchaQuestn}  = "Anti-spam test: What's this forum about?";
+$cfg-&gt;{captchaAnswer}  = "Chess";
+</code></pre>
+
+<h3>GD::SecurityImage</h3>
+
+<p>This captcha implementation displays randomized images with characters that need to be copied into a text field, as seen on many other sites. The random quality of the images is not that great due to the limited functionality of the used <a href='http://search.cpan.org/dist/GD-SecurityImage/'>GD::SecurityImage</a> and <a href='http://search.cpan.org/dist/GD/'>GD</a> Perl modules, but then any smart OCR spambots are probably only going to be written to attack high-volume sites by the major web corporations.</p>
+
+<p>Aside from installing the named modules and setting up the <a href='#attach'>attachment directory</a> for the generated image files, you also need to specify a TTF font file in MwfConfig.pm as shown below. Not all fonts will work equally well, one free font available that works is "VeraBd.ttf" (google for it). This method is not accessibility-enabled in any way.</p>
+
+<pre><code>
+$cfg-&gt;{captchaTtf} = "/usr/local/share/ttf/VeraBd.ttf";
+</code></pre>
+
+<h3>reCAPTCHA.net Service</h3>
+
+<p>The fanciest captcha implementation uses the <a href='http://recaptcha.net/'>reCAPTCHA.net</a> web service by the inventors of the "CAPTCHA" term (now owned by Google). It provides nicely warped text images that should be hard to crack, as well as alternative audio captchas. By using it, you also help digitizing old books. Check out their site for details and terms of service. Note that due to the omnipresence of this captcha implementation all over the Web, it is under much attack, and older versions have been defeated.</p> 
+
+<p>To make this work in mwForum, you need to install the <a href='http://search.cpan.org/dist/Captcha-reCAPTCHA/'>Captcha::reCAPTCHA</a> module and its unfortunately somewhat extensive list of dependencies and sub-dependencies. You also need to register an account at the reCAPTCHA.net site and put the public and private keys you got from them into your MwfConfig.pm:</p>
+
+<pre><code>
+$cfg-&gt;{reCapPubKey} = '01234567890abcdef';
+$cfg-&gt;{reCapPrvKey} = '01234567890abcdef';
+</code></pre>
+
+<p>reCAPTCHA.net doesn't work in XHTML mode, and adds a few harmless syntax errors in HTML mode, at least in the version tested.</p>
+
+<h3>Akismet Service</h3>
+
+<p><a href='http://akismet.com/'>Akismet</a> by Automattic isn't actually a captcha, it's a web service that does spam classification based on post text and metadata. Check their site for details and terms of service. In mwForum, Akismet is used for posts and private messages, but not registrations. It's currently experimental, and it's not yet known how reliable their classification is (which will no doubt change over time anyway).</p>
+
+<p>To enable it in mwForum, you need to install the <a href='http://search.cpan.org/dist/libwww-perl/'>LWP::UserAgent</a> Perl module (aka libwww-perl). Register an account at the WordPress site, and put the API key you get from them into your MwfConfig.pm, e.g.: "<code>$cfg-&gt;{akismetKey} = '0123456789ab';</code>".</p>
+
+<h3>DNSBL Service</h3>
+
+<p>Not really a catpcha either, <a href='http://en.wikipedia.org/wiki/DNSBL'>DNS-based blacklists</a> are frequently used for email spam filtering. Some blacklists also provide IPs used for web-spamming and/or belonging to <a href='http://en.wikipedia.org/wiki/Open_proxy'>open proxies</a>. This method is also experimental, and usefulness very much depends on the used blacklist, which may not fare too well against <a href='http://en.wikipedia.org/wiki/Botnet'>botnet</a>-based spammers. Advantages of this method are that it doesn't pester users (unless they're hit by blacklisted dynamic IPs), is very light on resources and doesn't require the installation of any Perl modules. To enable, put the domain name of the used blacklist into MwfConfig.pm, e.g.: "<code>$cfg-&gt;{dnsbl} = 'opm.tornevall.org';</code>".</p>
+
+
+<h2 id='cookies'>Cookies</h2>
+
+<p>Possible reasons for various cookie problems that can prevent successful login/logout:</p>
+
+<ul class='ext'>
+<li>The admin changed the cookie path or cookie domain implicitly by changing the URL of the forum, or explicitly by setting the <var>cookiePath</var> and/or <var>cookieDomain</var> forum options. This must never be done without also changing the cookie names with the <var>cookiePrefix</var> forum option (it's never too late to do that).</li>
+
+<li>The user hasn't enabled their cookies at all, or has logged in and than disabled changing them, preventing logout. Some proxies (in ad/privacy filters, personal firewalls) may cause this without the user's knowledge.</li>
+
+<li>General browser weirdness. Users will have to manually delete mwForum cookies. One known source of this is when a new Firefox installation has imported cookies from IE.</li>
+</ul>
+
+<p>To really understand the details of these problems, one would need to be familiar with the details of the cookie specification. And since people familiar with it won't need this FAQ entry, I won't go into anymore detail here.</p>
+
+
+<h2 id='seo'>Search Engine Optimization</h2>
+
+<p>This topic is about improving the index coverage and resource consumption by external search engines like Google, not about the built-in forum search.</p>
+
+<p>mwForum's URLs are by default not very search engine friendly. Forums may still get indexed more or less completely, but spiders request a lot more pages than necessary, and the search results contain all sorts of useless or suboptimal links, like variations of the same page with different parameters in the URL, or "prevnext.pl" URLs instead of "topic_show.pl" URLs. Spiders may also punish you for having duplicate content under different URL variations.</p>
+
+<p>It's not an option for mwForum to use a completely different URL style by default, with most admins being limited to ancient CGI setups and having limited control over their servers, and with the current scheme being established for many years. Instead, there are two alternative approaches to improve the situation.</p>
+
+<h3>robots.txt</h3>
+
+<p>The first approach simply uses a few extended entries in the site's <a href='http://www.robotstxt.org/'>robots.txt</a> file. It can be used by just about anybody with some basic webmastering knowledge, and prevents most useless page requests and bad search result links. The extended syntax used is not supported by all search engines, so far I know about support by Google, Bing and Yahoo. But that covers most of the search market. Don't forget to adjust the script path as necessary:</p>
+
+<pre><code>
+User-agent: Googlebot
+Disallow: /cgi-bin/mwf/
+Allow: /cgi-bin/mwf/forum_show.pl$
+Allow: /cgi-bin/mwf/board_show.pl?bid=
+Allow: /cgi-bin/mwf/topic_show.pl?tid=
+</code></pre>
+
+<h3>URL Rewriting</h3>
+
+<p>This method is <strong>deprecated</strong>, as it's not required to get Google to crawl full-speed, and the previous simple approach is good enough to avoid pointless crawling. The following is only listed for reference for existing users.</p>
+
+<p>The URL Rewriting approach requires some more webmastering experience and access to <a href='http://httpd.apache.org/docs/2.0/mod/mod_rewrite.html'>mod_rewrite</a> (or an equivalent). If the "<code>seoRewriting</code>" forum option is enabled (and the user agent is not logged in), mwForum rewrites certain links to the forum, board and topic pages to URLs that look like static HTML pages, e.g.:</p>
+
+<pre><samp>
+forum.pl                 -&gt; start.html
+forum_show.pl            -&gt; forum.html
+board_show.pl?bid=x;pg=y -&gt; board_x_y.html
+topic_show.pl?tid=x;pg=y -&gt; topic_x_y.html
+</samp></pre>
+
+<p>When these "fake" URLs are requested, they need to be rewritten back to the real URLs internally by the webserver. The following example uses mod_rewrite and assumes that your forum script path is not in a "cgi-bin" directory this time, as that might prevent spiders from handling the URLs as static files.</p>
+
+<pre><code>
+RewriteRule ^/mwf/topic_(\d+)_(\d+)\.html  /mwf/topic_show.pl?tid=$1;pg=$2
+RewriteRule ^/mwf/board_(\d+)_(\d+)\.html  /mwf/board_show.pl?bid=$1;pg=$2
+RewriteRule ^/mwf/forum\.html              /mwf/forum_show.pl
+RewriteRule ^/mwf/start\.html              /mwf/forum.pl
+</code></pre>
+
+<p>Last not least we want to prevent spiders from crawling and indexing any other pages than those using the .html URLs, again using robots.txt extended syntax:</p>
+
+<pre><code>
+User-agent: Googlebot
+User-agent: Slurp
+User-agent: msnbot
+Disallow: /mwf/
+Allow: /mwf/*.html$
+</code></pre>
+
+<p>How you handle search engines that don't understand the extended syntax for either approach is up to you.</p>
+
+
+<h2 id='archive'>Archiving</h2>
+
+<p>Archiving is one of those topics where everybody has a different idea on how it's supposed to work, and of course there are different purposes for it to begin with (backup, performance, etc). The approach taken by mwForum's built-in archiving is aimed at improving performance by moving out old topics and obsolete boards, while still keeping them readable through the normal user interface. It's also designed for minimal code impact.</p>
+
+<p>Archived boards, topics and and posts are moved to separate archive database tables. None of the other entities and relationships (e.g. polls, attachments and memberships) get archived, though. If the forum is browsed in archive mode, those three archive tables are queried instead of the normal ones. All other tables (users, categories etc.) are used as normal. Archive contents are read-only, no other operations can be performed on them.</p>
+
+<p>To have expired topics moved to the archive tables by the main cronjob, enable the <var>archiveExpired</var> forum option. To archive a complete board, use the Archive link on the board page admin bar, and delete the original board afterwards.</p>
+
+<p>To start browsing the archive, append an "arc=1" parameter to URLs, as in "<kbd>forum_show.pl?arc=1</kbd>". The paramater will stick while you browse, so to leave archive mode again, you would have to manually remove it, or just reenter the forum through a normal bookmark. Only the forum/board/topic pages and the forum search page actually use the archive contents. There's no regular link to the archive mode anywhere in the user interface, so if you want normal users to be able to find it, post a link in an announcement post or the like, and use the opportunity to also explain the archive limitations to your users.</p>
+
+<p>The fact that other non-archive tables (categories, users, memberships etc.) are used normally while browsing in archive mode has the following consequences:</p>
+
+<ul class='ext'>
+<li>As long as an archived board's original counterpart still exists, its user/group membership and moderator entries remain, and are used to grant access to the archived board, too.</li>
+<li>If an archived board's original counterpart is deleted, all membership and moderator entries are also deleted, which means that archived non-public boards can only be accessed by forum admins.</li>
+<li>Archived boards still need their original categories. Don't delete them if you delete the original board.</li>
+</ul>
+
+<h3>Notes</h3>
+
+<p>If you really need any of the other stuff that is not archived resp. not enabled for archived topics and posts, this feature isn't for you.</p>
+
+<p>The original and archive table schemas need to remain in sync regarding the number and order of columns. If you add any columns of your own, you need to take this into account.</p>
+
+<p>This feature doesn't work with SQLite.</p>
+
+
+<h2 id='ui'>Misc. UI Issues</h2>
+
+<h3>Collapsing/Expanding</h3>
+
+<p>Categories on the forum page and topic branches on the topic page can be collapsed and expanded. This feature is implemented using DHTML, as server-side tree controls are nasty bandwidth and CPU hogs.</p>
+
+<p>"Auto-collapsing" can be activated as a user option and automatically collapses topic branches without new or unread posts, but only if there are new or unread posts in that topic at all. If there are none at all, the user probably wanted to re-read the old posts.</p>
+
+<h3>Post Header Backgrounds</h3>
+
+<p>The colors and order of precedence are style-dependent, but the latter should be the same as listed:</p>
+
+<ul>
+<li>One color for new posts (yellow in Default2, like the icons).</li>
+<li>One color for unread posts (green in Default2, as white like the icons wouldn't stand out).</li>
+<li>Normal color for the rest (light blue in Default2).</li>
+</ul>
+
+<h3>Edit Timestamp</h3>
+
+<p>When a post is edited within two minutes of posting, no timestamp is shown, so there's time to correct small errors. If a post is edited after that, an edit timestamp is shown. If an edit is new since the user's last session, the timestamp is emphasized (bold red in Default2, as yellow would be unreadable).</p>
+
+
+<h2 id='limits'>Limitations</h2>
+
+<p>The parts of the user interface that are only used by administrators are not translated. This is intentional as getting people to translate is hard enough without the job being at least three times as much work.</p>
+
+<p>Due to the threaded nature of mwForum, huge topics (more than a few hundred posts) are not particularly efficient. The software always needs to retrieve the basic data for all posts in a topic to build the tree structure that's required to see which posts are on the current page of the topic. While mwForum also supports non-threaded flat boards, they use mostly the same code and are therefore no more efficient than threaded boards. It would be possible to create a topic_show.pl script specifically for non-threaded boards that would be efficient with any number of posts, but as threaded mode has always been the focus of this project, no such script is being maintained.</p>
+
+<p>There is no HTML templating support. The main reasons are that such a thing would require a major rewrite, that templates wouldn't be version-independent like some people seem to think, that there would be a performance impact because the page contents couldn't be streamed out anymore, and last not least that even for the much more simple CSS styling few enough people ever shared and maintained styles.</p>
+
+
+<h2 id='dataver'>Browser Cache Refreshing</h2>
+
+<p>Any admin who has been keeping mwForum up-to-date has gotten the usual complaints after forum upgrades by users who haven't discovered the magic F5 key to refresh their browser cache yet, and like me, they have (probably) also been too lazy to recommend F5 usage in advance of upgrades. Furthermore, if a file timestamp gets downgraded (e.g. because of a reverted change), Ctrl+F5 or emptying the cache is required, depending on the browser in question.</p>
+
+<p>The HTTP expiration header functionality is useless to solve this problem, as nobody ever knows in advance when something might change in the future.</p>
+
+<p>The simplest way to handle this in theory is to use different filenames for new versions of files. But unless some kind of CMS is used that handles this, it's not very practical.</p>
+
+<p>Another solution to force browsers to reload fresh copies of files is to append a versioned query string to the URLs of static files, e.g. "<code>/mwf/forum.css?v42</code>". This is often recommended by various articles on the topic, but they tend to ignore the fact that browsers won't really cache files anymore if their URLs contain question marks, or more specifically they will keep sending If-Modified-Since/304 requests on every page hit. In addition, the bigger problem with this approach is that nowadays lots of images etc. are referenced from CSS and JS files, where it's impractical to insert dynamic version numbers.</p>
+
+<p>mwForum supports adding a serial version number to the data URL path instead, e.g. "<code>/mwf/v42/forum.css</code>". This approach also affects files addressed with relative paths (e.g. only filenames) from stylesheets and scripts. The added path component needs to be written out on the server side, which unfortunately means not everybody may be able to use it. Examples using mod_alias and mod_rewrite on Apache (only one is required):</p>
+
+<pre><code>
+AliasMatch ^/mwf/v\d+/(.+)  /usr/local/apache/htdocs/mwf/$1
+
+RewriteRule ^/mwf/v\d+/(.+)  /mwf/$1
+</code></pre>
+
+<p>To enable the feature in mwForum, set the <var>dataVersion</var> forum option to <code>1</code>. When you upgrade the forum, upgrade.pl will automatically increase this number, if it's not 0. When you change CSS, JS, image etc. files on your own, you can also increase the number by double-clicking the copyright message at the bottom of all pages (this currently uses AJAX, mostly just to serve as an AJAX example and test case).</p>
+
+<h3>Cache Optimization</h3>
+
+<p>Now that we can force browsers to load changed files when we want, we can optionally also get them to cache unchanged static files for longer. This is especially useful for recently changed files, which browsers will also give the If-Modified-Since/304 treatment for a while. Example:</p>
+
+<pre><code>
+&lt;LocationMatch ^/mwf/v\d+&gt;
+  ExpiresActive On
+  ExpiresDefault "access plus 30 days"
+&lt;/LocationMatch&gt;
+</code></pre>
+
+
+<h2 id='mobile'>Mobile Browsing</h2>
+
+<p>A few tips to make a forum more accessible via mobile browsers on small screens:</p>
+
+<ul>
+<li>Include a "<code>&lt;meta name='viewport' content='width=device-width'/&gt;</code>" header with the <var>htmlHeader</var> forum option to have mobile browsers flow the page content to their native page widths instead of having users zoom around.</li>
+<li>Don't garnish the forum with any title images, navigation sidebars etc., or use an intelligent include plugin that skips them for mobile browsers.</li>
+<li>Use compact board titles, don't enable overly long topic subjects or usernames, etc.</li>
+<li>Point out the existence of the various "Show ..." user options to your users. Disabling them can make pages a good deal more compact and load time shorter.</li>
+</ul>
+
+
+</body>
+</html>

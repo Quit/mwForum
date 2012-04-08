@@ -1,0 +1,2249 @@
+<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01//EN' 'http://www.w3.org/TR/html4/strict.dtd'>
+<html lang='en'>
+<head>
+  <meta http-equiv='content-type' content='text/html; charset=utf-8'>
+  <title>mwForum Changes</title>
+  <link rel='stylesheet' href='doc.css' type='text/css'>
+</head>
+<body>
+
+<h1>mwForum Changes</h1>
+
+<p>Releases with <strong>even</strong> minor version numbers (e.g. 2.<strong>2</strong>.0) are stable releases, releases with <strong>odd</strong> minor version numbers (e.g. 2.<strong>3</strong>.0) are development releases.</p>
+
+<p>Please don't forget to follow the instructions in <a href='Upgrade.html'>Upgrade.html</a> when upgrading.</p>
+
+<p>Credits for bug reports are in [brackets].</p>
+
+
+<h2>2.26.0 (2012-02-15)</h2>
+
+<ul>
+<li>Added: Quick branch moving: Ctrl-Click post, Alt-Click new parent.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Changed: Use SSL/TLS for YouTube and Vimeo when forum uses it.</li>
+<li>Fixed: Embedded YouTube video when based on HTML5.</li>
+<li>Fixed: Don't stop dbToDisplay() on invalid video tag content.</li>
+<li>Fixed: Don't require country flags to use GeoIP for Google Maps.</li>
+<li>Fixed: Apostrophes in language strings passed to JS.</li>
+<li>Removed: Google AJAX forum search (deprecated by Google).</li>
+<li>Removed: Microsummary for Live Titles (removed in Firefox 6).</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Fixed: Escape brackets in URLs to avoid display-time tag corruption.</li>
+<li>Fixed: JS-based parent-post navigation over page boundaries.</li>
+</ul>
+
+
+<h2>2.25.2 (2012-01-21)</h2>
+
+<ul>
+<li>Added: Multi-file and drag&amp;drop attachment upload with HTML5.</li>
+<li>Added: Prev/next navigation on attachment page.</li>
+<li>Added: Click to zoom images on attachment page.</li>
+<li>Added: Add JS-based parent-post navigation to history.</li>
+<li>Changed: Don't normalize all URLs to tagged format with link text.</li>
+<li>Changed: Allow square brackets in URLs when not tagged with link text.</li>
+<li>Changed: Scripts can use <var>$cfg-&gt;{dbCitext}</var> option instead of -i param.</li>
+<li>Changed: Misc. small changes.</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Fixed: SQL error when adding topics. [Andrea Bianchi]</li>
+<li>Fixed: Undo removal of <var>dbSchema</var>, needed for multi-forums.</li>
+</ul>
+
+
+<h2>2.25.1 (2011-12-10)</h2>
+
+<ul>
+<li>Added: Log page.</li>
+<li>Added: Board/topic export/import between mwForums.</li>
+<li>Added: Check whether cookies work on login pages.</li>
+<li>Added: Purging posts by username.</li>
+<li>Added: List matching posts when purging users.</li>
+<li>Changed: Delay watch notif. and instant subs. for unapproved posts.</li>
+<li>Changed: Use SSL/TLS for Google APIs and Gravatar when forum uses it.</li>
+<li>Changed: Frontend proxy can signal SSL/TLS usage to backend server.</li>
+<li>Changed: Adapt OpenID to changes in Net::OpenID::Consumer.</li>
+<li>Changed: Make most input field sizes CSS-based.</li>
+<li>Changed: Merged logStrings table into log table.</li>
+<li>Changed: Updated jQuery to version 1.7.1.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Changed: Purge users/posts matching all instead of any criteria.</li>
+<li>Changed: Purge users by exact username match only.</li>
+<li>Fixed: Multiple spam purging errors.</li>
+<li>Fixed: Delete raw post body when setting body to "[deleted]".</li>
+<li>Fixed: Board jumplist script broke topic moving. [Matthias Althaus]</li>
+<li>Fixed: Admins with HTML5 browsers couldn't remove email addresses.</li>
+<li>Fixed: Table prefix error in old upgrade code.</li>
+<li>Removed: Topic hit counting.</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Fixed: Highlighting of quoted search terms using MySQL FTS.</li>
+<li>Fixed: Double-stemming of words using PgSQL FTS.</li>
+<li>Fixed: Login didn't mark old posts as old.</li>
+</ul>
+
+
+<h2>2.25.0 (2011-09-09)</h2>
+
+<ul>
+<li>Added: Simple style.</li>
+<li>Added: Print media style rules.</li>
+<li>Added: Preview for post editing.</li>
+<li>Added: Indexed fulltext search for PgSQL.</li>
+<li>Changed: Make URL-based login sessions optional.</li>
+<li>Changed: Moved jsparams to validator-compatible data attribute.</li>
+<li>Changed: Disable PgSQL prep. statements, bound params hurt optimizer.</li>
+<li>Changed: Prepare for UTF-8 changes in DBD::Pg 3.0.</li>
+<li>Changed: Removed deprecated SQLite pragma.</li>
+<li>Changed: Updated jQuery to version 1.6.2.</li>
+<li>Changed: Deprecated SEO rewriting.</li>
+<li>Fixed: All page 1 noindex'ed when using SEO rewriting.</li>
+<li>Fixed: Work around Opera bug with horizontal SVG gradients.</li>
+<li>Fixed: Multiple XSS vulnerabilities.</li>
+</ul>
+
+
+<h2>2.24.0 (2011-05-01)</h2>
+
+<ul>
+<li>Added: HTML5 "required" attributes.</li>
+<li>Added: Hidden option to force <var>scriptUrlPath</var> for all URLs.</li>
+<li>Added: Hidden options to enable noarchive and/or nosnippet robot metas.</li>
+<li>Changed: Style changes for IE9, no more filters for IE8-.</li>
+<li>Changed: Updated jQuery to version 1.5.2.</li>
+<li>Fixed: SQL error with temp tables and prefixes. [Daði Jónsson]</li>
+</ul>
+
+
+<h2>2.23.1 (2011-02-26)</h2>
+
+<ul>
+<li>Added: Forum option to make user-posted links open in new tabs.</li>
+<li>Changed: Page number link scheme.</li>
+<li>Changed: Embed videos with iframes to let providers select Flash or HTML5.</li>
+<li>Changed: Preselect ignored/watched user when coming from their info page.</li>
+<li>Changed: Allow all characters except necessary delimiters in URLs.</li>
+<li>Changed: Improved Accept-Language negotiation.</li>
+<li>Changed: Use negotiated instead of default language for new users.</li>
+<li>Changed: Delete never-logged-in users on email bounces.</li>
+<li>Changed: Updated jQuery to version 1.4.4.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Message notification formatting with multiple recipients.</li>
+<li>Fixed: Accidentally merging a topic with itself deletes it. [Daði Jónsson]</li>
+<li>Fixed: Accumulating FORUM IS LOCKED messages.</li>
+</ul>
+
+
+<h2>2.23.0 (2010-11-06)</h2>
+
+<ul>
+<li>Added: User country statistics.</li>
+<li>Added: Forum activity statistics.</li>
+<li>Added: Uploaded image resizing.</li>
+<li>Added: Google AJAX forum search mode.</li>
+<li>Added: IPv6 support.</li>
+<li>Added: IP address expiration.</li>
+<li>Added: Blocking of forum searches from outside search form.</li>
+<li>Changed: Simplified bans, banned users can't do anything anymore.</li>
+<li>Changed: Use backup request source auth values to avoid error messages.</li>
+<li>Changed: Flag display requires <var>userFlags</var> option in addition to <var>geoIp</var>.</li>
+<li>Changed: Ignore keystrokes on topic page when in (addon) textarea.</li>
+<li>Changed: Make threading notifications available without reports enabled.</li>
+<li>Changed: Don't limit dupecheck to timeframe.</li>
+<li>Changed: Don't IP-block registered users.</li>
+<li>Changed: Allow comments in IP blocks.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: dbToDisplay() ends when undefined :tag: is found.</li>
+<li>Fixed: Fatal error when using invalid format for <var>ipBlocks</var>. [John Cooper]</li>
+<li>Fixed: RSS date format on servers with non-English locale. [Tobias Jaeggi]</li>
+<li>Fixed: Persistency of board selection during attachment search. [Daði Jónsson]</li>
+<li>Fixed: Margin size of forms with IE7.</li>
+</ul>
+
+
+<h2>2.22.0 (2010-07-03)</h2>
+
+<ul>
+<li>Added: Text snippets for posts.</li>
+<li>Added: Skip :tag: replacement for users with showDeco off with "!" prefix.</li>
+<li>Changed: Expand/collapse all branches with Numpad-* or Shift-Click on +/-.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Removed: Experimental Drizzle support.</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Added: A dash of light blue to the Default2 style.</li>
+<li>Changed: Improved tracking and display of focused post.</li>
+<li>Fixed: Some new/old tracking features for guests on topic pages.</li>
+<li>Fixed: IE inserting tag buttons outside of text field. [Daði Jónsson]</li>
+</ul>
+
+
+<h2>2.21.3 (2010-06-09)</h2>
+
+<ul>
+<li>Added: Keyboard navigation of posts.</li>
+<li>Added: AJAX support for addons.</li>
+<li>Added: HTML5 video with [vid=html].</li>
+<li>Added: Skip buttons for :tags: with "?" prefix.</li>
+<li>Added: Can force browsers to reload files via version in data path.</li>
+<li>Added: tagButtons include plugin subtype, replaces default code.</li>
+<li>Changed: Use jQuery-based Javascript.</li>
+<li>Changed: Replaced client-side with server-side category hiding.</li>
+<li>Changed: Replaced smiley substitution with integrated smiley :tag: pack.</li>
+<li>Changed: Make parameters in mwf.p accessible to JS addons.</li>
+<li>Changed: Moved Q&amp;A captcha configuration to forum options page.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: JS-side tooltip titles for +/- branch collapsing buttons.</li>
+<li>Fixed: Removed 30s debug sleep in instant subscription script.</li>
+<li>Removed: Differentiation between normal and advanced forum options.</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Fixed: Don't require Net::CIDR::Lite unless IP blocking is used.</li>
+<li>Fixed: Persistency of selected categ/board during forum search.</li>
+</ul>
+
+<h2>2.21.2 (2010-05-13)</h2>
+
+<ul>
+<li>Added: Raw post bodies for source code etc.</li>
+<li>Added: IP blocking with CIDR and range support.</li>
+<li>Added: userUserLink and userAdminLink include plugin subtypes.</li>
+<li>Added: Tooltip of forum option names shows default value.</li>
+<li>Added: Script file extension global forum option.</li>
+<li>Changed: Use scrollbars for oversized embedded attached/external images.</li>
+<li>Changed: Pass user param to userProfileLink and userOptionsLink plugins.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Unordered poll results under some circumstances.</li>
+<li>Fixed: paramStr() always trimmed whitespace.</li>
+<li>Fixed: OpenPGP support.</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Changed: Some more HTML5 attributes and other small changes.</li>
+<li>Changed: Only show Geolocate button when Google Maps are enabled.</li>
+<li>Fixed: HTML error with polls.</li>
+</ul>
+
+
+<h2>2.21.1 (2010-04-15)</h2>
+
+<ul>
+<li>Added: Pseudo-pagination on New/Unread Posts overview pages.</li>
+<li>Added: Enable multiple message display plugins.</li>
+<li>Added: topicData include plugins can add CSS classes to posts.</li>
+<li>Added: Use HTML5 (backwards-compatible).</li>
+<li>Added: HTML5 geolocation insertion for user location field.</li>
+<li>Added: HTML5 input element types for user profile/options.</li>
+<li>Added: HTML5 autofocus attributes.</li>
+<li>Changed: Use &lt;code&gt; for [tt] for HTML5.</li>
+<li>Changed: Got rid of &lt;br&gt; outside of user content for HTML5.</li>
+<li>Changed: Merged various updates of current user into one query.</li>
+<li>Changed: Filter out Unicode bidi control characters.</li>
+<li>Changed: Dropped pointless defaults for database columns.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Temporary avatar files didn't get deleted.</li>
+<li>Fixed: Resized avatar files didn't get chmodded.</li>
+<li>Fixed: Error output when running install/upgrade.pl through CGI.</li>
+<li>Fixed: Global feed updating without <var>rssExclude</var> set. [Daði Jónsson]</li>
+<li>Fixed: Another potential SQL placeholder bug.</li>
+<li>Removed: Remaining IE6 workaround.</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Changed: Various tweaks to new/old tracking for guests.</li>
+</ul>
+
+
+<h2>2.21.0 (2010-03-12)</h2>
+
+<ul>
+<li>Added: New/old tracking for guests.</li>
+<li>Added: Mark Read button on board level.</li>
+<li>Added: Forum search features for attachment list.</li>
+<li>Added: Experimental DNSBL-based antispam method.</li>
+<li>Added: Forum option for sites with mandatory SSL/TLS.</li>
+<li>Added: Forum options to include static HTTP headers and HTML.</li>
+<li>Added: Board and topic subscription views on user admin page.</li>
+<li>Added: Message display plugin example for embedding attachments.</li>
+<li>Added: upgrade.pl can use -i param to enable citext type for PgSQL.</li>
+<li>Added: PgSQL schema can be set with <var>$cfg-&gt;{dbSchema}</var>.</li>
+<li>Changed: Fresh-up of the Default2 style.</li>
+<li>Changed: Headers can show wrapped text thanks to CSS gradients.</li>
+<li>Changed: Use base post as default target for moving topic-level branches.</li>
+<li>Changed: Don't rename non-image attachments with same base name.</li>
+<li>Changed: Widgets must opt-in to get auto-focus with <var>fcs</var> CSS class.</li>
+<li>Changed: Don't list redundant users in group/ignore/watch selection lists.</li>
+<li>Changed: Split off userVariables table from variables table.</li>
+<li>Changed: Use temp tables instead of potentially very long IN() lists.</li>
+<li>Changed: Replaced query debug output with better query log file.</li>
+<li>Changed: Tweaked language used for topic vs. post replies.</li>
+<li>Changed: Ask for missing forum version entry during upgrade.</li>
+<li>Fixed: userDataExp code could delete forum version entry.</li>
+<li>Fixed: HTML error with search results excl. body.</li>
+<li>Fixed: Editing posts with multiline linked URLs.</li>
+<li>Fixed: Topic pages jumped to "unread" posts for guests.</li>
+<li>Fixed: Unordered topics on board pages under some circumstances.</li>
+<li>Fixed: Don't show avatar size hint if uploading is disabled.</li>
+<li>Removed: Subject-only mode of forum search results.</li>
+<li>Removed: Sorting of forum search results by user.</li>
+<li>Removed: <var>fallbackStyle</var> forum option.</li>
+<li>Removed: <var>secureLogin</var> user option.</li>
+</ul>
+
+
+<h2>2.20.0 (2009-12-16)</h2>
+
+<ul>
+<li>Changed: Show search results incl. body more like posts.</li>
+<li>Changed: Use MEDIUMTEXT with MySQL by default.</li>
+<li>Fixed: Don't show unapproved posts in search results.</li>
+<li>Fixed: Missing execution messages for watch list editing.</li>
+<li>Fixed: Edited user when admin edits users' word watch list.</li>
+<li>Fixed: Nesting correction of URL tags with other tags.</li>
+<li>Fixed: SQL error when searching subjects for nothing.</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Changed: Use native named placeholders with PgSQL.</li>
+<li>Fixed: Google Maps without GeoIP. [Andrea Bianchi]</li>
+<li>Fixed: Image and video tag insertion. [Andrea Bianchi]</li>
+<li>Fixed: XHTML error in user_topics.pl.</li>
+</ul>
+
+
+<h2>2.19.3 (2009-11-07)</h2>
+
+<ul>
+<li>Added: Instant subscriptions.</li>
+<li>Added: Content Security Policy support.</li>
+<li>Added: topUserLink include plugin subtype.</li>
+<li>Added: LDAP login authentication plugin example.</li>
+<li>Added: Non-header-parsing mailx mailer support.</li>
+<li>Added: Enable multiple include plugins of the same subtype.</li>
+<li>Changed: Login authentication plugins can return error message.</li>
+<li>Changed: Always show advanced forum search options.</li>
+<li>Changed: Skip hidden boards in forum search.</li>
+<li>Changed: Fork cron emu and manual cronjobs to prevent timeouts.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Avoid multiple cron emu starts with transactional DBs.</li>
+<li>Fixed: Login page behavior if login auth plugin is used.</li>
+<li>Fixed: Archive table creation with PgSQL 8.0 to 8.2.</li>
+<li>Fixed: More issues caused by PgSQL 8.3's removed type conversions.</li>
+<li>Fixed: SQL error with board archiving. [Tobias Jaeggi]</li>
+<li>Fixed: SQL error with archiving and table prefixes. [Tobias Jaeggi]</li>
+<li>Fixed: Some group-not-found error messages.</li>
+<li>Fixed: XSS vulnerability in custom fields during registration.</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Fixed: Redirection from user name page.</li>
+<li>Fixed: Subject search results contained all topic-level posts.</li>
+</ul>
+
+<h2>2.19.2 (2009-09-13)</h2>
+
+<ul>
+<li>Added: Order user admin list by last online time.</li>
+<li>Added: MwfMainLocal.pm can override and add methods.</li>
+<li>Added: Hidden options for thumbnailing thresholds.</li>
+<li>Added: topicData, postHeader and userInfo include plugin subtypes.</li>
+<li>Added: Net::SMTP mailer support.</li>
+<li>Changed: Simplified avatar hint text, include max. upload size.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Re-added dbQuote(), required by old upgrade scripts.</li>
+<li>Removed: Post rating (custom implementations can use plugins).</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Fixed: Smileys and :tags: in attachment captions.</li>
+<li>Fixed: Subjects could be edited via any topic-level post. [Daði Jónsson]</li>
+</ul>
+
+<h2>2.19.1 (2009-08-16)</h2>
+
+<ul>
+<li>Added: Google maps on user info pages.</li>
+<li>Added: GeoLite City support on user info pages.</li>
+<li>Added: Image processing support for Imager, Graphics::Magick.</li>
+<li>Added: Moderated-user plugin example.</li>
+<li>Added: Pie charts for browser statistics.</li>
+<li>Added: Various hidden options.</li>
+<li>Changed: Make browser statistics public.</li>
+<li>Changed: Email notification subjects include name and topic.</li>
+<li>Changed: Increased quality of thumbnail JPEGs from 70 to 90.</li>
+<li>Changed: Display plugins can ask dbToDisplay() to do "safe" stuff only.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Multiple recipients when replying to a PM.</li>
+<li>Removed: Yahoo search.</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Added: Attachment captions can be edited.</li>
+<li>Changed: Topic replies are now actual topic-level posts.</li>
+<li>Changed: Various changes related to topic-level posts.</li>
+<li>Changed: Show caption instead of size in image gallery.</li>
+<li>Changed: Only show threading hint if user has &lt; 10 posts.</li>
+<li>Fixed: Topic reply status was lost after post age reminder.</li>
+</ul>
+
+<h2>2.19.0 (2009-07-09)</h2>
+
+<ul>
+<li>Added: Topic replies.</li>
+<li>Added: Attachment captions.</li>
+<li>Added: Separate user profile page.</li>
+<li>Added: Multipurpose user profile field with markup.</li>
+<li>Added: Active Time and Style Snippets views on user admin page.</li>
+<li>Added: Separate option for max. posts on forum overview page.</li>
+<li>Added: Wrapper div style option for styles like Rybka.</li>
+<li>Added: Hints for board subscriptions and user ignoring.</li>
+<li>Added: More detailed browser stats on forum info page.</li>
+<li>Added: HTML5 video element plugin example.</li>
+<li>Changed: Use CSS sprites instead of many small icons.</li>
+<li>Changed: Include stylesheet for style-independent rules.</li>
+<li>Changed: Moved board admin bar to board info page.</li>
+<li>Changed: Limited user admin bar to user info page.</li>
+<li>Changed: Package MwfConfigGlobal as MwfConfigGlobalDefault.</li>
+<li>Changed: Don't auto-tag URL after ] to allow plugin to use URL.</li>
+<li>Changed: Show hints, errors and exec messages in similar boxes.</li>
+<li>Changed: Replaced selection captcha with question/answer.</li>
+<li>Changed: Treat animated PNG like animated GIF avatars.</li>
+<li>Changed: Various small OpenPGP improvements.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Decode UTF-8 from GnuPG.</li>
+<li>Fixed: Embedding of videos when/where they shouldn't.</li>
+<li>Fixed: Group name linking on board info pages for forum admins.</li>
+<li>Fixed: Emphasize new edit time even if post is new.</li>
+<li>Fixed: Thumbnail filenames could collide. [Tobias Zwick]</li>
+<li>Fixed: Table prefix errors on user admin page. [Daði Jónsson]</li>
+<li>Fixed: Adding multiple group members via listbox. [Tobias Jaeggi]</li>
+<li>Fixed: Board position changing. [Tobias Jaeggi]</li>
+<li>Fixed: Default default style for early errors.</li>
+<li>Fixed: Forum purging didn't delete users.</li>
+<li>Removed: PGP backward compatibility option.</li>
+<li>Removed: OpenID icon next to usernames.</li>
+<li>Removed: <var>dataBaseUrl</var> option (prepend to <var>$cfg-&gt;{dataPath}</var> and <var>attachUrlPath</var>).</li>
+<li>Removed: <var>buttonIcons</var> option (<var>styleOptions</var> is enough).</li>
+</ul>
+
+<h2>2.18.0 (2009-05-23)</h2>
+
+<ul>
+<li>Added: Unicode collation support for SQLite.</li>
+<li>Changed: Replaced built-in Silk smileys with Fugue smileys.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: icon_openid.png was missing from downloads.</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Fixed: Report deleting.</li>
+</ul>
+
+<h2>2.17.3 (2009-05-15)</h2>
+
+<ul>
+<li>Added: Various aggregated views on user admin page.</li>
+<li>Added: Built-in video tag for YouTube and Vimeo.</li>
+<li>Added: Removal of admin/mod rights when banning.</li>
+<li>Added: Experimental support for Drizzle.</li>
+<li>Added: Support for citext type in install.pl for PgSQL 8.4.</li>
+<li>Changed: Reveal ignored posts with DHTML.</li>
+<li>Changed: Post reporting can be disabled.</li>
+<li>Changed: Allow banned users to remove notifications.</li>
+<li>Changed: Expired non-vital user data includes absent ignored users.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Searching in numeric user fields with PgSQL.</li>
+<li>Fixed: Forum overview incl. moderated boards with PgSQL.</li>
+<li>Fixed: On post attachments page, only link images to image page.</li>
+<li>Fixed: Post deleting didn't check topic/post locks.</li>
+<li>Fixed: Unrelated colons could prevent :tags: from working.</li>
+<li>Fixed: Honeypot captcha wouldn't catch anything. [Eazyjd]</li>
+<li>Removed: User ban list (merged into user admin page).</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Fixed: Replaced Default style in MwfDefaults.pm, too.</li>
+<li>Fixed: Blog topic migration.</li>
+</ul>
+
+<h2>2.17.2 (2009-04-07)</h2>
+
+<ul>
+<li>Added: Post and branch locking.</li>
+<li>Added: Topic creator = topic moderator board option.</li>
+<li>Added: Sending PMs to multiple recipients.</li>
+<li>Added: Adding/removing multiple group members at once.</li>
+<li>Added: Link from global forum_overview pages to topic level.</li>
+<li>Changed: Can search for posts by members of non-public groups.</li>
+<li>Changed: Users are allowed to rate their own posts.</li>
+<li>Changed: Use fallback if user's selected style is missing.</li>
+<li>Changed: Prevent editing topics/posts that user once had access to.</li>
+<li>Fixed: Unread Posts link on topic pages shows current unread posts.</li>
+<li>Fixed: Post rating link was shown in locked topics.</li>
+<li>Removed: Old Default style.</li>
+<li>Removed: Blogs.</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Added: Optional tag insert buttons for all custom styles.</li>
+<li>Changed: Custom styles moved to forum option and included inline.</li>
+<li>Changed: Use "!" as prefix for group names in username input fields.</li>
+<li>Fixed: Remove custom style tags from emails.</li>
+</ul>
+
+<h2>2.17.1 (2009-03-16)</h2>
+
+<ul>
+<li>Added: Group admins.</li>
+<li>Added: Open (joinable) groups.</li>
+<li>Added: Refresh button on forum_overview page.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Don't show SQL error for non-existent blog.</li>
+<li>Fixed: Change usernames of posts when users rename themselves.</li>
+<li>Removed: Direct board membership and moderatorship (use groups).</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Changed: Allow custom style tag names with any number of characters.</li>
+<li>Fixed: XSS vulnerability caused by the SQL placeholder changes.</li>
+<li>Fixed: Problems with uppercase style tags. [Daði Jónsson]</li>
+</ul>
+
+<h2>2.17.0 (2009-03-01)</h2>
+
+<ul>
+<li>Added: User badges.</li>
+<li>Added: Custom style tag.</li>
+<li>Added: User account comment field for admins.</li>
+<li>Added: Admins can edit users' ignore and watch lists.</li>
+<li>Added: Show ban status to admins on user info pages.</li>
+<li>Added: Show list of other users' updates on blog page.</li>
+<li>Added: Forum search for posts by group members (!groupname).</li>
+<li>Added: Show warning before replying to posts older than x days.</li>
+<li>Added: Hidden forum options for various hardcoded numbers (see FAQ.html).</li>
+<li>Added: Documentation for various hidden forum options.</li>
+<li>Added: Separate page for admin user options.</li>
+<li>Added: Include plugin subtype early.</li>
+<li>Changed: Plugins can stop requests.</li>
+<li>Changed: Use SQL placeholders everywhere.</li>
+<li>Changed: Tentatively require DBI 1.30 and DBD::mysql 2.9002.</li>
+<li>Changed: <var>locked</var> forum option is now text displayed when in lockdown.</li>
+<li>Changed: Don't linkify usernames of posts when user doesn't exist anymore.</li>
+<li>Changed: Only show Mark Old/Read and New/Unread buttons when usable.</li>
+<li>Changed: Reorder some buttons to have them appear in fixed places.</li>
+<li>Changed: Add session id to internal links in posts when displaying.</li>
+<li>Changed: Remove session id from internal links when posting.</li>
+<li>Changed: Don't show error if session id isn't valid.</li>
+<li>Changed: Copy user info page admin links to user options page.</li>
+<li>Changed: Admins can set users' email addresses to empty.</li>
+<li>Changed: Don't redirect to login page after registration.</li>
+<li>Changed: Skip origin redirection after errors.</li>
+<li>Changed: Allow ) in manual [url] tags.</li>
+<li>Changed: Always set MySQL sql_mode.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Unregistered usernames in reply notifications emails. [Tobias Jaeggi]</li>
+<li>Fixed: Ratings of deleted branches didn't get deleted.</li>
+<li>Fixed: Pagination bug with 9 pages.</li>
+<li>Fixed: Don't allow PMs addressed to nobody. [Daði Jónsson]</li>
+<li>Fixed: PgSQL &lt; 8.3 and SQLite can't use UPDATE x AS. [Michael Stevens]</li>
+<li>Fixed: PgSQL 8.3 won't auto-convert types anymore in some cases.</li>
+<li>Fixed: PgSQL syntax fix when deleting all private messages.</li>
+<li>Fixed: Subscriptions cronjob was missing multi-forum code.</li>
+<li>Fixed: OpenID registrants got rename notification despite nickname.</li>
+<li>Fixed: Some in-post messages didn't use the default language. [Daði Jónsson]</li>
+<li>Fixed: Posts in locked topics can't be deleted anymore. [Tobias Jaeggi]</li>
+<li>Fixed: Removing topic tags. [Andrea Bianchi]</li>
+<li>Fixed: Name link on user option pages was shown to admins.</li>
+<li>Fixed: Don't try to upgrade arc_boards table with SQLite.</li>
+<li>Fixed: Mention upgrading of language modules to UTF-8.</li>
+<li>Fixed: Missing user renaming execution message.</li>
+<li>Removed: ID Selector support.</li>
+</ul>
+
+<h2>2.16.0 (2008-10-26)</h2>
+
+<ul>
+<li>Added: Private message export.</li>
+<li>Added: Board splitting (topic mass-moving).</li>
+<li>Added: Users can rename themselves a limited number of times.</li>
+<li>Added: Track former usernames and display them on user info page.</li>
+<li>Added: Send notifications to users who don't observe thread structure.</li>
+<li>Changed: Don't enforce forum lockdown during login.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Check if submitted topic tags exist.</li>
+<li>Removed: Anonymous posts by registered users.</li>
+</ul>
+
+<h2>2.15.1 (2008-08-29)</h2>
+
+<ul>
+<li>Added: Mass-setting of user values.</li>
+<li>Added: Optionally allow unregistered guests to specify username.</li>
+<li>Added: Reminder that the report form isn't a reply form.</li>
+<li>Added: CSS classes for topics on board page with new/unr posts.</li>
+<li>Added: ID Selector support.</li>
+<li>Changed: Enable Default2 style by default.</li>
+<li>Changed: Create polls with textarea for quick pasting of prepared polls.</li>
+<li>Changed: Extended max. poll option length to 60 characters.</li>
+<li>Changed: Send notifications for unapproved posts after approval.</li>
+<li>Changed: Crosslinks to promoted topics use pid to survive later topic merge.</li>
+<li>Changed: util_replace.pl only loads one post at once, not whole table twice.</li>
+<li>Changed: Interpret input that isn't valid UTF-8 as Latin1.</li>
+<li>Changed: Do Unicode normalization under mod_perl only, for performance reasons.</li>
+<li>Changed: Replaced Perl constants with vars to avoid mod_perl reload log spam.</li>
+<li>Changed: Updated YouTube example with fullscreen parameters.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Crosslink posts pointing to themselves as next new/unread.</li>
+<li>Fixed: Case-insensitive search with util_replace.pl.</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Added: Board archiving UI.</li>
+<li>Added: Include plugin interface for tag buttons.</li>
+<li>Changed: Create archive tables automatically.</li>
+<li>Fixed: Board moderator list showing "ARRAY". [Daði Jónsson]</li>
+<li>Fixed: Button link include plugin parameter issues.</li>
+</ul>
+
+<h2>2.15.0 (2008-06-28)</h2>
+
+<ul>
+<li>Added: Archiving.</li>
+<li>Added: Board merging.</li>
+<li>Added: Basic HTML export.</li>
+<li>Added: Yahoo site search.</li>
+<li>Added: Akismet spam checking.</li>
+<li>Added: Linkifying embedded images.</li>
+<li>Added: More include plugin interfaces.</li>
+<li>Changed: Require MySQL 4.1, Perl 5.8.1.</li>
+<li>Changed: Always use Unicode/UTF-8 encoding.</li>
+<li>Changed: Attachments can use characters available in filesystem encoding.</li>
+<li>Changed: Allow branch promote/move in non-threaded boards.</li>
+<li>Changed: Accept uppercase [tags].</li>
+<li>Changed: Use SQL subqueries where it's faster or saves memory.</li>
+<li>Changed: Only cache user status where it can help performance.</li>
+<li>Changed: Don't send forgot-password emails to freshly registered users.</li>
+<li>Changed: Don't send forgot-password emails more than once in half an hour.</li>
+<li>Changed: Admin user search for various identity fields includes IP.</li>
+<li>Changed: Attachment list includes files from boards with limited upload.</li>
+<li>Changed: Don't pretend stuff doesn't exist if access is denied.</li>
+<li>Changed: Unified misc. access error messages.</li>
+<li>Changed: Don't list crosslink posts in feeds.</li>
+<li>Changed: Include robots-noindex in all error pages.</li>
+<li>Changed: Don't limit empty forum search to 30 days.</li>
+<li>Changed: Post rating doesn't require board write access anymore.</li>
+<li>Fixed: User admin page doesn't show Gravatars.</li>
+<li>Fixed: SQL injection vulnerability. [ash]</li>
+<li>Fixed: List crosslink posts in overview, so they get marked read. [Matthias Althaus]</li>
+<li>Fixed: Feed generation with PgSQL. [Michael Stevens]</li>
+<li>Fixed: Next-topic-page link when SEO rewriting is enabled.</li>
+<li>Fixed: Only generate blog feeds if blogs are public.</li>
+<li>Fixed: Google search keyword highlighting.</li>
+<li>Removed: noCacheHeaders forum option.</li>
+</ul>
+
+<h2>2.14.0 (2008-04-08)</h2>
+
+<ul>
+<li>Fixed: Untranslated German blog expiration note. [Matthias Althaus]</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Changed: Google site search only searches forum, not whole domain.</li>
+<li>Changed: Don't scroll to first new/unread post when showing poll results.</li>
+<li>Fixed: Blog page works with only topic id specified.</li>
+<li>Fixed: Error with watch words/users during topic adding.</li>
+<li>Fixed: Removing watch words with escaped characters. [Matthias Althaus]</li>
+</ul>
+
+<h2>2.13.3 (2008-03-27)</h2>
+
+<ul>
+<li>Added: URL rewriting for search engine optimization purposes.</li>
+<li>Added: Forum search max. age limit for performance reasons.</li>
+<li>Added: Forum search can be limited to registered users.</li>
+<li>Added: Last cronjob execution/duration on forum info page.</li>
+<li>Changed: Merged subscription, variable, birthday, ignore/watch expiration.</li>
+<li>Changed: Shell scripts take multi-forum id via -f param, not as first arg.</li>
+<li>Changed: More utility shell scripts print usage instructions.</li>
+<li>Changed: Moved performance forum options to other sections.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Removed: skipNew/UnreadComp forum options.</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Added: Scroll to posts with JS for new/unread posts, too.</li>
+<li>Changed: OpenID SREG 1.1 namespace for OpenID 2.0 compatibility.</li>
+<li>Changed: Remove fragment IDs from OpenID URLs.</li>
+<li>Changed: Only show visible boards on public group info page.</li>
+<li>Changed: One more board page optimization.</li>
+<li>Fixed: OpenID escaping issue affecting origin redirection.</li>
+<li>Fixed: Image attachment embedding tags. [Daði Jónsson]</li>
+</ul>
+
+<h2>2.13.2 (2008-03-07)</h2>
+
+<ul>
+<li>Added: Watch users.</li>
+<li>Added: Watch words.</li>
+<li>Added: Google site search.</li>
+<li>Added: Groups can be public.</li>
+<li>Added: Deleting all attachments of one post.</li>
+<li>Added: Searching for nothing again lists latest posts.</li>
+<li>Added: Server timezone with automatic DST also returns.</li>
+<li>Added: Scroll to posts with JS, works with embedded images.</li>
+<li>Added: CSS rule to limit external embedded images to post width.</li>
+<li>Added: Case-insensitive search with SQLite in UTF-8 mode.</li>
+<li>Added: More admin statistics on forum info page.</li>
+<li>Added: util_fill.pl and util_migratedb.pl scripts.</li>
+<li>Added: Show EXPLAIN output with SQL queries in debug mode.</li>
+<li>Added: IP recording can be disabled.</li>
+<li>Added: Quoting help entry.</li>
+<li>Changed: Limit number of notifications for one user to 200.</li>
+<li>Changed: Use request-wide transactions instead of manual ones.</li>
+<li>Changed: Work around Perl bug with s/// on tied hashes for PgSQL.</li>
+<li>Changed: Use basic hash wrapper for PgSQL instead of Hash::Case.</li>
+<li>Changed: Search, forum page and various other optimizations.</li>
+<li>Changed: Revised upgrade instructions.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: DROP INDEX syntax for PgSQL and SQLite.</li>
+<li>Fixed: Missing attachment error messages.</li>
+<li>Removed: Configurable email regexp.</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Changed: Average post ratings get recalculated in main cronjob.</li>
+<li>Fixed: Board page optimization in 2.13.0 was odd, is faster now.</li>
+</ul>
+
+<h2>2.13.1 (2007-12-20)</h2>
+
+<ul>
+<li>Added: Post rating.</li>
+<li>Added: Gravatar support.</li>
+<li>Added: Show attachments in search result and forum_overview pages.</li>
+<li>Added: Forum option to hide user info pages from unregistered visitors.</li>
+<li>Added: Video embedding message display plugin example.</li>
+<li>Changed: "Hide online status" is now a general privacy option.</li>
+<li>Changed: Show tag alt/title text in topic tags list.</li>
+<li>Changed: If OpenPGP signing/encryption fails, don't send email.</li>
+<li>Changed: Cookies use httpOnly flag.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Changed: Delete poll votes when deleting user.</li>
+<li>Fixed: Repeated user title HTML-escaping on user options page (mod_perl).</li>
+<li>Fixed: Untranslated password fields on user registration page. [Matthias Althaus]</li>
+<li>Fixed: Page button link style in default.css. [Matthias Althaus]</li>
+<li>Fixed: Delete group member entries and reports when deleting users.</li>
+<li>Fixed: Remember-me checkbox didn't use configured default. [Constantin Pan]</li>
+<li>Fixed: Handle missing language file gracefully on forum info page. [Constantin Pan]</li>
+<li>Fixed: Category collapsing persistence if cookie domain or path is set. [John Cooper]</li>
+<li>Fixed: Deleting user with gallery avatar also deleted file. [Daði Jónsson]</li>
+<li>Fixed: Attachments upgrade in 2.9.2 should have failed for transactional databases.</li>
+<li>Removed: Post todo list, doesn't add anything that bookmarks can't do.</li>
+<li>Removed: Mark old manually user option.</li>
+<li>Removed: Configurable signature boundaries.</li>
+<li>Removed: Most parameters for authz plugins.</li>
+<li>Removed: IP blocking.</li>
+</ul>
+
+<h2>2.13.0 (2007-11-01)</h2>
+
+<ul>
+<li>Added: OpenID support.</li>
+<li>Added: Image attachment embedding tags.</li>
+<li>Added: Invisible Field and reCAPTCHA.net captchas.</li>
+<li>Added: Configurable attachment file extension exclusion.</li>
+<li>Added: Delete notifications when their links are followed.</li>
+<li>Added: Searching through multiple fields at once on user admin page.</li>
+<li>Added: Configurable permissions for mwForum-created files/dirs.</li>
+<li>Added: Image page that makes "Content-Disposition: attachment" more convenient.</li>
+<li>Changed: Allow replying to crosslink base posts.</li>
+<li>Changed: Separate error for usernames containing reserved string.</li>
+<li>Changed: Board page statistics query optimization gains 20% performance.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Changed: Removed dependency on buggy Image::Info from thumbnail code.</li>
+<li>Changed: Safeguard against Image::Info bug in avatar code.</li>
+<li>Fixed: Harmless HTML syntax errors.</li>
+<li>Fixed: Wrongly regexp-escaped search highlight parameters.</li>
+</ul>
+
+<h2>2.12.0 (2007-07-26)</h2>
+
+<ul>
+<li>Fixed: Harmless HTML syntax errors.</li>
+<li>Fixed: robots-noindex logic was inverted.</li>
+</ul>
+
+<h2>2.11.2 (2007-07-10)</h2>
+
+<ul>
+<li>Changed: License switch from GPLv2 or later to GPLv3 or later.</li>
+<li>Changed: Don't set post edit time if only topic subject changed.</li>
+<li>Changed: Always print robots-noindex for all pages but forum/board/blog/topic_show.</li>
+<li>Changed: Workaround for UTF-8 compatibility breakage in DBD::mysql.</li>
+<li>Changed: If using UTF-8 mode, Perl 5.8.1 is required because of above workaround.</li>
+<li>Fixed: Deleting posts with replies didn't delete attachments etc. [Daði Jónsson]</li>
+<li>Fixed: Private messages could be sent even if feature was disabled.</li>
+</ul>
+
+<h2>2.11.1 (2007-06-07)</h2>
+
+<ul>
+<li>Added: Registration without email.</li>
+<li>Added: Notification message form for admins.</li>
+<li>Added: Microsummary support for Firefox Live Titles.</li>
+<li>Added: Optionally show post bodies in search results by default.</li>
+<li>Changed: Use main language for [deleted] messages.</li>
+<li>Changed: Sendmail options in <var>$cfg->{sendmail}</var> instead of hardcoded.</li>
+<li>Changed: Moved captcha code to separate module for customization purposes.</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Changed: Bottom page bar in topic page returns.</li>
+<li>Fixed: Warning spam in error log.</li>
+<li>Fixed: Avatar resizing bugs. [Daði Jónsson]</li>
+<li>Fixed: A few orphaned tags in forum_info. [Daði Jónsson]</li>
+<li>Fixed: Wrong page link to last page in blogs. [Петр Кузнецов]</li>
+<li>Fixed: Style of board descriptions of inaccessible boards.</li>
+</ul>
+
+<h2>2.11.0 (2007-03-10)</h2>
+
+<ul>
+<li>Added: Button icons.</li>
+<li>Added: Per-style options.</li>
+<li>Added: Default2 style with new icons.</li>
+<li>Added: Board option to list board on forum page even if user has no access.</li>
+<li>Added: Pseudo-captchas for those lacking the image captcha Perl modules.</li>
+<li>Added: Forum option list can be toggled between simplified and advanced mode.</li>
+<li>Added: Option to always show advanced forum search inputs.</li>
+<li>Added: Set focus on text fields in some often used forms.</li>
+<li>Added: Don't-reply warning in subscription emails.</li>
+<li>Added: Login ticket link in registration emails.</li>
+<li>Changed: Combined board title and description cells.</li>
+<li>Changed: Remember-me login option instead of user option.</li>
+<li>Changed: User lists' search feature scans selectable field, not username.</li>
+<li>Changed: Flag size to 16x11 for flags from same author as other new icons.</li>
+<li>Changed: Better Image::Magick support for avatar resizing.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Changed: Faster query for new blog posts.</li>
+<li>Changed: Workaround for SQLite 3.3.5 random() compatibility breakage.</li>
+<li>Changed: Workaround for Perl 5.8.0 bug with "@timestamp".</li>
+<li>Changed: Allow board mod/member adding even if user already has status via group.</li>
+<li>Changed: Hide empty custom user fields on user info page like the rest.</li>
+<li>Fixed: Image::Info was required even if only gallery avatars were used.</li>
+<li>Fixed: RSS 2.0 feed post bodies weren't dbToDisplay()-filtered.</li>
+<li>Fixed: Remove control characters from input.</li>
+<li>Fixed: Board prev/next skipped boards only visible to registered users.</li>
+<li>Fixed: New attachment IDs weren't getting passed to event plugins.</li>
+<li>Fixed: Gallery avatars getting deleted after upload.</li>
+<li>Fixed: Missing captcha on topic add page. [eoe]</li>
+<li>Fixed: Untranslated user_topics.pl.</li>
+<li>Fixed: Problems with various checkbox lists and PgSQL. [Isaac Mushinsky]</li>
+<li>Removed: user_search.pl.</li>
+</ul>
+
+<h2>2.10.0 (2006-08-05)</h2>
+
+<ul>
+<li>Changed: Admins can see all online users on forum page.</li>
+<li>Changed: All icons use PNG format now, styles need updating.</li>
+</ul>
+
+<h2>2.9.2 (2006-07-29)</h2>
+
+<ul>
+<li>Added: Multiple attachments per post.</li>
+<li>Added: Spam/troll account/post purging.</li>
+<li>Added: Automatic reformatting of avatar images.</li>
+<li>Changed: Use [[x]]-style placeholders for all language strings.</li>
+<li>Fixed: User search criteria.</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Added: Captcha support for private messages.</li>
+<li>Changed: Use much longer timeouts for post and message captchas.</li>
+<li>Fixed: More problems with invalid/missing images and thumbnails.</li>
+</ul>
+
+<h2>2.9.1 (2006-07-08)</h2>
+
+<ul>
+<li>Changed: Detached post delete function from post edit page.</li>
+<li>Changed: Remove quotes from text before auto-quoting.</li>
+<li>Changed: Hide empty user profile fields on user info page.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Search SQL error if no boards are visible. [mevvis]</li>
+</ul>
+
+<h3>Changes only of interest to development release users:</h3>
+<ul>
+<li>Added: Notifications of merged topics.</li>
+<li>Added: Captcha support for unregistered and all posts.</li>
+<li>Changed: Crosslink posts are optional.</li>
+<li>Fixed: Crosslink posts didn't use main language.</li>
+<li>Fixed: 2.9.0 upgrade script errors. [Daði Jónsson]</li>
+<li>Fixed: Image gallery pagination. [Daði Jónsson]</li>
+<li>Fixed: Problems with invalid/missing images and thumbnails.</li>
+</ul>
+
+
+<h2>2.9.0 (2006-05-20)</h2>
+
+<ul>
+<li>Added: Image gallery.</li>
+<li>Added: Captcha images.</li>
+<li>Added: FastCGI support.</li>
+<li>Added: Topic subscriptions.</li>
+<li>Added: Notification message system.</li>
+<li>Added: Crosslink posts for promoted topic branches.</li>
+<li>Added: Attachment uploading can be limited to admins/mods.</li>
+<li>Added: Embedded attached images can be displayed as thumbnails.</li>
+<li>Added: Optional data base URL for load balancing and attachment security.</li>
+<li>Added: Warning message for admins if forum is currently locked.</li>
+<li>Added: Optional redirection with relative Location headers.</li>
+<li>Added: Signatures on user info pages.</li>
+<li>Changed: Board page performance optimizations for thousands of topics.</li>
+<li>Changed: Remove default MySQL stopwords from indexed search query.</li>
+<li>Changed: Renamed <var>brdSubsExpirat</var> to <var>subsExpiration</var>, affects topics, too.</li>
+<li>Changed: Don't jump to topic page with first new/unread post for guests.</li>
+<li>Fixed: Show decorations option wasn't set for new users. [Daði Jónsson]</li>
+<li>Fixed: Check board visibility for topic move and branch promote actions.</li>
+<li>Fixed: Attachment and user list nav up button.</li>
+<li>Fixed: Delete topics completely when deleting them by deleting the first post.</li>
+</ul>
+
+<h2>2.8.0 (2006-02-26)</h2>
+
+<ul>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: PgSQL upgrading.</li>
+<li>Removed: Old upgrade files, now come in a separate download.</li>
+</ul>
+
+<h2>2.7.3 (2006-02-19)</h2>
+
+<ul>
+<li>Added: Subdirectories for style-dependent files.</li>
+<li>Added: Skipping of GeoIP flags for a selectable country.</li>
+<li>Changed: Simplified adv. search mode, now called indexed search mode.</li>
+<li>Changed: Moving topics doesn't require dest. board mod status anymore.</li>
+<li>Changed: Always limit passwords to ASCII, but allow special chars.</li>
+<li>Changed: Allow tagging of locked topics.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Set version variable for new installations.</li>
+<li>Fixed: Missing topic tag message. [Matthias Althaus]</li>
+<li>Fixed: Two more missing table prefixes. [Daði Jónsson]</li>
+<li>Fixed: Manual username input for user migration. [Daði Jónsson]</li>
+<li>Fixed: Fill custom fields on user reg. page with previous values. [Глеб Стальной]</li>
+<li>Fixed: Only show email notification checkbox to users who can use it.</li>
+<li>Fixed: SQL error when trying to send notifications to deleted users.</li>
+</ul>
+
+<h2>2.7.2 (2006-02-01)</h2>
+
+<ul>
+<li>Added: Topic tags.</li>
+<li>Added: Blog feeds.</li>
+<li>Added: Predefined user titles.</li>
+<li>Added: Optionally show full posts on forum search page.</li>
+<li>Added: Show decorations user option (titles, ranks, smileys, topic tags).</li>
+<li>Added: Category and board position selection by listbox.</li>
+<li>Added: Warning about wrong charsets on forum info page.</li>
+<li>Added: Log login attempts with invalid passwords.</li>
+<li>Added: Ranks on user list page with post number column.</li>
+<li>Added: Missing user fields on user admin page.</li>
+<li>Changed: Replaced Atom 0.3 feeds with Atom 1.0 feeds.</li>
+<li>Changed: Moved all feed links to global feed page.</li>
+<li>Changed: Use new standard icon to link to feed page.</li>
+<li>Changed: Don't enforce edit time limit on board members.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Apostrophe wasn't escaped in URL parameters. [Daði Jónsson]</li>
+<li>Fixed: HTML user titles/ranks.</li>
+</ul>
+
+<h2>2.7.1 (2005-12-22)</h2>
+
+<ul>
+<li>Added: User ranks based on post count.</li>
+<li>Added: Move topic branches across topics.</li>
+<li>Added: Move topic branches and merge topics across boards.</li>
+<li>Added: Show report link for moderators on forum page again.</li>
+<li>Changed: Automatically HTML-escape policy text.</li>
+<li>Changed: Require destination board mod status for various mod actions.</li>
+<li>Changed: Only auto-approve posts by members in public boards.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Changed: Don't scroll textbox on tag insertion in Mozilla browsers. [Daði Jónsson]</li>
+<li>Fixed: Topic merge vulnerability.</li>
+<li>Fixed: Various missing table prefixes. [Daði Jónsson]</li>
+<li>Fixed: Moderators couldn't access reports page. [Matthias Althaus]</li>
+<li>Fixed: Messages from ignored users didn't appear in sentbox.</li>
+<li>Fixed: Wrongly HTML-escaped forum search words in page links. [Daði Jónsson]</li>
+<li>Fixed: Attachment list page board selection wasn't persistent.</li>
+<li>Fixed: Prefilled username fields on message and ignore pages.</li>
+<li>Fixed: Advanced search syntax help was only displayed to admins.</li>
+</ul>
+
+<h2>2.7.0 (2005-11-25)</h2>
+
+<ul>
+<li>Added: PostgreSQL support.</li>
+<li>Added: Group members page.</li>
+<li>Added: Attachment list page.</li>
+<li>Added: Forum search pagination.</li>
+<li>Added: Forum search quote operators.</li>
+<li>Added: Forum search minimum age.</li>
+<li>Added: Forum search sorting.</li>
+<li>Added: Birthday expiration.</li>
+<li>Added: Message text display plugin interface.</li>
+<li>Added: Lists for user selection if less users than <var>maxListUsers</var>.</li>
+<li>Added: Move topic branches to parent posts other than first post.</li>
+<li>Added: Show HTTP headers in forum info under mod_perl for debugging.</li>
+<li>Added: Show expiration time below private message list.</li>
+<li>Changed: Search for substring in user lists, not prefix.</li>
+<li>Changed: Invalid sessions will only display note, not generate error.</li>
+<li>Changed: Use nameless timezones, don't use Date::Format anymore.</li>
+<li>Changed: Limit subscriptions to posts from last few days.</li>
+<li>Changed: Allow moderators access to board groups page.</li>
+<li>Changed: Also use X-Forwarded-Host as realHost for backend servers.</li>
+<li>Changed: CSS font tweaks for MSIE 5.x.</li>
+<li>Changed: Check board access before sending subscriptions and notifications.</li>
+<li>Fixed: Cronjob set all sourceAuth values to the same number (since 2.5.0).</li>
+<li>Fixed: Adding subscriptions for boards where user had group membership. [Peter Bauer]</li>
+<li>Fixed: SQL error reporting for dbDo(). [Peter Bauer]</li>
+<li>Fixed: Missing ban error message title.</li>
+<li>Fixed: Table name prefix bug in feeds cronjob. [Daði Jónsson]</li>
+<li>Fixed: HTML error if only birthdays are shown in forum stats. [Daði Jónsson]</li>
+<li>Fixed: Anchor id on hidden post bar.</li>
+<li>Fixed: HTML standard requires &lt;p&gt; inside &lt;blockquote&gt;.</li>
+<li>Fixed: Delete cookies via past expiration dates, not empty values.</li>
+<li>Fixed: Group info page visible to everybody. [Peter Wortmann]</li>
+<li>Fixed: Non-approved replies visible to everybody. [Ian Pitcher]</li>
+<li>Fixed: Reserved username checking during registration.</li>
+<li>Fixed: Icon on sent message page was shown from recipient's perspective.</li>
+<li>Fixed: Report list didn't check moderator group membership. [Günther Brammer]</li>
+<li>Removed: Report link for moderators on forum page.</li>
+<li>Removed: classic.css style.</li>
+<li>Removed: Relevance-sorted and attachment search modes.</li>
+</ul>
+
+<h2>2.6.0 (2005-06-13)</h2>
+
+<ul>
+<li>Changed: Misc. small changes.</li>
+<li>Changed: Censor words in subject, too.</li>
+<li>Fixed: Default user option <var>showImages</var> wasn't used.</li>
+<li>Fixed: User options in variables table weren't deleted with user.</li>
+<li>Fixed: Expanding all topic branches didn't set icon titles/alts. [Tobias Zwick]</li>
+<li>Removed: Email plugin interfaces, never used.</li>
+</ul>
+
+<h2>2.5.4 (2005-05-30)</h2>
+
+<ul>
+<li>Added: "(locked)" after subject of locked topics on topic and overview pages.</li>
+<li>Changed: Use single upgrade.pl file, starting with 2.3.2.</li>
+<li>Changed: Changed/removed some non-idempotent GET links.</li>
+<li>Changed: Local language modules compatible with Apache::Reload'ing.</li>
+<li>Changed: Custom user profile fields can contain 255 characters.</li>
+<li>Changed: Renamed homepage profile field to more generic "website".</li>
+<li>Changed: URLs in website field can be mixed with text and still get linkified.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Illegal birthyear default value, wasn't compatible with MySQL 5.0.</li>
+<li>Fixed: Upgrading from versions < 2.3.0. [Julian Zimmerle]</li>
+<li>Fixed: XSS vulnerability.</li>
+</ul>
+
+<h2>2.5.3 (2005-05-21)</h2>
+
+<ul>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: UTF-8 in configuration options.</li>
+<li>Fixed: Empty hash configuration options like <var>styleSnippets</var>. [Daði Jónsson]</li>
+</ul>
+
+<h2>2.5.2 (2005-05-20)</h2>
+
+<ul>
+<li>Added: Style snippets.</li>
+<li>Added: Threaded display of forum_overview. [Günther Brammer]</li>
+<li>Changed: Don't show embedded [img] on forum_overview page.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Birthday on user info page was sticky under mod_perl.</li>
+<li>Fixed: Don't print HTTP header from forked cron job.</li>
+<li>Fixed: Todo list showed same topic for every post in it.</li>
+<li>Fixed: Reply list showed board bars with no posts for self-replies.</li>
+<li>Fixed: HTML title on message list page. [Matthias Althaus]</li>
+<li>Removed: Feed discovery, only attracts crappy browser RSS clients.</li>
+</ul>
+
+<h2>2.5.1 (2005-04-25)</h2>
+
+<ul>
+<li>Added: Group permissions.</li>
+<li>Added: Login redirects to origin page.</li>
+<li>Added: Show embedded images user option.</li>
+<li>Added: Body HTML element gets the script name as CSS class.</li>
+<li>Added: Hiding of database error messages with <var>$cfg->{dbHideError}</var>.</li>
+<li>Changed: Split attachment upload from post edit page.</li>
+<li>Changed: Improved tag insertion cursor positioning.</li>
+<li>Changed: Revised redirection to origin pages.</li>
+<li>Changed: Merged page and admin bars.</li>
+<li>Changed: Use current apreq2 API.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Removed: Attachment plugin interface, use event.</li>
+</ul>
+
+<h2>2.5.0 (2005-03-30)</h2>
+
+<ul>
+<li>Added: Cookieless login sessions.</li>
+<li>Added: SQLite database support.</li>
+<li>Added: Table name prefix support.</li>
+<li>Added: Birthdays.</li>
+<li>Added: Show file attachment size.</li>
+<li>Added: Show user title and avatar on user info page.</li>
+<li>Added: Show long description on board page (option <var>boardPageDesc</var>).</li>
+<li>Added: Support for different script filename extensions.</li>
+<li>Added: New/online users lists can be displayed to everybody.</li>
+<li>Added: Preserve users with posts during expiration (option <var>noUserPostsExp</var>).</li>
+<li>Changed: Combined forum page user statistics in a single stats box.</li>
+<li>Changed: Only show new users registered in last 5 days in stats box.</li>
+<li>Changed: Enabled tag buttons for Opera, supported since 8.0 beta 2.</li>
+<li>Changed: Centralized topic delete code to avoid incomplete code elsewhere.</li>
+<li>Changed: Quotes can contain markup and are stored highlighted in database.</li>
+<li>Changed: Link board title on board page and topic subject on topic page.</li>
+<li>Changed: No more new install/upgrade.sql files, use scripts instead.</li>
+<li>Changed: Use new Apache2 namespace in mod_perl 2.0 after RC4.</li>
+<li>Changed: Split user board options from user options page.</li>
+<li>Changed: Delete blog topics when deleting blog owner.</li>
+<li>Changed: Don't show comment IPs to blog owners.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Flag DBI-quoted strings as utf8 again. [FtoR]</li>
+<li>Fixed: Two untranslated strings.</li>
+<li>Fixed: Unapproved posting.</li>
+<li>Removed: Member checkboxes in user admin list, never used, always buggy.</li>
+<li>Removed: Score moderation, never really finished or useful.</li>
+</ul>
+
+<h2>2.4.x</h2>
+
+<p>Stable branch skipped due to lack of beta testers.</p>
+
+<h2>2.3.5 (2005-02-16)</h2>
+
+<ul>
+<li>Added: Blogs.</li>
+<li>Added: Show number of users that ignore user on user info page to admin.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Changed: Merged <var>quoteThreaded</var> option into <var>quote</var> option, <var>chatRegReq</var> into <var>chat</var>.</li>
+<li>Fixed: Image tag was always enabled if markup was enabled. [FtoR]</li>
+<li>Fixed: Banned users couldn't see topics even when they should.</li>
+<li>Fixed: Admin changing other user's password.</li>
+</ul>
+
+<h2>2.3.4 (2005-01-30)</h2>
+
+<ul>
+<li>Added: GeoIP support, shows user's country name and flag.</li>
+<li>Added: Optional full signatures with markup and no size limit (option <var>fullSigs</var>).</li>
+<li>Added: URL auto tags are back with safer detection.</li>
+<li>Changed: Restructured some forum option sections.</li>
+<li>Changed: Include board title in board feed titles.</li>
+<li>Changed: Allow 2-character usernames.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Uploaded avatars don't work in UTF-8 mode under CGI. [biolearner]</li>
+<li>Fixed: Minimum registration time broke unregistered posting. [drups]</li>
+<li>Fixed: Don't show poll form if board isn't writable for user.</li>
+<li>Removed: Per-post signatures.</li>
+</ul>
+
+<h2>2.3.3 (2005-01-15)</h2>
+
+<ul>
+<li>Added: Wait time between registration and first post (option <var>minRegTime</var>).</li>
+<li>Added: User IP resolver script.</li>
+<li>Changed: Normalize space around quotes.</li>
+<li>Changed: Don't update user's timestamps if user just triggered cron emu.</li>
+<li>Fixed: Persistent variables weren't saved unless already existent. [Lucas Saud]</li>
+<li>Fixed: GPG fields missing from install-tables.sql.</li>
+<li>Removed: Subject regexp forum option.</li>
+<li>Removed: URL auto tags, back in 2.3.4.</li>
+</ul>
+
+<h2>2.3.2 (2004-12-31)</h2>
+
+<ul>
+<li>Added: Attachments can be enabled per board.</li>
+<li>Changed: Optimized forum page performance if many boards are used.</li>
+<li>Changed: Optimized private message storage, only one copy per message.</li>
+<li>Changed: Use &lt;blockquote&gt; for quote highlighting.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Manual and emulated cronjob launching. [Andrea Bianchi]</li>
+<li>Fixed: Wrong user info link on sent message page.</li>
+<li>Fixed: Text::Flowed loading for quoting in non-threaded boards.</li>
+<li>Fixed: URL auto-tags could generate invalid HTML for nested URLs.</li>
+</ul>
+
+<h2>2.3.1 (2004-12-01)</h2>
+
+<ul>
+<li>Added: Post preview.</li>
+<li>Added: :Tag: buttons.</li>
+<li>Added: Auto-closing of polls x days after topic creation (option <var>pollLockTime</var>).</li>
+<li>Added: Upgrade scripts and some utils can be executed over CGI.</li>
+<li>Added: Enforce that upgrade scripts can only be run once.</li>
+<li>Added: Show all SQL queries in debug mode.</li>
+<li>Changed: Optimized performance if many private boards are used.</li>
+<li>Changed: [Tag] and :tag: buttons are optional (option <var>tagButtons</var>).</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Initial admin password wasn't set to "admin". [Vincent Rivellino]</li>
+<li>Fixed: Reverted MwfCGI back to old implementation. [Ian Pitcher]</li>
+<li>Fixed: viewBoard authz plugin wasn't getting board parameter.</li>
+<li>Fixed: Board jumplist obeys viewBoard authz plugins.</li>
+<li>Fixed: Don't show hidden custom user fields in public user list.</li>
+<li>Fixed: Incomplete renaming of "forumId" to "cookiePrefix" and "options" to "variables".</li>
+<li>Fixed: Missing <var>enableSecLogin</var> forum option.</li>
+</ul>
+
+<h2>2.3.0 (2004-11-06)</h2>
+
+<ul>
+<li>Added: URL tags.</li>
+<li>Added: [Tag] buttons.</li>
+<li>Added: Sent-box for private messages.</li>
+<li>Added: Optional error/warning log file.</li>
+<li>Added: Authentication plugin interfaces.</li>
+<li>Added: Separate form for password change.</li>
+<li>Added: GnuPG signing/encryption for emails.</li>
+<li>Added: Button to delete all read private messages.</li>
+<li>Added: Temporarily lock the whole forum (option <var>locked</var>).</li>
+<li>Added: Ticket links instead of forgotten password by email.</li>
+<li>Added: Ticket links instead of new password when email is changed.</li>
+<li>Added: Some warnings shown on page bottom for log ignorers.</li>
+<li>Added: util_cleancfg.pl deletes unneeded options from database.</li>
+<li>Added: Show full %INC and Apache environment on forum info page.</li>
+<li>Added: Unicode NFC normalization for all text input in UTF-8 mode.</li>
+<li>Added: Use quoted-printable for emails sent through commandline mailers.</li>
+<li>Added: DB error messages with full SQL in addition to often useless MySQL messages.</li>
+<li>Added: Support for MySQL 4.1 tables in UTF-8 format.</li>
+<li>Added: util_lang2utf8.pl creates UTF-8 versions of language modules.</li>
+<li>Added: Hook for custom options in MwfDefaultsLocal.pm.</li>
+<li>Changed: Use salted MD5 hash of passwords in cookies and database.</li>
+<li>Changed: Use utf8 for DB data, language strings and output in UTF-8 mode.</li>
+<li>Changed: Renamed "Forum Admin" to "Admin" and "Board Admin" to "Moderator".</li>
+<li>Changed: Moved option <var>utf8</var> from forum_options.pl to MwfConfigGlobal.pm.</li>
+<li>Changed: Hide most admin info on forum info page unless Details button is used.</li>
+<li>Changed: Under mod_perl 2.0, "SetHandler perl-script" is again required.</li>
+<li>Changed: Only log email sending errors, don't show error page.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Changed: Stylesheets force vertical scrollbar.</li>
+<li>Changed: Reimplemented MwfCGI with CGI::Simple code.</li>
+<li>Changed: Moved search options to their own section.</li>
+<li>Changed: Shortened upgrade instructions, filenames.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Upgrade instructions, perform all DB upgrades first. [Sau Loon Tong]</li>
+<li>Fixed: Various UTF-8 issues.</li>
+<li>Fixed: Plugins couldn't return values.</li>
+<li>Fixed: Javascript post delete shortcut.</li>
+<li>Fixed: Email headers for bounce recognition.</li>
+<li>Fixed: Tag corrector catches more nasty nested tags, hopefully all.</li>
+<li>Fixed: Membership-setting on admin page would reset status of users on other pages.</li>
+<li>Fixed: Perl constant errors with Perl 5.8 under CGI. [Leo Grapendaal]</li>
+<li>Fixed: Search by user only allowed 15 chars for names. [Matthias Althaus]</li>
+<li>Fixed: Apache::Request 2.0 support under CGI.</li>
+<li>Fixed: Broken email sending. [Andrea Bianchi]</li>
+<li>Fixed: mod_perl button image on forum info page.</li>
+<li>Removed: Mark Read button on forum overview page.</li>
+<li>Removed: IE7 hack support.</li>
+<li>Removed: Built-in HTTP authentication, use request auth plugin instead.</li>
+<li>Removed: Option <var>linkNewWindow</var>, not compatible with URL tags.</li>
+<li>Removed: RSS 0.91 feeds.</li>
+</ul>
+
+<h2>2.2.0 (2004-08-08)</h2>
+
+<ul>
+<li>Added: Link on user options page for SendGPG plugin.</li>
+<li>Changed: Misc. small changes.</li>
+</ul>
+
+<h2>2.1.3 (2004-08-04)</h2>
+
+<ul>
+<li>Added: Apache::Request 2.0 support under CGI.</li>
+<li>Changed: Send/create email plugin interface parameters.</li>
+<li>Changed: First user (admin) doesn't get registration email at all.</li>
+<li>Changed: Use <var>MwfMain::MP</var> constants instead of <var>$m->{modperl}</var>.</li>
+<li>Changed: On errors occuring before language loading, default to English.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Warning spam from MwfEnglish.pm.</li>
+<li>Fixed: Upload disabled under mod_perl.</li>
+<li>Fixed: Escape system error messages.</li>
+<li>Fixed: Poll buttons were shown to guests on pages > 1.</li>
+<li>Fixed: Missing config table in install-tables.sql. [alexrait]</li>
+<li>Fixed: Fatal errors during init prevented fixing of options in forum_options. [alexrait]</li>
+<li>Removed: <var>$gcfg->{ignoreModPerl}</var>.</li>
+</ul>
+
+<h2>2.1.2 (2004-07-23)</h2>
+
+<ul>
+<li>Added: Public user list.</li>
+<li>Added: Public user list's prefix/hide features for admin user list.</li>
+<li>Added: Mark Old for forum_overview when showing new posts for whole forum.</li>
+<li>Added: Mark Read for forum_overview when showing unread posts for whole forum.</li>
+<li>Added: Proper Accept-Language parsing with I18N::AcceptLanguage if available.</li>
+<li>Changed: Default email address validation regexp allows "+" in usernames.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: HTML error, sorting error on user admin page.</li>
+</ul>
+
+<h2>2.1.1 (2004-07-05)</h2>
+
+<ul>
+<li>Added: HTTP authentication.</li>
+<li>Added: RSS 2.0 feeds.</li>
+<li>Added: Google search keyword highlighting.</li>
+<li>Added: Limiting of access to forum_options to specific admins.</li>
+<li>Added: forum_overview-based pages can be limited to boards and topics.</li>
+<li>Changed: Integrated Reply List and Todo List into forum_overview.</li>
+<li>Changed: Unread Posts page only marks displayed topics as read.</li>
+<li>Changed: Mark Read and Mark Old buttons on forum page.</li>
+<li>Changed: Use current Apache::Request 2.0 API for uploads.</li>
+<li>Changed: Board member's posts are always approved.</li>
+<li>Changed: Misc. small changes.</li>
+</ul>
+
+<h2>2.1.0 (2004-06-07)</h2>
+
+<ul>
+<li>Added: Form-based configuration.</li>
+<li>Added: XHTML 1.1 (application/xhtml+xml) support.</li>
+<li>Added: Site navigation link tags.</li>
+<li>Added: Atom 0.3 feeds.</li>
+<li>Added: Hide online status user option.</li>
+<li>Added: Link to message in message notification emails.</li>
+<li>Added: Highlight post edit time if edited since last session.</li>
+<li>Added: Show note and exit on cronEmu-triggering requests.</li>
+<li>Added: Show <var>%ENV</var> on forum info page again.</li>
+<li>Added: Support for Dean Edwards' IE7 hack.</li>
+<li>Added: More .htaccess examples.</li>
+<li>Changed: Improved post abbreviations for RSS and tooltips.</li>
+<li>Changed: Clip message subject to max length after adding "Re:".</li>
+<li>Changed: Reveal hidden posts in unread overview links to topic.</li>
+<li>Changed: Show multiple reasons on hidden posts bar.</li>
+<li>Changed: Name of cgi directory in distribution is now "script".</li>
+<li>Changed: Only save post edit time if it has been 2min since posting.</li>
+<li>Changed: Prev/next topic redirects to board at the end of the sequence.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Changed: Avoid recursion with error printing.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Changed: Workaround for MSIE problems with avatars.</li>
+<li>Fixed: Allow avatar uploads when attachments are disabled.</li>
+<li>Fixed: CSS class for tag-embedded images. [Guenther Brammer]</li>
+<li>Fixed: Missing newline before auth header with sendmail.</li>
+<li>Fixed: Unescaped quote XSS vulnerability.</li>
+<li>Removed: HTTP hostname blocking.</li>
+<li>Removed: Referrer check.</li>
+<li>Removed: Statistics plugin interface.</li>
+<li>Removed: Filter plugin interface.</li>
+</ul>
+
+<h2>2.0.0 (2004-04-05)</h2>
+
+<ul>
+<li>Added: Separate RSS feeds for boards.</li>
+<li>Added: Hidden-post bars for ignored posts on forum overview page.</li>
+<li>Changed: Documentation is in HTML.</li>
+<li>Changed: Moved RSS files to xml subdirectory.</li>
+<li>Changed: Only use #fp for logged-in users.</li>
+<li>Changed: Misc. small changes.</li>
+</ul>
+
+<h2>1.99.2 (2004-03-25)</h2>
+
+<ul>
+<li>Added: Show board subscriptions in user/board info pages.</li>
+<li>Added: Optionally show newest and online users on forum page.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Board jumplist hidden when copyright message hidden. [Matthias Althaus]</li>
+<li>Fixed: Top bar didn't display configured forum name. [Matthias Althaus]</li>
+<li>Fixed: Topic merge form redirects to topic move script.</li>
+<li>Fixed: Policy title not shown.</li>
+</ul>
+
+<h2>1.99.1 (2004-03-23)</h2>
+
+<ul>
+<li>Added: CSS-based strict HTML.</li>
+<li>Added: RSS 0.91 feeds.</li>
+<li>Added: Avatar gallery.</li>
+<li>Added: Flood control, optional x seconds pause between posts.</li>
+<li>Added: Browser stats and a few other fields for admins on forum info page.</li>
+<li>Added: Icon for answered private messages.</li>
+<li>Added: Configuration upgrade script (experimental until tested).</li>
+<li>Added: util_posts_sed renamed util_replace, can s&amp;r in all fields.</li>
+<li>Changed: Report list shows full posts.</li>
+<li>Changed: Changed German from impersonal to formal.</li>
+<li>Changed: Optimized performance when looking for a topic's board page.</li>
+<li>Changed: post_misc and topic_move split up into separate pages.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: SQL error when resetting email flags while banning.</li>
+<li>Fixed: Jumping to a specific board page via tid=x with sticky topics present.</li>
+<li>Fixed: Chat display for unregistered users.</li>
+<li>Fixed: Bounce warning.</li>
+<li>Fixed: User agent field wasn't escaped.</li>
+<li>Removed: Long string breaking (not needed with new HTML).</li>
+<li>Removed: Forum statistics plugin.</li>
+</ul>
+
+<h2>1.19.0 (2004-02-15)</h2>
+
+<ul>
+<li>Added: Topic merging.</li>
+<li>Added: User ignoring.</li>
+<li>Added: Bounced email handling.</li>
+<li>Added: Post formatting for post reports.</li>
+<li>Added: Expiration of accounts that have never been used.</li>
+<li>Changed: A few chat page changes, mostly for performance.</li>
+<li>Changed: Split off cron_subscriptions from cron_jobs.</li>
+<li>Changed: Board admins can add polls to all topics.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Missing request auth for user_delete and board_member/remove.</li>
+<li>Fixed: Quote highlighting when edit timestamp is displayed. [Matthias Althaus]</li>
+<li>Fixed: postEditTime in 1.17.2 Upgrade.html must be showEditTime. [Vincent Rivellino]</li>
+<li>Fixed: Missing field posts.editTime in install-tables.sql. [Lucas Saud]</li>
+</ul>
+
+<h2>1.18.0 (2004-01-09)</h2>
+
+<ul>
+<li>Added: SMTP authentication.</li>
+</ul>
+
+<h2>1.17.2 (2004-01-03)</h2>
+
+<ul>
+<li>Added: Chat page.</li>
+<li>Added: Post edit timestamp.</li>
+<li>Added: Database query counter.</li>
+<li>Changed: Round page creation time.</li>
+<li>Changed: Round poll result percents instead of clipping them.</li>
+<li>Changed: Optimized boardVisible() and tag replacement.</li>
+<li>Changed: Added poll actions to the list of actions that don't cause read status.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Membership mode of user admin page.</li>
+<li>Fixed: Missing error string if admin renames user to existing name. [Philip Mak]</li>
+<li>Fixed: Syntax error in MwfConfig.pm. [Lucas Saud]</li>
+<li>Removed: Trolls (too many problems, unfortunately).</li>
+<li>Removed: <var>$cfg-&gt;{showNewButtons}</var>.</li>
+<li>Removed: <var>$cfg-&gt;{qcache}</var>.</li>
+</ul>
+
+<h2>1.17.1 (2003-12-02)</h2>
+
+<ul>
+<li>Added: Page creation timer.</li>
+<li>Added: Cronjob can close huge topics.</li>
+<li>Added: Cronjob can close polls of locked topics.</li>
+<li>Added: Optional "user wrote:" prefix for quotes.</li>
+<li>Added: Show notice on topic page if poll is closed.</li>
+<li>Added: Additional DBI DSN parameters can be specified.</li>
+<li>Added: Experimental DateTime support.</li>
+<li>Changed: Optimized retrieval of big topics.</li>
+<li>Changed: Additional attachment directory layer to circumvent 32000 dir limit.</li>
+<li>Changed: Jump to topic's first unread post if available, first new post otherwise.</li>
+<li>Changed: Hide some of the user options when they're not used.</li>
+<li>Changed: Moved poll close/delete buttons to poll box.</li>
+<li>Changed: Changed a few configuration defaults.</li>
+<li>Changed: Restructured MwfConfig.pm.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Various fixes/changes to poll buttons. [Matthias Althaus]</li>
+<li>Fixed: Don't skip first poll option when adding polls. [Matthias Althaus]</li>
+</ul>
+
+<h2>1.17.0 (2003-11-07)</h2>
+
+<ul>
+<li>Added: Avatar images.</li>
+<li>Added: Multiple-vote polls.</li>
+<li>Added: Include plugin interface for additional headers and HTML.</li>
+<li>Added: Replace :tags: in colons with configurable strings.</li>
+<li>Added: Time zone descriptions.</li>
+<li>Added: Experimental DBD::mysqlPP support.</li>
+<li>Changed: Board admins can lock and delete polls.</li>
+<li>Changed: Some forms use GET instead of POST.</li>
+<li>Changed: Don't put old password on user options page.</li>
+<li>Changed: Re-added <var>$cfg-&gt;{noCacheHeaders}</var>, use "Cache-Control: private" when off.</li>
+<li>Changed: Normalize multiple consecutive slashes in URL path for multi-forum support.</li>
+<li>Changed: Work around MySQL 4.x bug (?) causing unsorted MATCH relevance.</li>
+<li>Changed: Changed various column types to TINYINT.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: <var>$env-&gt;{realHost}</var> for CGI frontend/backend setups.</li>
+<li>Fixed: Load Time::Zone in user_options. [Lucas Saud]</li>
+<li>Fixed: Additional slash in user registration email link.</li>
+<li>Removed: <var>$cfg-&gt;{redirect303}</var> (always used for HTTP/1.1 now).</li>
+<li>Removed: Search result limit field.</li>
+</ul>
+
+<h2>1.16.0 (2003-09-23)</h2>
+
+<ul>
+<li>Changed: Use semicolons instead of invalid ampersands in URLs.</li>
+<li>Changed: Added reset of font sizes to previous upgrade.sql.</li>
+<li>Changed: Some more changes to message and report link buttons.</li>
+<li>Changed: Don't allow votes in locked topics.</li>
+<li>Changed: Changed default time format to ISO.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: SQL error while changing email address. [Matthias Althaus]</li>
+<li>Fixed: Main bar messages for adding/deleting private messages. [Matthias Althaus]</li>
+<li>Fixed: Only show quote button for messages when quoting is enabled.</li>
+<li>Fixed: Added missing 1.15.1 upgrade instructions.</li>
+<li>Fixed: forum-id parameter for util_posts_sed.</li>
+<li>Removed: Regexp search mode (unused and way too slow).</li>
+</ul>
+
+<h2>1.15.1 (2003-09-02)</h2>
+
+<ul>
+<li>Added: Private messages.</li>
+<li>Added: Optional deleting of sent private messages with user bans.</li>
+<li>Added: Optional resetting of email subscriptions/notifications with user bans.</li>
+<li>Changed: Reply notification default for own topics applies to all posts in topic.</li>
+<li>Changed: Stick/unstick isn't a toggle anymore but uses explicit parameter instead.</li>
+<li>Changed: Changed script names.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Reply notification default for new topic posts was ignored.</li>
+<li>Fixed: Language of email notifications was wrong in 1.15.0. [Philip Mak]</li>
+</ul>
+
+<h2>1.15.0 (2003-08-23)</h2>
+
+<ul>
+<li>Added: Polls.</li>
+<li>Added: Trolls.</li>
+<li>Added: Multi-forum support.</li>
+<li>Added: Topic links jump to first new post in the topic.</li>
+<li>Added: Prefix @ to names of board admins in topics of their boards.</li>
+<li>Added: Separate quote and reply buttons in unthreaded boards.</li>
+<li>Added: Optional trash bin board for deleted topics.</li>
+<li>Added: forum.pl?bid=x redirects to board.</li>
+<li>Added: Configurable cookie domain.</li>
+<li>Added: Supports <code>PerlSetupEnv Off</code>, <code>PerlSendHeader Off</code> (mp1).</li>
+<li>Added: Supports <code>PerlOptions -SetupEnv -ParseHeaders -GlobalRequest</code> (mp2).</li>
+<li>Added: Supports Apache::RegistryBB (mp1) resp. ModPerl::RegistryBB (mp2).</li>
+<li>Added: Supports "modperl" handler in addition to "perl-script" handler (mp2).</li>
+<li>Changed: Better preserve multiple consecutive spaces in posts.</li>
+<li>Changed: Use MwfMain as an object, no more globals, no more exported functions.</li>
+<li>Changed: Adapted plugin interfaces to MwfMain objects and unified interface style.</li>
+<li>Changed: Lock/unlock isn't a toggle anymore but uses explicit parameter instead.</li>
+<li>Changed: Changed method of determining if a user has left a topic for read calc.</li>
+<li>Changed: <var>$cfg-&gt;{maxPostsPP}</var> is also used for new/unread posts and replies pages.</li>
+<li>Changed: Moved forum statistics to their own plugin that isn't used by default.</li>
+<li>Changed: Forum statistics only show active users/topics from the last 14 days. </li>
+<li>Changed: Board admins get forum admin bar with global reports link, too.</li>
+<li>Changed: Use pixels instead of points for font size option.</li>
+<li>Changed: Use MySQL's MD5() instead of Digest::SHA1.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Changed: Renamed doc files.</li>
+<li>Changed: Requires MySQL 3.23.17.</li>
+<li>Changed: Requires Perl 5.6.0.</li>
+<li>Changed: Restored old behaviour of (x new) link on board page</li>
+<li>Fixed: Wrong parameter name for user_migrate. [SPr]</li>
+<li>Fixed: "x new" link on board_show wasn't shown without <var>$cfg{'linkShowNew'}</var>.</li>
+<li>Fixed: "Go up a level" for sticky topics.</li>
+<li>Fixed: JPEG user title images.</li>
+<li>Fixed: References to old _x filenames in user_ban and user_migrate.</li>
+<li>Fixed: Syntax error in user_ban.</li>
+<li>Fixed: user.extra123 mixup. [Jon Evans]</li>
+<li>Fixed: Removed user_mark. </li>
+<li>Removed: <var>$cfg-&gt;{showBoardCateg}</var>, <var>$cfg-&gt;{showTopicCateg}</var>, <var>$cfg-&gt;{showTopicBoard}</var>.</li>
+<li>Removed: <var>$cfg-&gt;{noCacheHeaders}</var>, they're always sent now.</li>
+<li>Removed: Workaround for mod_perl 2.0 without Apache::Request.</li>
+</ul>
+
+<h2>1.14.0 (2003-06-28)</h2>
+
+<ul>
+<li>Added: "(x new)" link on board page links to first topic page with new posts.</li>
+<li>Changed: Mark Old button on forum bar for users with manual option activated.</li>
+<li>Changed: Workaround for problems with mod_perl 2.0 without Apache::Request.</li>
+<li>Changed: Use CSS for table borders, results in proper borders in Opera 7.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Auto-collapsing in Mozilla. [Matthias Althaus]</li>
+<li>Fixed: Notification checkbox state. [Matthias Althaus]</li>
+<li>Removed: <var>$cfg{'linkShowNew'}</var>, <var>$cfg{'newColor'}</var> and <var>$cfg{'navImages'}</var>.</li>
+<li>Removed: Netscape 4.x support.</li>
+</ul>
+
+<h2>1.13.1 (2003-06-16)</h2>
+
+<ul>
+<li>Added: Users can add posts to personal todo lists.</li>
+<li>Added: Users can report inappropriate posts to admins.</li>
+<li>Added: Integrated various form pages to retain field values on errors.</li>
+<li>Added: Request authentication values for increased security.</li>
+<li>Added: Show unread posts page, marks all posts as read (has undo button).</li>
+<li>Added: Show new posts page has button to mark all posts as old.</li>
+<li>Added: Users can disable automatic marking of posts as old.</li>
+<li>Added: Search result list includes abbr. post bodies as tooltips.</li>
+<li>Added: Target posts in topic_show get different header color.</li>
+<li>Added: Advanced search mode supports subject and attachment search.</li>
+<li>Added: A few more user search fields.</li>
+<li>Added: Registration page requires typing email address twice.</li>
+<li>Added: Display category title in topic_move and branch_promote pages.</li>
+<li>Changed: If no title image is defined, main menu occupies full width.</li>
+<li>Changed: Moved board admin bar from board info to board page.</li>
+<li>Changed: Disable subscription checkboxes if subscriptions are disabled.</li>
+<li>Changed: Changed script names.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: A few search mode selection issues.</li>
+<li>Fixed: Signature field description texts. [Matthias Althaus]</li>
+<li>Fixed: Show hide-board checkboxes if subscriptions are disabled.</li>
+<li>Fixed: Disable notification checkbox in topic_new when email is disabled.</li>
+<li>Removed: Protected topics, basically superseded by sticky topics.</li>
+</ul>
+
+<h2>1.13.0 (2003-05-06)</h2>
+
+<ul>
+<li>Added: Sticky topics.</li>
+<li>Added: User titles/icons.</li>
+<li>Added: Subject and attachment search modes.</li>
+<li>Added: Category collapsing/expanding (DHTML), state is saved in cookie.</li>
+<li>Added: Topic branches can be moved to top level inside topic if misplaced.</li>
+<li>Added: User registration page can be disabled if admin wants to create accounts.</li>
+<li>Added: Promote and move topic branches to different board in one go.</li>
+<li>Added: Additional CSS definitions via config option.</li>
+<li>Added: Optionally open posted links in new window.</li>
+<li>Added: Configurable max. username length.</li>
+<li>Changed: Auto-remove user's board subscriptions if board membership is revoked.</li>
+<li>Changed: Changed ICQ field to text field for all instant messenger IDs.</li>
+<li>Changed: Users without DHTML/JS don't get collapsed topics anymore.</li>
+<li>Changed: Removed outdated CSS FAQ entry, added attachment FAQ entry.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Unban POST referrer check. [Vincent Rivellino]</li>
+<li>Removed: OR search mode (rarely used, mode list is simpler without it).</li>
+</ul>
+
+<h2>1.12.0 (2002-09-26)</h2>
+
+<ul>
+<li>Changed: Camouflaged admin email addresses won't be linked.</li>
+<li>Changed: Auto-link URLs in signatures.</li>
+</ul>
+
+<h2>1.11.1 (2002-09-07)</h2>
+
+<ul>
+<li>Added: Support for MySQL 4.0's query cache.</li>
+<li>Added: Support for MySQL 4.0's boolean search mode.</li>
+<li>Added: Go-to-first-new/unread-post button in non-threaded topics.</li>
+<li>Added: Local string overrides.</li>
+<li>Changed: Signatures may contain 100 chars and one linebreak instead of 50/50.</li>
+<li>Changed: Delete signature when setting posts to "[deleted]".</li>
+<li>Changed: Don't use default signature in anonymous boards.</li>
+<li>Changed: Misc. changes to URL auto-highlighting.</li>
+<li>Changed: Only load MwfSendmail.pm when required.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Limit actions with referrer checks to POST to prevent local link attacks.</li>
+<li>Fixed: Two code lines requiring Perl 5.6.0. [Yura]</li>
+<li>Removed: Skipping delete confirmation.</li>
+</ul>
+
+<h2>1.11.0 (2002-08-16)</h2>
+
+<ul>
+<li>Added: Per-post signatures.</li>
+<li>Added: Admin-to-user messages.</li>
+<li>Added: Experimental Unicode/UTF-8 support.</li>
+<li>Added: Branch collapsing/expanding in threaded topics (DHTML).</li>
+<li>Added: Email can be disabled for users with defective email accounts.</li>
+<li>Added: Attachment embedding can be toggled without re-uploading.</li>
+<li>Added: Post editing can be limited to a given time after posting.</li>
+<li>Added: Go-to-next-new-post buttons also jump to unread posts.</li>
+<li>Added: User agent is saved in user records and displayed to admins.</li>
+<li>Added: Additional internal ban reason only shown to admins.</li>
+<li>Added: Attachment processing plugin interface with real examples.</li>
+<li>Added: Expiration of board subscriptions.</li>
+<li>Added: Client IP in error log entries.</li>
+<li>Added: Filtering of bad w*rds.</li>
+<li>Added: Auto-correction of broken mwForum markup (balancing/nesting).</li>
+<li>Added: String used to break long strings can be set, &lt;WBR&gt; is default.</li>
+<li>Added: Board/topic viewing can be denied to banned users.</li>
+<li>Changed: Replaced Mail::QuoteWrap with Text::Flowed (better list quoting, small).</li>
+<li>Changed: Attachment embedding status is saved as DB field, not filename suffix.</li>
+<li>Changed: Approved posts in moderated boards can't be edited anymore.</li>
+<li>Changed: Don't show signatures and embedded images in post_shownew.</li>
+<li>Changed: Authz and email plugin interfaces changed to use named parameters.</li>
+<li>Changed: One cookie instead of two.</li>
+<li>Changed: No more 3D border in Mozilla.</li>
+<li>Changed: Requires Perl 5.005_03 (5.8.0 for UTF-8 support).</li>
+<li>Changed: Misc. small changes.</li>
+<li>Changed: Enable auto-linking of URLs with embedded passwords.</li>
+<li>Changed: Don't send password request emails to banned users.</li>
+<li>Changed: Wrapper functions for CGI parameter access.</li>
+<li>Changed: Use Apache::Request instead of MwfCGI under mod_perl.</li>
+<li>Changed: Searching can be limited to fulltext-indexed mode to prevent slow searches.</li>
+<li>Changed: If fulltext index is enabled, relevance search mode is the default.</li>
+<li>Changed: User/date-only searching is enabled in all modes.</li>
+<li>Changed: No more separate FIXES file.</li>
+<li>Fixed: CGI params are now also filtered for admins.</li>
+<li>Fixed: Fixed bug that would expire all posts after upgrade from 1.0.x.</li>
+<li>Fixed: Anonymous posts didn't get included in subscriptions. [David Wolf]</li>
+<li>Fixed: Missing "attachment deleted" message. [Lucas Saud]</li>
+<li>Fixed: Referrer checks for admin-only scripts, too.</li>
+<li>Fixed: Pagination bug if old user postsPP was bigger than maxPostsPP.</li>
+<li>Fixed: Escaped HTML in topic subjects in emails. [Philip Mak]</li>
+<li>Fixed: Last-minute typo prevented &lt;wbr&gt; breaking from working in 1.10.0.</li>
+<li>Fixed: Minimum username length wasn't enforced and was inconsistently stated.</li>
+<li>Fixed: Fixed uppercase embedded image filename extension, part 2. [David Wolf]</li>
+<li>Removed: Removed topic sorting order option.</li>
+<li>Removed: ICQ indicators (for legal reasons).</li>
+</ul>
+
+<h2>1.10.0 (2002-02-16)</h2>
+
+<p>No code changes</p>
+
+<h2>1.9.2 (2002-02-09)</h2>
+
+<ul>
+<li>Added: logStrings table, mainly used for search keyword logging.</li>
+<li>Added: Translation of illegal Windows-1252 characters to ASCII.</li>
+<li>Added: New format for reply notification emails with more context info.</li>
+<li>Added: Quick Javascript confirmation for deleting posts.</li>
+<li>Added: Intersperse long strings with &lt;WBR&gt; to avoid page layout corruption.</li>
+<li>Added: Enable use of Apache::Compress for gzipped output.</li>
+<li>Added: PerlSendHeader On isn't required for mod_perl anymore.</li>
+<li>Added: Optional ROBOTS NOINDEX meta tag.</li>
+<li>Added: <var>$cfg{'emailRegExp'}</var> to define valid email addresses.</li>
+<li>Added: topic_show can infer topic id from post id.</li>
+<li>Added: Worked around Opera bug with cell widths if not all widths are explicit.</li>
+<li>Added: Use https:// in reply notification URLs for SSL/TLS cookie users.</li>
+<li>Changed: Update posts.userNameBaks when changing usernames.</li>
+<li>Changed: Separate username fields and text changes on login page.</li>
+<li>Changed: Remove tags before quoting text to avoid invalid HTML.</li>
+<li>Changed: Remove control characters in escHtml().</li>
+<li>Changed: Misc. small changes on search page.</li>
+<li>Changed: Optimized filtering speed by removing /i regexp options.</li>
+<li>Changed: Some changes in boardVisible/Writeable() interfaces.</li>
+<li>Fixed: Invisible post icon wasn't shown in topic_show.</li>
+<li>Fixed: Relevance search option didn't stick.</li>
+<li>Fixed: Fixed uppercase embedded image filename extension. [David Wolf]</li>
+<li>Fixed: Boards only visible to reg. users were missing from some lists. [Philip Mak]</li>
+<li>Fixed: Form-data boundary wasn't escaped before regexp search. [Philip Mak]</li>
+</ul>
+
+<h2>1.9.1 (2002-01-02)</h2>
+
+<ul>
+<li>Added: Lock icon shown as separate icon.</li>
+<li>Changed: Renamed some files.</li>
+<li>Fixed: Delete attachments when deleting branches.</li>
+<li>Fixed: Problems with 1.9.0 upgrade.pl and leftover attachments. [David Wolf]</li>
+<li>Fixed: Wrong parameter name for anonymous board option checkbox. [David Wolf]</li>
+<li>Fixed: Also use <var>$cfg{'subjectRegExp'}</var> in post_edit_x. [Yura]</li>
+<li>Fixed: mkdir() needs mask parameter in Perl &lt; 5.6.0. [Yura]</li>
+<li>Fixed: Unregistered posting info strings mixed up in German. [Matthias Althaus]</li>
+</ul>
+
+<h2>1.9.0 (2001-12-23)</h2>
+
+<ul>
+<li>Added: Posting without registration (board option).</li>
+<li>Added: Anonymous posting (user id not saved with posts, board option).</li>
+<li>Added: Board visible only to registered users (board option).</li>
+<li>Added: Integrated forum search and results pages.</li>
+<li>Added: Improved jump-to-board dropdown list.</li>
+<li>Added: Links to specific posts are possible if post is not on first topic page.</li>
+<li>Added: Links to specific topics are possible if topic is not on first board page.</li>
+<li>Added: Links to specific posts/topics are used from misc. locations.</li>
+<li>Added: Integrated title and page bars. </li>
+<li>Added: Title/page bar repeated at bottom of topic pages.</li>
+<li>Added: Go-to-next-new-post and go-to-parent-post navigation buttons.</li>
+<li>Added: Attachments get their own directories instead of post IDs in the filename.</li>
+<li>Added: Search keyword highlighting works with regexps and phrases.</li>
+<li>Added: If keywords field is empty in phrase search mode, search by age only.</li>
+<li>Added: Configurable regexp for subject validation.</li>
+<li>Added: Configurable strings that are displayed before and after signatures.</li>
+<li>Added: Configurable maxima for topics per page and posts per page.</li>
+<li>Added: Link button to last page is shown when there are less buttons than pages.</li>
+<li>Added: Preservation of multiple spaces in posts (for ASCII tables etc).</li>
+<li>Added: Cronjob script executes "cron_jobs_local" if present.</li>
+<li>Added: Show category names on board admin and user admin pages.</li>
+<li>Added: More selectable fields on user admin page.</li>
+<li>Added: Manual "&gt;" quotes are colored even without automatic quoting.</li>
+<li>Added: Optionally allow mixing of multiple charsets. Security risk?</li>
+<li>Added: Show board/topic name in HTML title.</li>
+<li>Added: More module versions on forum info page.</li>
+<li>Added: Command line script for search and replace in post bodies.</li>
+<li>Added: Allow blank HTTP referrers if <var>$cfg{'checkReferer'}</var> == 2.</li>
+<li>Added: Show username on user ban page.</li>
+<li>Added: TEXTAREA fields use "width: 99%" style.</li>
+<li>Added: Link button on user info page to user's reply list for admins.</li>
+<li>Changed: Changed distribution archive folder layout.</li>
+<li>Changed: Promoted topic branches inherit read timestamps.</li>
+<li>Changed: Only use hidden board status for forum_show, posts_shownew and prevnext.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Changed: Disabled DBI's PrintError option.</li>
+<li>Changed: Uniformly count subject/body length before HTML escaping.</li>
+<li>Changed: Removed CGI::Carp, might be responsible for some of the esoteric problems.</li>
+<li>Changed: English language names in configuration.</li>
+<li>Changed: Proper init() function instead of connectDb() abuse.</li>
+<li>Changed: Cache browser-specific tag attributes.</li>
+<li>Fixed: "Attachment added" message was missing.</li>
+<li>Fixed: Clipped HTML entities in topic stats. [David Wolf]</li>
+<li>Fixed: Multi-level quoting didn't work properly in some versions. [Philip Mak]</li>
+<li>Fixed: Font size couldn't be set to 0 unless <var>$cfg{'fontSize'}</var> was 0. [Philip Mak]</li>
+<li>Fixed: Show reply button in posts_shownew for non-threaded boards. [Philip Mak]</li>
+<li>Fixed: Illegal newline in mail content-type header.</li>
+<li>Fixed: Wrong plugin function called for escHtml().</li>
+<li>Fixed: post_shownew cutoff message was displayed without &lt;BR&gt;. [Matthes Bender]</li>
+<li>Fixed: SQL-injection security hole, registered users can gain admin status.</li>
+<li>Fixed: Entity name on confirmation pages wasn't escaped.</li>
+<li>Fixed: Messages for adding/removing board members.</li>
+<li>Fixed: Attachments didn't get deleted correctly when deleting a whole topic.</li>
+<li>Fixed: Misc. user profile fields needed more storage space for escaped HTML.</li>
+<li>Fixed: Don't allow certain separator characters (;, ) in email addresses.</li>
+<li>Fixed: Different entity names in category action logging. [David Wolf]</li>
+<li>Removed: Removed MySQL logos because of MySQL AB's new trademark policy.</li>
+<li>Removed: Main page pagination.</li>
+</ul>
+
+<h2>1.8.0 (2001-07-30)</h2>
+
+<ul>
+<li>Added: Timezone selection via listbox, zones taken from Time::Zone module.</li>
+<li>Fixed: Some options would be mixed up if an admin edited another user's options.</li>
+</ul>
+
+<h2>1.7.1 (2001-07-21)</h2>
+
+<ul>
+<li>Added: Entity names in delete confirmation forms.</li>
+<li>Added: Confirmation for single post deleting.</li>
+<li>Added: Link buttons on post_shownew page can be hidden.</li>
+<li>Added: Post icons in post_shownew page are links to topic with anchor.</li>
+<li>Changed: Icons use short strings for ALT and longer strings for TITLE attributes.</li>
+<li>Changed: Removed DOCTYPE URL to prevent extra-ugly 3D border in Mozilla.</li>
+<li>Changed: Combined new/old/unread/read FAQ entry and icon legend.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Max. posts cutoff on post_shownew page was broken.</li>
+<li>Fixed: Syntax error in board_delete_x. [Mike Blezien]</li>
+<li>Fixed: Syntax errors in categ_admin and user_showbans.</li>
+</ul>
+
+<h2>1.7.0 (2001-06-16)</h2>
+
+<ul>
+<li>Added: User-selectable language.</li>
+<li>Added: Admins can delete branches and promote them to topics.</li>
+<li>Added: Forum pagination using a static category-&gt;page assignment.</li>
+<li>Added: Active topics/users, newest/online users statistics on forum page.</li>
+<li>Added: Member management for board admins.</li>
+<li>Added: Jump-to-board dropdown list.</li>
+<li>Added: Listing of replies to user's posts.</li>
+<li>Added: Category/board names in board/topic bars are links to the higher layers.</li>
+<li>Added: Error message if logging-in fails because of disabled cookies.</li>
+<li>Added: Login/password request possible with email address instead of username.</li>
+<li>Added: User option for limiting cookies to SSL/TLS connections.</li>
+<li>Added: Link decoration (underlined or not) is configurable.</li>
+<li>Added: Show notification in empty posts_shownew list.</li>
+<li>Added: All errors are logged in webserver log.</li>
+<li>Added: Create-email plugins can override sender address and get more context info.</li>
+<li>Added: Multiple authorization plugins for different actions can be used.</li>
+<li>Added: Experimental transaction support with InnoDB tables.</li>
+<li>Changed: Don't default to localhost in SMTP module.</li>
+<li>Changed: Category/board positions are now relative to page/category.</li>
+<li>Changed: Online FAQ corrections/additions concerning new/old/read/unread.</li>
+<li>Changed: No more reply notifications for self-replies.</li>
+<li>Changed: Hide email addresses from not-logged-in users (email spiders).</li>
+<li>Changed: Globalized $user.</li>
+<li>Changed: Optimized topicReadTimes update in posts_shownew.</li>
+<li>Changed: Replies are instantly marked read if there was no parallel post.</li>
+<li>Changed: Limit max. number of posts in posts_shownew to 500.</li>
+<li>Changed: Board deletions must always be confirmed.</li>
+<li>Changed: Base post id is stored in topic.</li>
+<li>Changed: Misc. filtering changes.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Search listed topics in private boards.</li>
+<li>Fixed: Search by username/id listed posts in semi-anonymous boards. [David Wolf]</li>
+<li>Fixed: Uploading an attachment over an old one with the same name deleted both.</li>
+<li>Fixed: <var>$cfg{'smileySize'}</var> wasn't used. [Philip Mak]</li>
+<li>Fixed: Bug in prevnext.pl (consequences unknown).</li>
+<li>Fixed: Delete additional dependent rows on user/board deletion. [David Wolf, mw]</li>
+<li>Fixed: Workaround for bug in Mail::QuoteWrap with empty/whitespace lines.</li>
+<li>Fixed: When defaulting to localhost, SMTP module messed up CGI output.</li>
+<li>Fixed: Highlighting won't break HTML tags and entities anymore. [Carlo Teubner, mw]</li>
+<li>Removed: No more HTML mode in boards for security and code simplicity reasons.</li>
+</ul>
+
+<h2>1.6.0 (2001-03-29)</h2>
+
+<ul>
+<li>Added: Event plugin interface.</li>
+<li>Added: Requests denied by bans/blocks are logged.</li>
+<li>Added: Pseudo timezone "SVR" = server's timezone.</li>
+<li>Changed: Log includes IP.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Timezone of not logged-in users defaults to <var>$cfg{'userTimezone'}</var>.</li>
+<li>Fixed: New post numbers were wrong with <var>$cfg{'linkShowNew'}</var> off. [Marko Njezic]</li>
+<li>Fixed: Posting plugin was broken, superseded by event plugin. [Marko Njezic]</li>
+<li>Fixed: Undefined function lengthError(). [Michael Zinn]</li>
+<li>Fixed: Search highlight regexp problems with special chars.</li>
+</ul>
+
+<h2>1.5.2 (2001-02-09)</h2>
+
+<ul>
+<li>Added: Search keyword highlighting.</li>
+<li>Added: Logging, level 2 and 3.</li>
+<li>Fixed: User info page text wasn't filtered. [Carlo Teubner]</li>
+<li>Fixed: Syntax error in post_moderate_x.</li>
+<li>Fixed: Logging out didn't work if <var>$cfg{'forumId'}</var> was used. [David Wolf]</li>
+<li>Fixed: No more user search in semi-anonymous boards. [Brian Maloney]</li>
+<li>Fixed: Date display was broken without Date::Format. [Arne Bochem]</li>
+</ul>
+
+<h2>1.5.1 (2001-01-29)</h2>
+
+<ul>
+<li>Added: Indexed fulltext search with relevance sorting (req. MySQL 3.23.28).</li>
+<li>Added: Fulltext search with POSIX regular expressions.</li>
+<li>Added: Reply quoting and quote highlighting.</li>
+<li>Added: Logging, level 1.</li>
+<li>Added: Localized time display.</li>
+<li>Added: Persistent board admin page options.</li>
+<li>Added: Semi-anonymous boards (poster names visible to admins only).</li>
+<li>Added: Reply-only boards (admins/members can start topics, all users can reply).</li>
+<li>Changed: Prev/next board/topic computation moved to prevnext.pl.</li>
+<li>Changed: Prev/next, search and post_shownew skip hidden boards, too.</li>
+<li>Changed: Instead of MD5, Digest::SHA1 is used if available, hex cookies if not.</li>
+<li>Changed: Renamed "external handler modules" to "plugins".</li>
+<li>Changed: Show short board desc on board info page if no long desc available.</li>
+<li>Changed: After printError(), page ends with printFooter() now.</li>
+<li>Changed: URL auto-linking now only stops at '")&lt; and whitespace.</li>
+<li>Changed: Leading spaces get converted to &amp;nbsp; for code snippets.</li>
+<li>Changed: Cookie names can get an optional unique prefix.</li>
+<li>Changed: New users see all posts as old to prevent huge new posts pages.</li>
+<li>Changed: Docs wrapped to 78 chars for narrow consoles.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Board view authz plugin is now always called in post_shownew.</li>
+<li>Fixed: Changing of temp cookie flag works without re-login now. [Carlo Teubner]</li>
+<li>Fixed: :o smiley conflicted with "mailto:o", requires nose now. [Chuq Von Rospach]</li>
+<li>Removed: No more tag filtering in HTML boards (fake security). [Carlo Teubner]</li>
+</ul>
+
+<h2>1.5.0 (2000-12-11)</h2>
+
+<ul>
+<li>Added: Forum keeps track of which topics/posts have been read.</li>
+<li>Added: Optional post_shownew link for all users.</li>
+<li>Added: post_shownew linked from new-numbers, showing a single board resp. topic.</li>
+<li>Added: Configurable color for header bars of new posts, makes them easier to spot.</li>
+<li>Added: Users can hide selected boards.</li>
+<li>Added: Users can hide board descriptions.</li>
+<li>Added: User-configurable editbox width/height.</li>
+<li>Added: Reply notification user option can be set for new topics or all posts.</li>
+<li>Added: New authorization plugin action for viewing boards.</li>
+<li>Added: Authorization plugins get more context info.</li>
+<li>Added: Users are notified of wrong bookmarks with obsolete "?markRead=1".</li>
+<li>Added: Password cookies are MD5-hashed (users will have to re-login).</li>
+<li>Changed: More standardized access checking in some places.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Fixed security hole that lets everybody see private posts.</li>
+<li>Fixed: Attachments under Windows still didn't work.</li>
+<li>Fixed: Workaround for missing <var>$ENV{HTTP_HOST}</var> was broken.</li>
+<li>Fixed: String in forum full phrase search was not quoted.</li>
+</ul>
+
+<h2>1.4.0 (2000-08-26)</h2>
+
+<ul>
+<li>Added: Optional thread indenting on the right instead of the left side.</li>
+<li>Changed: Workaround for missing <var>$ENV{HTTP_HOST}</var>.</li>
+<li>Changed: Switched from .zip to .tar.gz archives.</li>
+<li>Fixed: Sometimes double and conflicting email headers in changed sendEmail().</li>
+<li>Fixed: Referrer check didn't work with new <var>$cfg{'baseUrl'}</var>. [Marko Njezic]</li>
+</ul>
+
+<h2>1.3.2 (2000-08-10)</h2>
+
+<ul>
+<li>Added: New, more flexible email plugin interfaces.</li>
+<li>Added: Category in board title bar, board in topic bar and category in topic bar.</li>
+<li>Added: Configurable max. number of page buttons displayed on board page.</li>
+<li>Added: Optional smiley graphics.</li>
+<li>Added: Table index optimization (ANALYZE table) with MySQL 3.23.22+.</li>
+<li>Added: Subscriptions contain forum link, in case s.o. forgets where to unsubscribe.</li>
+<li>Changed: Changed enter/mark-read procedure once again, one less redir now.</li>
+<li>Changed: Image embedding is now done via checkbox instead of 'embed'-filename.</li>
+<li>Changed: Improved table template functions.</li>
+<li>Changed: URL autolinking works at start of post.</li>
+<li>Changed: New posts in boards without approval moderation are marked as approved.</li>
+<li>Changed: Unapproved posts don't count as new for normal users.</li>
+<li>Changed: Absmiddle image align in Opera and Moz5/6.</li>
+<li>Changed: Smaller textarea/input size for all Netscape versions (still broken in 5/6).</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Words in forum search weren't filtered.</li>
+<li>Fixed: <var>$ENV{'MWF_ALLOWCRON'}</var> wasn't reset after cron script execution.</li>
+<li>Fixed: "Email Error" string was missing.</li>
+<li>Fixed: "Error string not found" message had angled brackets.</li>
+<li>Fixed: Attachment wasn't deleted when setting posts to "[deleted]".</li>
+<li>Fixed: Attachment filenames without path weren't handled right. [Mark Marsalese]</li>
+<li>Fixed: Attachment syswrite didn't work with Perl 5.004. [Mark Marsalese]</li>
+</ul>
+
+<h2>1.3.1 (2000-07-17)</h2>
+
+<ul>
+<li>Added: Posts contain a backup of the username which is used if user is deleted.</li>
+<li>Added: Attached images can be displayed inline (provisional).</li>
+<li>Added: Config option for icon size.</li>
+<li>Added: Optional homepage link in main bar or at page bottom.</li>
+<li>Added: Config option for copyright message color.</li>
+<li>Changed: Changed mark-read procedure, no more problematic parameter in the URL.</li>
+<li>Changed: Replaced CGI::Cookie with internal functions.</li>
+<li>Changed: Replaced literal table/cell headers with template functions (provisional).</li>
+<li>Changed: Posts of deleted users get a neutral user id.</li>
+<li>Changed: Removed °° quoting, showed up as escape sequences in vi on some systems.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Attachments didn't work on Windows servers.</li>
+<li>Fixed: Prev/next board sequence included private boards.</li>
+</ul>
+
+<h2>1.3.0 (2000-06-20)</h2>
+
+<ul>
+<li>Added: New posts plugin supprt.</li>
+<li>Added: Authorization plugin support.</li>
+<li>Added: Additional options for the extra profile fields for authorization plugins.</li>
+<li>Added: All error messages are displayed with header and in a table.</li>
+<li>Added: Logging/display of user's last used IP (independent of posts).</li>
+<li>Added: Multiple empty lines and empty lines at post beginning and end get removed.</li>
+<li>Changed: Admin posts get set to approved automatically.</li>
+<li>Changed: Ban page actions redirect to ban page.</li>
+<li>Changed: Double length for ban reason string.</li>
+<li>Changed: No more O0o1l and uppercase characters in passwords.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Reply notification flags of banned users didn't get resetted.</li>
+<li>Fixed: Users with zero and negative votes could vote.</li>
+</ul>
+
+<h2>1.2.0 (2000-05-30)</h2>
+
+<ul>
+<li>Changed: Integrated files CONTRIBUTE, BUGS, TODO and AUTHORS into README.</li>
+<li>Fixed: Attachment expiration was buggy.</li>
+<li>Fixed: Email addresses with multiple domains didn't get auto-linked.</li>
+</ul>
+
+<h2>1.1.3 (2000-05-16)</h2>
+
+<ul>
+<li>Added: File attachments.</li>
+<li>Added: Reply notification emails contain link to topic.</li>
+<li>Added: Topic hit sum on forum info page.</li>
+<li>Changed: Email address validation accepts long top level domains.</li>
+<li>Fixed: Referrer check wasn't correctly displayed on forum info page.</li>
+<li>Fixed: Email change text wasn't translated in German translation.</li>
+</ul>
+
+<h2>1.1.2 (2000-04-22)</h2>
+
+<ul>
+<li>Added: User search form for admins.</li>
+<li>Added: Three configurable user profile fields.</li>
+<li>Added: Old topics can be locked by cronjob (board option).</li>
+<li>Added: Confirmation for category/board/topic/user deletion (forum option).</li>
+<li>Added: Configuration section in forum_info.</li>
+<li>Changed: HTTP expires-header uses legal date format instead of 0.</li>
+<li>Fixed: Redirection URI must be absolute according to HTTP spec.</li>
+<li>Fixed: create-tables.sql contained false commas.</li>
+<li>Fixed: Default DB name in create-table.sql was "test".</li>
+<li>Fixed: Topic prev/next sequence was broken. [Matthes Bender]</li>
+<li>Fixed: board_admin didn't load MwfCGI.pm. [Arne Bochem]</li>
+<li>Fixed: Subscriptions were still unnecessarily limited to SMTP. [Arne Bochem]</li>
+</ul>
+
+<h2>1.1.1 (2000-04-08)</h2>
+
+<ul>
+<li>Added: Topic hits can be counted and displayed.</li>
+<li>Changed: Reverted to caching board and topic statistics. Major speedup.</li>
+<li>Changed: Netscape6/Mozilla5 compatibility (removed lots of &lt;P&gt; tags).</li>
+<li>Changed: Filter plugins can overwrite markup help.</li>
+<li>Fixed: create-tables.sql still contained IP field in ban index.</li>
+<li>Fixed: sendmail/mail didn't use <var>$cfg{'charset'}</var>. [Marko Njezic]</li>
+</ul>
+
+<h2>1.1.0 (2000-04-04)</h2>
+
+<ul>
+<li>Added: Access blocking for hostnames and IPs.</li>
+<li>Added: Filtering plugin interfaces.</li>
+<li>Added: Configurable policy text for forum info page and registration emails.</li>
+<li>Added: Display of post IP addresses (forum option).</li>
+<li>Added: New posts overview page. Useful for quickly scanning all new posts.</li>
+<li>Added: Ban overview page.</li>
+<li>Added: Board membership status can be edited per board on user admin page.</li>
+<li>Added: Reply notification flag of posts can be edited.</li>
+<li>Added: Users receive a new password when they change their email address.</li>
+<li>Added: Translation can be selected in MwfConfig.</li>
+<li>Added: Subscriptions work with all mailers. Seperate sending instead of BCC header.</li>
+<li>Changed: Replaced bloated CGI.pm with MwfCGI.pm (=CGI::Minimal).</li>
+<li>Changed: Replaced board/category creation forms with simple creation links.</li>
+<li>Changed: Deleting a post with descendants resets reply notification flag.</li>
+<li>Fixed: Topic lock status wasn't checked in post_reply_x.</li>
+<li>Fixed: (?&lt;!) regexp required Perl 5.005, should run with 5.004 again.</li>
+<li>Fixed: $cfg{'charset '} contained a space, so it wasn't used. [Marko Njezic]</li>
+</ul>
+
+<h2>1.0.0 (2000-03-14)</h2>
+
+<ul>
+<li>Added: In-response-to text gets auto-linked too.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Image tag didn't work with external links. [Marko Njezic]</li>
+</ul>
+
+<h2>0.9.7 (2000-03-10)</h2>
+
+<ul>
+<li>Added: http:// is added before homepage URL if missing.</li>
+<li>Added: Post icon is an anchor link to parent post.</li>
+<li>Added: Subscription execution button added.</li>
+<li>Changed: Cronjobs don't "use lib" anymore and must be started from their directory.</li>
+<li>Fixed: User bans with duration 0 (infinite) don't expire anymore.</li>
+<li>Fixed: Subscription function checks approval status of posts.</li>
+<li>Fixed: If username in search form isn't found, don't find posts by everybody.</li>
+</ul>
+
+<h2>0.9.6 (2000-03-04)</h2>
+
+<ul>
+<li>Added: Email subscription of boards.</li>
+<li>Added: cron_optimize, optimizes database tables.</li>
+<li>Added: Configurable title image filename.</li>
+<li>Added: Icon legend in help text.</li>
+<li>Changed: Search: user field instead of user mode. Code simplifications.</li>
+<li>Changed: German translation: translated missing strings, help and FAQ.</li>
+<li>Changed: German translation: changed informal to impersonal addressing. </li>
+<li>Changed: Re-added setLanguage() in translations, seems to be neccessary.</li>
+<li>Changed: Mark Read button sets lastReadTime to lastOnTime instead of current time.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: OBJECT, EMBED, APPLET and SCRIPT tags get filtered even with HTML enabled.</li>
+<li>Fixed: HTML option and IMG tag option marked as security risks.</li>
+<li>Fixed: Charset gets set in HTTP header. </li>
+<li>Fixed: Subject gets filtered the same as message body.</li>
+<li>Fixed: Requests are only accepted if coming from the same domain (forum option).</li>
+<li>Fixed: Integer CGI parameters were used in SQL without check. [Vladislav Malyshkin]</li>
+<li>Fixed: Strict filtering for image tags to disable inline script. [mw, Arne Bochem]</li>
+<li>Fixed: <var>$cfg{'postSortOrder'}</var> = DESC didn't work in 0.9.4/5. [Arne Bochem]</li>
+</ul>
+
+<h2>0.9.5 (2000-02-03)</h2>
+
+<ul>
+<li>Fixed: Compilation errors in category_create_x. [Chris Gregors]</li>
+</ul>
+
+<h2>0.9.4 (2000-02-02)</h2>
+
+<ul>
+<li>Added: Topic pagination.</li>
+<li>Added: Board pagination.</li>
+<li>Added: User list pagination.</li>
+<li>Added: Non-threaded mode (board option).</li>
+<li>Added: Image markup tag (forum option).</li>
+<li>Added: User list options are saved permanently.</li>
+<li>Added: Configurable text color.</li>
+<li>Added: CSS-formatting for widgets.</li>
+<li>Added: Statistics on forum info page.</li>
+<li>Added: Username validation regexp in MwfConfig for easier i18n. </li>
+<li>Changed: Lots of behind-the-scenes SQL changes. No more cached statistics.</li>
+<li>Changed: cgi/forum.pl replaces data/index.html.</li>
+<li>Changed: LastReadTime gets set on login.</li>
+<li>Changed: More auto-link regexp improvements.</li>
+<li>Changed: Set link color for non-CSS browsers.</li>
+<li>Changed: Improved username validation, no more problematic spaces.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Deleted post with successors weren't set to "[deleted]".</li>
+<li>Fixed: Tags didn't get filtered out of emails.</li>
+<li>Fixed: Memberships/admins/subscriptions didn't get removed on board deletion.</li>
+<li>Removed: Bottom nav bars had to make way for page bars.</li>
+</ul>
+
+<h2>0.9.3 (2000-01-14)</h2>
+
+<ul>
+<li>Added: Forum info page (most info is for admin so far).</li>
+<li>Added: Non-threaded mode (forum option).</li>
+<li>Added: Second navbar at bottom of board and topic pages (global option).</li>
+<li>Changed: Replaced sth-&gt;{insertid} with LAST_INSERT_ID() query.</li>
+<li>Fixed: Sendmail and mail didn't work because of a missing semicolon.</li>
+<li>Fixed: Apostrophes in input fields cut off the rest of the string. [Marko Njezic]</li>
+<li>Fixed: cron_expireusers deleted new users who didn't log in until then.</li>
+<li>Fixed: Search only worked if at least one private board existed. [momu]</li>
+<li>Fixed: Typo in score/vote field evaluation in user options. [Alexander Sulima]</li>
+<li>Fixed: topic_new_x was untested and had an undeclared scalar. [Marko Njezic]</li>
+</ul>
+
+<h2>0.9.2 (2000-01-10)</h2>
+
+<ul>
+<li>Added: Posts can be sorted ascending or descending (forum option).</li>
+<li>Added: Navigation buttons can be shown as images (forum option).</li>
+<li>Added: Added sendmail and mail as alternatives to SMTP.</li>
+<li>Changed: Optimized topic_show to get all posts in one query.</li>
+<li>Changed: Included Mail::Sendmail as MwfSendmail to make installation easier. </li>
+<li>Fixed: Removed "exit" from grant-access.sql, avoiding harmless error. [Jürgen Fey]</li>
+<li>Removed: Removed reveal button from topic bar.</li>
+</ul>
+
+<h2>0.9.1 (2000-01-06)</h2>
+
+<ul>
+<li>Changed: Changed mysql_insertid to insertid for compatibility with older DBD::mysql.</li>
+<li>Changed: Font size 0 is the default now, and is skipping definition in CSS.</li>
+<li>Fixed: Zombie topics prevented board display.</li>
+<li>Fixed: First user didn't get promoted to admin.</li>
+</ul>
+
+<h2>0.9.0 (2000-01-02)</h2>
+
+<p>Initial public release.</p>
+
+
+</body>
+</html>

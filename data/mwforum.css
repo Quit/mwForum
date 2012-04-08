@@ -1,0 +1,220 @@
+/* mwForum style-independent rules 2.25.1 */
+/* Do not edit, use forumStyle option to include your own stylesheet */
+
+/* Force scrollbar */
+html {
+	overflow-y: scroll;
+}
+
+/* Clickable cursor */
+.clk {
+	cursor: pointer;
+}
+
+/* Forms */
+form {
+	margin: 0;
+}
+fieldset {
+	margin: 10px 0 0 0;
+	border: none;
+	padding: 0;
+}
+fieldset > label:first-child {
+	margin-top: 0;
+}
+legend {
+	padding: 0;
+}
+label.lbw, div.cli {
+	margin-top: 3px;
+}
+label.lbw, label.lbw input, label.lbw select {
+	display: block;
+}
+input {
+	max-width: 98%;
+}
+input.fwi {
+	width: 98%;
+	min-width: 15em;
+}
+input.hwi {
+	width: 50%;
+	min-width: 15em;
+}
+input.qwi {
+	width: 25%;
+	min-width: 15em;
+}
+input[type=number] {
+	width: 8em;
+	min-width: 5em;
+}
+input[type=file] {
+	width: 98%;
+}
+textarea {
+	width: 98%;
+	resize: vertical;
+}
+textarea.raw {
+	font-size: 90%;
+	font-family: monospace;
+}
+div.ccl > button {
+	margin-top: 10px;
+}
+
+/* Country flag */
+img.flg {
+	width: 16px;
+	height: 11px;
+}
+
+/* Make post cell enclose avatar */
+div.pst div.ccl {
+	overflow: auto;
+}
+
+/* Video iframe */
+iframe.vif {
+	border: 0;
+}
+
+/* Ignored posts */
+div.pst.ign div.ccl, div.pst.ign div.bcl {
+	display: none;
+}
+
+/* Honeypot field */
+div.ihf { 
+	display: none;
+}
+
+/* Unobtrusive mwforum.org link */
+p.cpr a { 
+	color: inherit !important;
+}
+
+/* Configuration */
+form.cfg h3 {
+	margin: 20px 0 10px 0;
+	border-top: 1px solid silver;
+	padding-top: 10px;
+	font-size: 100%;
+	font-weight: bold;
+}
+form.cfg h3:first-child {
+	margin-top: 0;
+	border-top: none;
+}
+form.cfg h4 {
+	margin: 10px 0 0 10px;
+	font-size: 100%;
+	font-weight: bold;
+}
+form.cfg p, form.cfg fieldset {
+	margin: 5px 0 0 20px;
+}
+form.cfg code {
+	color: green;
+	font: inherit;
+}
+form.cfg dfn, form.cfg var {
+	color: gray;
+	font-style: normal;
+	font-weight: normal;
+	white-space: nowrap;
+}
+
+/* Smiley sprite */
+.fsm { 
+	width: 16px; 
+	height: 16px; 
+	background-image: url(fsmileys.png);
+	vertical-align: text-top;
+}
+.fsm_confused { background-position: 0 0 }
+.fsm_cool { background-position: -16px 0 }
+.fsm_cry { background-position: -32px 0 }
+.fsm_eek { background-position: -48px 0 }
+.fsm_evil { background-position: -64px 0 }
+.fsm_fat { background-position: -80px 0 }
+.fsm_grin { background-position: -96px 0 }
+.fsm_lol { background-position: -112px 0 }
+.fsm_mad { background-position: -128px 0 }
+.fsm_neutral { background-position: -144px 0 }
+.fsm_razz { background-position: -160px 0 }
+.fsm_red { background-position: -176px 0 }
+.fsm_roll { background-position: -192px 0 }
+.fsm_sad { background-position: -208px 0 }
+.fsm_slim { background-position: -224px 0 }
+.fsm_smile { background-position: -240px 0 }
+.fsm_surprised { background-position: -256px 0 }
+.fsm_twisted { background-position: -272px 0 }
+.fsm_wink { background-position: -288px 0 }
+.fsm_yell { background-position: -304px 0 }
+
+/* Button icon sprite */
+.bic {
+	width: 16px;
+	height: 16px;
+	background-image: url(buttonicons.png);
+	vertical-align: text-top;
+}
+.bic_admopt { background-position: 0 -1px; } 
+.bic_approve { background-position: 0 -18px; } 
+.bic_archive { background-position: 0 -35px; } 
+.bic_attach { background-position: 0 -52px; } 
+.bic_avatar { background-position: 0 -69px; } 
+.bic_ban { background-position: 0 -86px; } 
+.bic_board { background-position: 0 -103px; } 
+.bic_branch { background-position: 0 -120px; } 
+.bic_category { background-position: 0 -137px; } 
+.bic_chat { background-position: 0 -154px; } 
+.bic_cron { background-position: 0 -171px; } 
+.bic_delete { background-position: 0 -188px; } 
+.bic_edit { background-position: 0 -205px; } 
+.bic_feed { background-position: 0 -222px; } 
+.bic_forum { background-position: 0 -239px; } 
+.bic_group { background-position: 0 -256px; } 
+.bic_help { background-position: 0 -273px; } 
+.bic_home { background-position: 0 -290px; } 
+.bic_ignore { background-position: 0 -307px; } 
+.bic_image { background-position: 0 -324px; } 
+.bic_info { background-position: 0 -341px; } 
+.bic_key { background-position: 0 -358px; } 
+.bic_lock { background-position: 0 -375px; } 
+.bic_login { background-position: 0 -392px; } 
+.bic_logout { background-position: 0 -409px; } 
+.bic_markold { background-position: 0 -426px; } 
+.bic_markread { background-position: 0 -443px; } 
+.bic_merge { background-position: 0 -460px; } 
+.bic_message { background-position: 0 -477px; } 
+.bic_move { background-position: 0 -494px; } 
+.bic_name { background-position: 0 -511px; } 
+.bic_openid { background-position: 0 -528px; } 
+.bic_options { background-position: 0 -545px; } 
+.bic_password { background-position: 0 -562px; } 
+.bic_poll { background-position: 0 -579px; } 
+.bic_post { background-position: 0 -596px; } 
+.bic_preview { background-position: 0 -613px; } 
+.bic_profile { background-position: 0 -630px; } 
+.bic_rate { background-position: 0 -647px; } 
+.bic_refresh { background-position: 0 -664px; } 
+.bic_remove { background-position: 0 -681px; } 
+.bic_report { background-position: 0 -698px; } 
+.bic_search { background-position: 0 -715px; } 
+.bic_shownew { background-position: 0 -732px; } 
+.bic_showunread { background-position: 0 -749px; } 
+.bic_split { background-position: 0 -766px; } 
+.bic_stick { background-position: 0 -783px; } 
+.bic_subscribe { background-position: 0 -800px; } 
+.bic_tag { background-position: 0 -817px; } 
+.bic_topic { background-position: 0 -834px; } 
+.bic_user { background-position: 0 -851px; } 
+.bic_watch { background-position: 0 -868px; } 
+.bic_wipe { background-position: 0 -885px; } 
+.bic_write { background-position: 0 -902px; } 
+.bic_log { background-position: 0 -919px; } 

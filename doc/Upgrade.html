@@ -1,0 +1,198 @@
+<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01//EN' 'http://www.w3.org/TR/html4/strict.dtd'>
+<html lang='en'>
+<head>
+  <meta http-equiv='content-type' content='text/html; charset=utf-8'>
+  <title>mwForum Upgrading</title>
+  <link rel='stylesheet' href='doc.css' type='text/css'>
+</head>
+<body>
+
+<h1>mwForum Upgrading</h1>
+
+<p>To do an upgrade, you only need to download the latest version, not any intermediate versions. For an upgrade, perform the following steps. As usual, the actual required actions and commands are dependent on your specific situation, the following are only examples that assume the same environment as the installation instructions.</p>
+
+<ol class='ext'>
+<li>Backup your database and forum installation!
+<pre><kbd>
+shell&gt; cd ~
+shell&gt; mysqldump mwforum | gzip &gt; mwforum.sql.gz
+shell&gt; tar -czf mwforum-script.tar.gz /usr/local/apache/cgi-bin/mwf/
+shell&gt; tar -czf mwforum-data.tar.gz   /usr/local/apache/htdocs/mwf/
+</kbd></pre>
+</li>
+
+<li>Unpack the contents of the latest version into your home directory.
+<pre><kbd>
+shell&gt; tar -xzf mwforum-x.x.x.tar.gz
+</kbd></pre>
+</li>
+
+<li>Delete the old Perl scripts in your forum's script directory. Don't delete any configuration files and files that you might have created yourself. This step is not strictly necessary, but remaining obsolete scripts may pose security issues.
+<pre><kbd>
+shell&gt; rm /usr/local/apache/cgi-bin/mwf/*.pl
+</kbd></pre>
+</li>
+
+<li>Copy the new files from the script directory of the latest version into your forum's script directory. Set the correct file permissions if necessary.
+<pre><kbd>
+shell&gt; cp mwforum-x.x.x/script/* /usr/local/apache/cgi-bin/mwf/
+shell&gt; chmod 755 /usr/local/apache/cgi-bin/mwf/*.pl
+</kbd></pre>
+</li>
+
+<li>Copy the new files from the data directory of the latest version into your forum's data directory. Images and styles may not always change, but it's easy to miss new or changed files if you don't copy them all.
+<pre><kbd>
+shell&gt; cp -r mwforum-x.x.x/data/* /usr/local/apache/htdocs/mwf/
+</kbd></pre>
+</li>
+
+<li>Upgrade the database using upgrade.pl from your forum's script directory. This only works for upgrades after version 2.3.0. For upgrades of older versions, the specific upgrade steps involving upgrade-x.x.x.sql files have to be done first. If you don't have shell access to your server, you may also execute upgrade.pl scripts over CGI. This is not really recommended however, since CGI timeouts and RAM limits might interrupt it. Delete upgrade.pl and install.pl afterwards.
+<pre><kbd>
+shell&gt; cd /usr/local/apache/cgi-bin/mwf/
+shell&gt; perl upgrade.pl
+shell&gt; rm upgrade.pl install.pl
+</kbd></pre>
+</ol>
+
+<p>You might also want to tell your users to hit F5 to refresh any CSS and images, in case they changed.</p>
+
+<p>If additional steps are required for specific upgrades, or there are important things to know, they are listed below. Follow them chronologically. Even if you skip some versions when upgrading, you still have to execute all upgrade steps between your last and the new version.</p>
+
+
+<h2>2.21.3</h2>
+
+<h3>Smileys</h3>
+
+<p>The optional text smiley to icon replacement feature has been removed in favor of an integrated smiley pack for the :tag: feature. It is enabled by default for new forums, existing forums might want to set the <var>tagButtons</var> forum option to "Yes, show buttons for [tags] and :tags:" and add the following to the <var>tags</var> forum option:</p>
+
+<pre><kbd>
+confused=&lt;img class='fsm fsm_confused' src='[[dataPath]]/epx.png' title='confused' alt=':confused:'/&gt;
+cool=&lt;img class='fsm fsm_cool' src='[[dataPath]]/epx.png' title='cool' alt=':cool:'/&gt;
+cry=&lt;img class='fsm fsm_cry' src='[[dataPath]]/epx.png' title='cry' alt=':cry:'/&gt;
+eek=&lt;img class='fsm fsm_eek' src='[[dataPath]]/epx.png' title='eek' alt=':eek:'/&gt;
+evil=&lt;img class='fsm fsm_evil' src='[[dataPath]]/epx.png' title='evil' alt=':evil:'/&gt;
+fat=&lt;img class='fsm fsm_fat' src='[[dataPath]]/epx.png' title='fat' alt=':fat:'/&gt;
+grin=&lt;img class='fsm fsm_grin' src='[[dataPath]]/epx.png' title='grin' alt=':grin:'/&gt;
+lol=&lt;img class='fsm fsm_lol' src='[[dataPath]]/epx.png' title='lol' alt=':lol:'/&gt;
+mad=&lt;img class='fsm fsm_mad' src='[[dataPath]]/epx.png' title='mad' alt=':mad:'/&gt;
+neutral=&lt;img class='fsm fsm_neutral' src='[[dataPath]]/epx.png' title='neutral' alt=':neutral:'/&gt;
+razz=&lt;img class='fsm fsm_razz' src='[[dataPath]]/epx.png' title='razz' alt=':razz:'/&gt;
+red=&lt;img class='fsm fsm_red' src='[[dataPath]]/epx.png' title='red' alt=':red:'/&gt;
+roll=&lt;img class='fsm fsm_roll' src='[[dataPath]]/epx.png' title='roll' alt=':roll:'/&gt;
+sad=&lt;img class='fsm fsm_sad' src='[[dataPath]]/epx.png' title='sad' alt=':sad:'/&gt;
+slim=&lt;img class='fsm fsm_slim' src='[[dataPath]]/epx.png' title='slim' alt=':slim:'/&gt;
+smile=&lt;img class='fsm fsm_smile' src='[[dataPath]]/epx.png' title='smile' alt=':smile:'/&gt;
+surprised=&lt;img class='fsm fsm_surprised' src='[[dataPath]]/epx.png' title='surprised' alt=':surprised:'/&gt;
+twisted=&lt;img class='fsm fsm_twisted' src='[[dataPath]]/epx.png' title='twisted' alt=':twisted:'/&gt;
+wink=&lt;img class='fsm fsm_wink' src='[[dataPath]]/epx.png' title='wink' alt=':wink:'/&gt;
+yell=&lt;img class='fsm fsm_yell' src='[[dataPath]]/epx.png' title='yell' alt=':yell:'/&gt;
+</kbd></pre>
+
+<p>Anyone who has previously installed the Fugue Smiley Pack must remove its CSS rules from their forum's local stylesheet.</p>
+
+
+<h2>2.19.3</h2>
+
+<h3>Email Subscriptions</h3>
+
+<p>Subscriptions are now available as instant subscriptions (that are sent out the moment a new post gets submitted) and as digest subscriptions (the cronjob-driven feature available before). The forum options to enable either are now in the Email Options section, and digest subscriptions have to be re-enabled if used before. The <var>$cfg-&gt;{scriptFsPath}</var> and <var>$cfg-&gt;{perlBinary}</var> options in MwfConfig.pm have to be configured for instant subscriptions. Instant subscriptions may not work everywhere for technical reasons, but they are an alternative for places where no cronjobs are available.</p>
+
+<h3>Cron Emulation and Manual Cronjobs</h3>
+
+<p>If you use either, you also have to configure the <var>$cfg-&gt;{scriptFsPath}</var> and <var>$cfg-&gt;{perlBinary}</var> options in MwfConfig.pm, as these features (or rather workarounds for missing cronjob support with cheap webhosters) now use the same process forking as the instant subscriptions above. This change should prevent any webserver timeouts from causing havok with long-running jobs.</p>
+
+
+<h2>2.19.0</h2>
+
+<h3>Styles</h3>
+
+<p>Any styles will need to be upgraded to use the CSS Sprite technique. Please remove any styles that are not upgraded, as they won't show icons.</p>
+
+
+<h2>2.17.2</h2>
+
+<h3>Blogs</h3>
+
+<p>The upgrade script will move all blog topics into a new board with the new topic moderator option enabled.</p>
+
+<h3>Default Style</h3>
+
+<p>If you used the old "Default" style, note that it's gone now. The only reason I kept it so long was that the semi-transparent hi-color icons of the "Default2" style don't properly blend in IE6, but that one is becoming so ancient that it's time to <a href='http://abetterbrowser.org/'>ignore</a> it. You have the following options:</p>
+
+<ul>
+<li>Change everybody's style to Default2 (or whatever) with user_set.pl.</li>
+<li>Change the style of Default users to Default2 (or whatever) with SQL (<code>UPDATE users SET style = 'Default2' WHERE style = 'Default'</code>).</li>
+</ul>
+
+<p>Or if you hate modern hi-color icons, really need the higher contrast icons, or simply can't see the famfamfam Silk icons anymore, which have become rather common on the Web since they have been added to mwForum:</p>
+
+<ul>
+<li>Maintain Default yourself (of which you'll probably tire quickly).</li>
+<li>Emulate Default by adapting Default2 after every upgrade that changes it: make a copy of the default2 directory, rename it and the CSS file inside to "default" and put the <a href='http://www.mwforum.org/dl/upgrade/old_icons_16x16.zip'>old low-color icons</a> (with bigger canvas, i.e. resized the correct way) into the directory.</li>
+<li>Let the Default style rot without updates, after all your users will probably blame me and not you for resulting layout issues. Obviously not recommended.</li>
+</ul>
+
+<p>When removing the Default style, make sure to check the <var>styles</var> and <var>style</var> forum options. If you have anything in the <var>styleOptions</var> forum option, make sure it doesn't include "<code>excludeUA="MSIE (?:5|6)</code>" for the Default2 style anymore.</p>
+
+
+<h2>2.17.1</h2>
+
+<h3>Board Members and Moderators</h3>
+
+<p>If you use any direct board membership or moderator entries, you should change these relations to be based on user groups with the equivalent permissions <em>before</em> upgrading, as the upgrade process will delete these entries. The [so far untested] script util_migratexs.pl creates a moderator and a member group for every board that has direct moderator and/or member entries, and adds the respective users to them. This is only useful if most or all boards have (and are meant to have) individual sets of mods/members, otherwise you should manually create groups that apply to multiple boards instead. Make a backup before doing this in addition to the backup before the upgrade itself.</p>
+
+
+<h2>2.15.0</h2>
+
+<p>Note the changed Perl (5.8.1) and MySQL (4.1) version requirements. The required versions of related Perl modules (esp. DBI and DBD) may also increase somewhat in the process, though as usual the exact required version are unknown.</p>
+
+<h3>General Unicode/UTF-8 issues</h3>
+
+<p>Forums that use some kind of chaotic encoding mixture (e.g. embedded SJIS) may be impossible to upgrade, at least without lots of manual work by an expert.</p>
+<p>Language modules will usually need conversion to UTF-8. Modules encoded in Latin1 (iso-8859-1) may continue to work without conversion, as Perl transparently does the conversion while loading them, but this may cause obscure problems. I can't really provide simple instructions for how to convert and edit UTF-8 files though, as this really depends on the text editor used. An example command for the conversion itself would be "<kbd>piconv -f koi8-r -t utf8 MwfRussian.pm > MwfRussianUtf8.pm</kbd>", but whether and how any given editor can properly recognize and handle UTF-8-encoded files afterwards, you have to figure out for yourself. In any case, once the module has been converted, add a "<code>use utf8;</code>" line near the top, and for completeness' sake, remove the obsolete "<code>$lng->{charset}</code>" line.</p>
+
+<h3>Unicode/UTF-8 issues with MySQL</h3> 
+
+<p>The upgrade.pl script will convert the database to UTF-8. It may have to rename users whose usernames wouldn't be considered distinct by MySQL anymore after the conversion, as the used Unicode collation (comparison ruleset) ignores <a href='http://en.wikipedia.org/wiki/Diacritic'>diacritic</a> marks. For example, "Günther" would be considered equal to "Gunther". The names of affected users will be listed by the script, and active users among them should be notified and given a chance to have their names changed to something else by an admin.</p>
+
+<p>If the encoding of the database is misdeclared, e.g. if a database that contains Russian KOI8-R is labeled as containing Latin1, the automatic conversion probably won't have the desired effect, and you need to restore the database from the backup you made before the upgrade. The script util_fixcharset.pl can be used to correct the declaration before executing upgrade.pl, e.g. by executing "<kbd>perl util_fixcharset.pl -c koi8r</kbd>" given the example case above. If you don't have any clue about character sets, and which one would have been the correct one for your forum, you might have a bit of problem here. Try asking in the support forum, maybe someone can help.</p>
+
+<h3>Unicode/UTF-8 issues with PostgreSQL</h3>
+
+<p>Database conversion to UTF-8 is <em>not</em> performed by upgrade.pl. It should probably work (not yet tested) by dumping the database to SQL and importing it to a new database created with "<code>ENCODING=UTF8</code>". The PostgreSQL cluster's locale should also be compatible with UTF-8 for search etc. to work correctly. Failing to convert the database will result in an SQL error every time someone inserts a character that's outside the old character set's coverage.</p>
+
+<p>Also note version requirements regarding case-independent search in FAQ.html, important for non-English forums.</p>
+
+<h3>Unicode/UTF-8 issues with SQLite</h3>
+
+<p>Database conversion to UTF-8 is <em>not</em> performed by upgrade.pl. There are currently no full instructions for manually converting an SQLite database to UTF-8, as I'm not aware of anybody using it who also upgrades. More info may be found in the support forum.</p>
+
+
+<h2>2.11.1</h2>
+
+<h3>Sendmail</h3>
+
+<p>If you use sendmail for sending emails, modify <var>$cfg->{sendmail}</var> in MwfConfig.pm to include the options, e.g. <code>"/usr/sbin/sendmail -oi -oeq -t"</code>. These are not hardcoded anymore, as some sendmail emulations apparently can't ignore unsupported options.</p>
+
+
+<h2>2.10.0</h2>
+
+<h3>Icons</h3>
+
+<p>Icons and other distributed images use PNG instead of GIF format now. All styles need to be updated.</p>
+
+
+<h2>2.7.3</h2>
+
+<h3>Styles</h3>
+
+<p>Style-dependent files now belong into their own subdirectories of the data directory. This makes managing multiple styles much more convenient, allows using unchanged filenames for changed images, and last not least allows using different icons for different styles. All images (except the pwrd_*.gif and valid_*.gif images, as well as any of your own global images like title images) and the CSS stylesheets themselves are style-dependent. Assuming you use mwForum's "Default" style, create a directory called "default" inside your data directory, and move or copy all those files into that. Repeat for any additional styles that you might have. The names of the subdirectories are always the same as that of the respective stylesheet files without the ".css" extensions. Then go to the forum options page, edit the "<var>styles</var>" option and remove the ".css" extension from every line.</p>
+
+
+<h2>2.3.0 and older</h2>
+
+<p>Old instructions and upgrade-x.y.z.pl and .sql files required for upgrades from earlier versions are not included in this distribution anymore, but are available in a separate <a href='http://www.mwforum.org/dl/upgrade/upgrade-0.9.4-2.3.0.tar.gz'>download</a>.</p>
+
+
+</body>
+</html>

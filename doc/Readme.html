@@ -1,0 +1,235 @@
+<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01//EN' 'http://www.w3.org/TR/html4/strict.dtd'>
+<html lang='en'>
+<head>
+  <meta http-equiv='content-type' content='text/html; charset=utf-8'>
+  <title>mwForum Readme</title>
+  <link rel='stylesheet' href='doc.css' type='text/css'>
+</head>
+<body>
+
+<h1>mwForum Readme</h1>
+
+<h2>Contents</h2>
+
+<ul>
+<li><a href='#intro'>Introduction</a></li>
+<li><a href='#docs'>Documentation</a></li>
+<li><a href='#gpl'>License</a></li>
+<li><a href='#web'>Website</a></li>
+<li><a href='#support'>Support</a></li>
+<li><a href='#releases'>Release Types</a></li>
+<li><a href='#updates'>Update News</a></li>
+<li><a href='#features'>Features</a></li>
+<li><a href='#contrib'>Contributing</a></li>
+<li><a href='#credits'>Credits</a></li>
+</ul>
+
+
+<h2 id='intro'>Introduction</h2>
+
+<p>mwForum is an open-source, Web-based discussion forum system. mwForum is based on <a href='http://www.perl.com/'>Perl</a> CGI scripts, uses a <a href='http://www.mysql.com/'>MySQL</a>, <a href='http://www.postgresql.org/'>PostgreSQL</a> or <a href='http://www.sqlite.org/'>SQLite</a> database and is compatible with <a href='http://perl.apache.org/'>mod_perl</a> 1.0 and 2.0 for optimal performance. mwForum's design goals are comfortable operation and administration, stability, security and speed, a professional and consistent look, and lean and clean code to make customization easy.</p>
+
+
+<h2 id='docs'>Documentation</h2>
+
+<ul>
+<li>Readme.html: this file</li>
+<li><a href='Install.html'>Install.html</a>: installation guide (incl. system requirements)</li>
+<li><a href='FAQ.html'>FAQ.html</a>: administration topics</li>
+<li><a href='Changes.html'>Changes.html</a>: list of new features, changes and bugfixes</li>
+<li><a href='Upgrade.html'>Upgrade.html</a>: instructions for upgrading older installations</li>
+<li><a href='Develop.html'>Develop.html</a>: development/customization notes</li>
+<li><a href='License.html'>License.html</a>: the GNU General Public License</li>
+</ul>
+
+
+<h2 id='gpl'>License</h2>
+
+<p>mwForum is Copyright &#169; 1999-2012 Markus Wichitill.</p>
+
+<p>This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software foundation; either version 3 of the License, or (at your option) any later version.</p>
+
+<p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the <a href='http://www.gnu.org/copyleft/gpl.html'>GNU General Public License</a> for more details.</p>
+
+
+<h2 id='web'>Website</h2>
+
+<p>The website is at <a href='http://www.mwforum.org/'>http://www.mwforum.org/</a>.</p>
+
+
+<h2 id='support'>Support</h2>
+
+<p>Support is available from the support forum on the website mentioned above. Please make sure to specify your software products/versions and to clearly describe your problem when posting in the support forum. Too many details are always preferable to too few.</p>
+
+<p>If you ask for help in the support forum and get that help, please reply back. The main reason is that we need feedback on whether the support was helpful, if and how the problem was fixed, or whether you just gave up in frustration. Saying thanks can't hurt either, but mainly we need the feedback. To only receive silence after spending considerable amounts of time on trying to help can be frustrating. General feedback about your and your users' experience with the forum is appreciated, too.</p>
+
+
+<h2 id='releases'>Release Types</h2>
+
+<p>mwForum follows the common version number system used in many open-source applications: releases with <em>even</em> minor version numbers (e.g. 2.<em>2</em>.0) are stable releases, releases with <em>odd</em> minor version numbers (e.g. 2.<em>3</em>.0) are development releases. Releases from a stable branch will get bug fixes only, new features are introduced in development releases.</p>
+
+
+<h2 id='updates'>Update News</h2>
+
+<p>To receive email notifications about new mwForum releases and possible security issues, register an account in the support forum and subscribe to the mwForum board in the Downloads category. To receive news about addons, styles etc. you can also subscribe to those download boards. Please note that you have to login to the forum once a year to keep the subscriptions from expiring.</p>
+
+
+<h2 id='features'>Features</h2>
+
+<p>This is an overview of the main features of mwForum, not a complete list. Many features are optional, especially those that impact performance.</p>
+
+<ul>
+<li>Forum
+<ul>
+<li>Supports Perl CGI, mod_perl 1.x and 2.x</li>
+<li>Supports MySQL, PostgreSQL and SQLite databases</li>
+<li>Highly configurable via online form</li>
+<li>Valid HTML5 or XHTML5.</li>
+<li>Styling via CSS stylesheets, multiple user-selectable styles</li>
+<li>Language modules, user-selectable</li>
+<li>Uses Unicode/UTF-8</li>
+<li>Private messages, with export</li>
+<li>Chat page</li>
+<li>Atom and RSS feeds</li>
+<li>Event logging with log browser</li>
+<li>Attachment list with image gallery mode</li>
+<li>Searching, optionally with fulltext index and/or Google</li>
+<li>Plugin interfaces: authen, authz, include, event, log, message display</li>
+<li>Export/import between different mwForum installations</li>
+<li>Supports IPv6 addresses</li>
+</ul>
+</li>
+
+<li>Boards
+<ul>
+<li>Grouping by collapsible categories</li>
+<li>Read access: everybody, registered users, selected user groups</li>
+<li>Write access: everybody, registered users, selected user groups</li>
+<li>Moderated boards where only approved posts are visible</li>
+<li>Posting by unregistered users</li>
+<li>Archiving</li>
+</ul>
+</li>
+
+<li>Topics
+<ul>
+<li>Threaded or non-threaded</li>
+<li>Polls, with single or multiple votes</li>
+<li>Collapsible branches in threaded topics</li>
+<li>Moving and deleting of whole topics and topic branches</li>
+<li>Manual and automatic locking</li>
+<li>Expiration</li>
+<li>Merging</li>
+<li>Tags and icons</li>
+</ul>
+</li>
+
+<li>Posts
+<ul>
+<li>Post preview</li>
+<li>Editing, with optional time limitation</li>
+<li>Quoting in good old email/news style</li>
+<li>Additional post field for source code etc.</li>
+<li>Text snippet insertion</li>
+<li>File attachments</li>
+<li>Thumbnails resizing for attached images</li>
+<li>Reporting of rule-violating posts</li>
+<li>Post content rating with statistics</li>
+<li>Tracking of which posts are new/old in current session</li>
+<li>Tracking of which posts are unread/read independent of session</li>
+<li>Notifications when words on watch list appear in new posts</li>
+<li>Notifications when users on watch list post new posts</li>
+<li>Overviews containing all new or unread posts, per topic, board or for whole forum</li>
+<li>Markup [tags] with insertion buttons, predefined and custom</li>
+<li>Manual and automatic linking of URLs</li>
+<li>Configurable :tags:</li>
+<li>Censored words</li>
+<li>Flood protection</li>
+<li>Video embedding</li>
+</ul>
+</li>
+
+<li>Users
+<ul>
+<li>Cookie-based, URL-based and OpenID login</li>
+<li>Various captcha</li>
+<li>User info pages with public profiles</li>
+<li>Configurable user profile fields</li>
+<li>Avatars, uploaded and gallery, automatic resizing, users can disable display</li>
+<li>Signatures, short and simple or long incl. markup, users can disable display</li>
+<li>Notifications for replies, messages, moderator actions etc.</li>
+<li>Lists of newest, online and birthday users on main page</li>
+<li>Expiration, after x days absence and/or if never logged in</li>
+<li>User list for all users with public info</li>
+<li>User list for admins, can display and search all fields</li>
+<li>Ranks based on post count</li>
+<li>User titles and badges</li>
+<li>GeoIP country detection</li>
+<li>User groups, public and non-public, joinable or managed</li>
+<li>Birthdays</li>
+<li>Ignoring</li>
+<li>Banning</li>
+</ul>
+</li>
+
+<li>Email
+<ul>
+<li>SMTP, sendmail or mail transport</li>
+<li>RFC 2554 authentication</li>
+<li>OpenPGP encryption</li>
+<li>Bounce detection</li>
+<li>Instant and digest subscriptions of boards and topics</li>
+<li>Notifications for replies and private messages</li>
+<li>Registration can optionally require valid address</li>
+</ul>
+</ul>
+
+
+<h2 id='contrib'>Contributing</h2>
+
+<p>Want to contribute?</p>
+
+<ul>
+<li>Find bugs and submit detailed bug reports</li>
+<li>Help other users in the support forum</li>
+<li>Create and update language modules</li>
+<li>Create plugins, addons, mods and styles</li>
+</ul>
+
+<p>I'm not really interested in contributions to the core code, because for this type of application, it's typically more work for me to evaluate/integrate/test third-party code than to code the respective features myself, and certainly less fun. Plugin/modular/external features are welcome of course.</p>
+
+<p>Make sure to skim <a href='Develop.html'>Develop.html</a> before making substantial code changes. Of course you can always post code patches in the support forum, even if they don't get integrated into the main distribution.</p>
+
+
+<h2 id='credits'>Credits</h2>
+
+<dl>
+<dt>Markus Wichitill</dt>
+<dd>Author and maintainer.</dd>
+
+<dt>Philip Mak</dt>
+<dd>Author of Text::Flowed, long-time hosting of mwforum.org.</dd>
+
+<dt>Daði Örn Jónsson, Matthias Althaus, Tobias Jaeggi</dt>
+<dd>Testing, bug reports and feedback.</dd>
+
+<dt>John Resig et al.</dt>
+<dd>Authors of the <a href='http://jquery.com/'>jQuery</a> Javascript Library. License: <a href='http://en.wikipedia.org/wiki/MIT_License'>MIT</a>.</dd>
+
+<dt>Mark James</dt>
+<dd>Creator of the <a href='http://www.famfamfam.com/lab/icons/silk/'>Silk</a> icon set, used for the Default2 style and button icons. License: <a href='http://creativecommons.org/licenses/by/3.0/deed'>CC Attribution 3.0</a>.</dd>
+<dd>Creator of the recommended 16x11 <a href='http://www.famfamfam.com/lab/icons/flags/'>flag</a> icons. License: Public domain.</dd>
+
+<dt>上山根 祐輔 (Yusuke Kamiyamane)</dt>
+<dd>Creator of the <a href='http://p.yusukekamiyamane.com/'>Fugue and Diagona</a> icon sets, used to complement the Silk icons. License: <a href='http://creativecommons.org/licenses/by/3.0/deed'>CC Attribution 3.0</a>.</dd>
+
+<dt>Benjamin Franz</dt>
+<dd>Author of <a href='http://search.cpan.org/dist/CGI-Minimal/'>CGI::Minimal</a>, on which MwfCGI.pm is based. License: <a href='http://perldoc.perl.org/perlartistic.html'>Artistic</a>/<a href='http://perldoc.perl.org/perlgpl.html'>GPL</a>.</dd>
+
+<dt>Milivoj Ivkovic</dt>
+<dd>Author of <a href='http://search.cpan.org/dist/Mail-Sendmail/'>Mail::Sendmail</a>, on which MwfSendmail.pm is based. License: "Do whatever you want with it."</dd>
+</dl>
+
+
+</body>
+</html>

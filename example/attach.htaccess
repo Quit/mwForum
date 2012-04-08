@@ -1,0 +1,45 @@
+# Force downloading of attachments instead of opening them in website context, 
+# which can be very dangerous, allowing account hijacking etc. Does not have any 
+# effect on embedded images. Very important.
+
+Header set Content-Disposition "attachment"
+Header set X-Download-Options "noopen"
+
+# Disable execution via CGI, PHP etc. Very important.
+
+Options -ExecCGI
+SetHandler default-handler
+
+# Disable browsing this directory. Always recommended, since there are so many 
+# useless bots out there that download everything in their way. 
+# Very important if you have private boards with attachments that are supposed 
+# to be secret.
+
+Options -Indexes
+
+# Treat files with unregistered extensions as binary files. 
+# Helps against "alphabet soup" downloads. Not very important.
+
+DefaultType application/octet-stream
+
+# Set more specific MIME types for feeds. Not important.
+
+<FilesMatch "\.atom[0-9]*\.xml$">
+	ForceType application/atom+xml
+</FilesMatch>
+<FilesMatch "\.rss[0-9]*\.xml$">
+	ForceType application/rss+xml
+</FilesMatch>
+
+# Block access to OpenID cache.
+
+<Files "cache.db">
+	Deny from all
+</FilesMatch>
+
+# Block access to PGP user keyrings. They only contain public keys, though, 
+# so this is usually unnecessary.
+
+<FilesMatch "\.gpg~?$">
+	Deny from all
+</FilesMatch>

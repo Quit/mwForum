@@ -1,0 +1,272 @@
+<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01//EN' 'http://www.w3.org/TR/html4/strict.dtd'>
+<html lang='en'>
+<head>
+  <meta http-equiv='content-type' content='text/html; charset=utf-8'>
+  <title>mwForum Development</title>
+  <link rel='stylesheet' href='doc.css' type='text/css'>
+</head>
+<body>
+
+<h1>mwForum Development</h1>
+
+<p>This file contains random development notes. You should have read or at least skimmed it when you intend to customize, port, extend or translate mwForum.</p>
+
+
+<h2>Contents</h2>
+
+<ul>
+<li><a href='#copyright'>Copyright</a></li>
+<li><a href='#languages'>Language Modules</a></li>
+<li><a href='#modperl'>mod_perl</a></li>
+<li><a href='#plugins'>Plugins</a></li>
+<li><a href='#ajax'>AJAX</a></li>
+</ul>
+
+
+<h2 id='copyright'>Copyright</h2>
+
+<p>Please note that if you distribute your own version of mwForum, no matter how heavily customized or under what name - it's still copyrighted by me (Markus Wichitill), and you're not allowed to remove or change my copyright notices, you can only add your own notices if you did substantial changes or additions. You'll also have to use a different name than "mwForum".</p>
+
+
+<h2 id='languages'>Language Modules</h2>
+
+<p>Instructions for creating language modules:</p>
+
+<p>Make a copy of MwfEnglish.pm and change its name to whatever your language is called. Adapt the line "package MwfEnglish" at the top of the file to match your new filename (without the ".pm"). Add the following lines before the <var>$lng-&gt;{author}</var> line:</p>
+
+<pre><code>
+# Default to English for missing strings
+require MwfEnglish;
+%$lng = %$MwfEnglish::lng;
+</code></pre>
+
+<p>Set <var>$lng-&gt;{author}</var> to your own name. If your translation is based on an existing translation, don't replace the original author's name, add your name to it. At the bottom of the file, change the language name in the "<code>do 'MwfEnglishLocal.pm';</code>" line to your language (the named file doesn't have to exist).</p>
+
+<p>The main work is of course to translate all the strings on the right hand side. You'll have to take care to escape any characters that have a special meaning in Perl or HTML, except for where the strings are meant to contain actual HTML. If in doubt, just look at how it's done in the original English or German modules. The main issues to watch out for are:</p>
+
+<ul>
+<li>Prefix <code>"</code> in the middle of strings with a backslash, as in <code>\"</code></li>
+<li>Prefix <code>$</code> and <code>@</code> with a backslash, too</li>
+<li>Write <code>&amp;</code> as <code>&amp;amp;</code></li>
+<li>Write <code>'</code> as <code>&amp;#39;</code></li>
+</ul>
+
+<p>Language modules need to be encoded in Unicode/UTF-8 for mwForum 2.15.0 and later. I can't really provide simple instructions on how to handle that, as there are too many different text editors out there, which in turn have different options for handling Unicode. If you want to upgrade an existing module to UTF-8, also check the instructions in Upgrade.html. Do not write accented characters etc. as HTML entities (e.g. <code>&amp;auml;</code>) instead of using UTF-8, as in some cases that will lead to trouble.</p>
+
+<p>To support XHTML mode, all markup must be well-formed XML and preferably valid XHTML 1.1.</p>
+
+<p>To update your translation for future versions, you'll probably want to use some sort of "diff" utility on the old and new English modules to get a list of additions and changes to the string table. Not all of my changes have to be integrated into your translation, sometimes I just make small changes to the wording which aren't that important.</p>
+
+<p>If someone uses your older translation with a newer version of mwForum which adds new strings, the software will fall back to the English original strings for missing translated strings (provided that you added the code above), but some strings might have changed their meaning completely, thus it's not always safe to use an outdated translation.</p>
+
+<p>If you're wondering where the strings for administration functions are, they're hardcoded and not supposed to be translated. That's by design, as it would be a lot more work to internationalize all strings, and contributed language modules and updates for them are already few enough without multiplying the number of strings.</p>
+
+<p>If you have created or updated a translation, please post it somewhere in the support forum (it will be moved to the download section by an admin).</p>
+
+
+<h2 id='modperl'>mod_perl</h2>
+
+<p>If you want to change and redistribute the code, please make sure you know what is necessary to keep the code mod_perl-compatible. Lots of information on this topic is available in the <a href='http://perl.apache.org/guide/'>mod_perl Guide</a>. The two most important things to know are:</p>
+
+<ul class='ext'>
+<li>Don't use any file-scope my-declared scalars (except constants) in subs in the same script. See the mod_perl-Guide for a longer explanation.</li>
+
+<li>Don't assume a scalar will be automatically initialized to <var>undef</var> on script start, since scalars will retain their value from the previous script run under mod_perl.</li>
+</ul>
+
+
+<h2 id='plugins'>Plugins</h2>
+
+<p>There are places in the code where admins typically want to customize the forum behavior, and places where they want to fill in special functionality that isn't part of the official releases. The problem with modifying the original code is that it makes updating to newer releases problematic. For this reason, mwForum contains hooks for calling plugins in various places. Depending on the plugin type, functions in these plugins can replace default functions or are called in addition to the default code.</p> 
+
+<p>If you have developed a plugin that might be of general interest, you can post it anywhere in the support forum and it will be moved to the board in the Downloads category. But even if a plugin is for your internal usage only, you might want to mention it in the support forum, since I might change plugin types without warning as long as I'm under the impression that nobody except me uses them anyway.</p>
+
+<p>Plugin types or subtypes that have never been used or tested by anybody might very well be buggy or badly documented, but if anybody wants to use them, I'll usually provide a fix or some more explanations ASAP.</p>
+
+<h3>Installation</h3>
+
+<p>Plugins are activated by uploading the Perl module and setting the respective options at the bottom of the forum options page. Some of the plugin types allow one or more plugin functions for different subtypes and take the form "<code>subtype=MwfPlgModuleName::functionName</code>", some allow multiple sequentially executed plugin functions and take the form of one or more "<code>MwfPlgModuleName::functionName</code>" lines, and some only allow a single plugin function using the same form.</p>
+
+<p>The names of the Perl modules and functions can be freely chosen, except that the module names must start with "MwfPlg" for security reasons. You can copy all your used plugin functions into a single module if you want.</p>
+
+<h3 id='include'>Include Plugins</h3>
+
+<p>Include plugins can be used to include output (headers, HTML etc.) at various positions on the forum's pages, but can also include code that does something else. See example/MwfPlgInclude.pm for some examples.</p>
+
+<p>While there are a million different places where one might want to include stuff, this feature can only cover some of the more common places with the following subtypes:</p>
+
+<dl class='ids'>
+<dt>early</dt>
+<dd>Called early, directly after user authentication. Can be used for purposes like blocking users/bots, or anything else that can't wait for a later plugin call, or shouldn't for performance reasons. See example for a plugin function that only allows a limited number of requests per IP and timeframe.</dd>
+<dt>httpHeader</dt>
+<dd>Can print HTTP header lines.</dd>
+<dt>htmlHeader</dt>
+<dd>Can print HTML header lines.</dd>
+<dt>top</dt>
+<dd>Can print HTML at the top of every page.</dd>
+<dt>middle</dt>
+<dd>Can print HTML below the top bar of every page.</dd>
+<dt>bottom</dt>
+<dd>Can print HTML at the bottom of every page.</dd>
+<dt>topUserLink</dt>
+<dd>Can print button links for all users in the top bar of all pages.</dd>
+<dt>forumUserLink</dt>
+<dd>Can print button links for all users in the page bar on the forum page.</dd>
+<dt>forumAdminLink</dt>
+<dd>Can print button links for admins/mods in the page bar on forum pages.</dd>
+<dt>boardUserLink</dt> 
+<dd>Can print button links for all users in the page bar on board pages. Parameters passed: <var>board</var>.</dd>
+<dt>boardAdminLink</dt> 
+<dd>Can print button links for admins/mods in the page bar on board pages. Parameters passed: <var>board</var>.</dd>
+<dt>topicUserLink</dt> 
+<dd>Can print button links for all users in the page bar on topic pages. Parameters passed: <var>board</var>, <var>topic</var>.</dd>
+<dt>topicAdminLink</dt> 
+<dd>Can print button links for admins/mods in the page bar on topic pages. Parameters passed: <var>board</var>, <var>topic</var>.</dd>
+<dt>userProfileLink</dt>
+<dd>Can print button links for the respective user in the page bar on user profile pages. Parameters passed: <var>user</var>.</dd>
+<dt>userOptionsLink</dt>
+<dd>Can print button links for the respective user in the page bar on user options pages. Parameters passed: <var>user</var>.</dd>
+<dt>userUserLink</dt>
+<dd>Can print button links for all users in the page bar on user info pages. Parameters passed: <var>user</var>.</dd>
+<dt>userAdminLink</dt>
+<dd>Can print button links for admins in the page bar on user info pages. Parameters passed: <var>user</var>.</dd>
+<dt>userInfo</dt>
+<dd>Can print stuff on user info pages, after the profile section. Parameters passed: <var>user</var>.</dd>
+<dt>topicData</dt> 
+<dd>Called before printing of posts on topic pages starts. Can either print something there or e.g. process posts in some way, prepare data for other plugins that are called per-post etc. Parameters passed: <var>board</var>, <var>topic</var>, <var>postsById</var>, <var>pagePosts</var>, <var>boardAdmin</var> and <var>topicAdmin</var>.</dd>
+<dt>postHeader</dt> 
+<dd>Can print header items for posts on topic pages. Parameters passed: <var>board</var>, <var>topic</var>, <var>post</var>, <var>boardAdmin</var> and <var>topicAdmin</var>.</dd>
+<dt>postLink</dt> 
+<dd>Can add button links for posts on topic pages. Parameters passed: <var>board</var>, <var>topic</var>, <var>post</var>, <var>boardAdmin</var> and <var>topicAdmin</var>. Note that implementations of this plugin subtype need to return their markup differently than the others, as shown in the example plugin.</dd>
+<dt>tagButton</dt>
+<dd>Can print additional [tag] buttons on post/message forms. Could also be used for other stuff in that place.</dd>
+<dt>tagButtons</dt>
+<dd>Can print tag buttons etc. on post/message forms. Replaces the built-in tag insertion code.</dd>
+</dl>
+
+<h3 id='event'>Event Plugins</h3>
+
+<p>This plugin type is called from the MwfMain::logAction() function that in turn is called after pretty much every successful script run.  While it can be used to override the logging itself, it is mainly used for various other purposes. Event plugins are always called after the fact, so they can't influence/cancel the events directly anymore, although they could usually undo them. They're not called if the script was previously aborted because of an error. Multiple plugins can be installed concurrently.</p>
+
+<p>Read <a href='FAQ.html'>FAQ.html</a> for some more details about logging. To replace the standard logging (e.g. to log to a plaintext file), just leave the logLevel config option set to 0 and use your own config options if necessary.</p>
+
+<p>The plugin functions get the same parameters as MwfMain::logAction(). See the .pl scripts to see which parameters contain what data for the respective event.</p>
+
+<p>example/MwfPlgEvent.pm has a couple of real-world examples.</p>
+
+<h3 id='msgdisplay'>Message Display Plugins</h3>
+
+<p>Some admins want to do more message text filtering/transforming/replacing than is done by default, usually to add more formatting, emoticons and such. An enabled message display plugin is called every time a text with markup is displayed (public posts and private messages, as well as some other texts like reports).</p>
+
+<p>The plugin is called at the start of MwfMain::dbToDisplay(). If the plugin returns 0, the rest of dbToDisplay() will run normally after that, if it returns 1 dbToDisplay() will end without further processing, and if it returns 2, dbToDisplay() will only do the processing that's likely to be safe and not interfere with whatever the plugin is doing (at the time of this writing that means adding attachments, signatures and sessions IDs). If you chose to end or limit the processing in dbToDisplay() by returning 1 or 2, you might have to copy part of the code in dbToDisplay() to your plugin, possibly modified in some way that prevents interference with your own markup and code.</p>
+
+<p>The examples in example/MwfPlgMsgDisplay.pm add another smiley and video tags and then let MwfMain::dbToDisplay() continue to do the rest of the work.</p>
+
+<p>Notes:</p>
+<ul class='ext'>
+<li>Don't use a message display plugin for something simple that can be done with :tags: or custom style tags.</li>
+<li>Possible slightly advanced techniques include making the processing dependent on which user wrote a post, or make it dependent on some kind of trigger tag at the beginning of a post that enables features different from the normal behavior.</li>
+<li>There are no more plugin types for the other filtering functions like editToDb() and dbToEdit(), since modifying the format of text in the database is not something I would recommend, as it easily leaves admins with no upgrade path to newer mwForum releases.</li>
+</ul>
+
+<h3 id='authen'>Authentication Plugins</h3>
+
+<p>Note: Since there are so many different scenarios when it comes to authentication, and since the discussion in the development/support forum about this topic was also rather confused and fruitless, there's no good documentation about this complex topic.</p>
+
+<p>There are two subtypes of user authentication plugins: login authentication plugins, and request authentication plugins. The former is called every time someone tries to login using mwForum's login page, the latter for every HTTP request independent of mwForum's normal authentication facilities. The two subtypes are not meant to be used together.</p>
+
+<p>Typical plugin workflow:</p>
+<ol>
+<li>Get user credentials.</li>
+<li>Check credentials against external data source (SQL, LDAP, NTLM, etc.).</li>
+<li>Look for mwForum user account matching authenticated credentials.</li>
+<li>If no account exists, optionally create one and set some fields based on external data.</li>
+<li>Retrieve and return user acount from mwForum database.</li>
+</ol>
+
+<p>Login authentication plugin details:</p>
+<ul>
+<li>Parameters: plugin gets the username and password fields from the login page.</li>
+<li>Normal mwForum login page and cookies/sessions are used.</li>
+<li>Normal mwForum user_register and user_password pages are not used.</li>
+<li>Once a mwForum user is created, the plugin itself cannot reliably revoke access.</li>
+</ul>
+
+<p>Request authentication plugin details:</p>
+<ul>
+<li>Parameters: none, needs to extract info from the environment (custom cookies, HTTP auth, SSL client cert, etc.).</li>
+<li>Normal mwForum cookies, user_register, user_login, user_password and user_ticket are not used.</li>
+<li>Typically used when an existing site uses a common authentication scheme.</li>
+<li>Plugin might have to cache an external authentication source that is not very fast.</li>
+</ul>
+
+<p>There are various issues that are not addressed here and that depend on the exact scenario for which someone might want to use a plugin, including which user fields are used for identification (numeric userId, userName, email, etc.), uniqueness and length limitations of fields in mwForum, further synchronization of mwForum accounts with external accounts, etc.</p>
+
+<p>The file example/MwfPlgAuthen.pm contains working examples of login authentication via LDAP, request authentication with HTTP authentication, and request authentication with SSL client certificates.</p>
+
+<p>Alternatives to mwForum plugins: existing site registration/login scripts could be extended to create mwForum user accounts and/or mwForum login cookies. mwForum also supports OpenID for that warm fuzzy "Web 2.0"-esque feeling.</p>
+
+<p>The registration authorization plugin type below is somewhat related to user authentication, though it's limited to accepting or denying a registration performed by user_register.pl.</p>
+
+<h3 id='authz'>Authorization Plugins</h3>
+
+<p>Authorization plugins allow finer grained control over whether users can perform certain actions. The possibilities of what to do with this data are manifold. You could check whether the user has entered a valid shareware code before letting him register or post. For a corporate forum, you could limit registration to users with a company email address. You could check how much data a user has already uploaded before letting him add another attachment.</p>
+
+<p>Authorization plugins can only disallow the respective actions, they can't allow otherwise forbidden actions. For example, a normal user can't be allowed to edit another user's posts. An exception to this is the viewBoard action, plugins for which can tell the code in MwfMain.pm to skip the normal access checking.</p>
+
+<p>Since forum admins are always allowed to do everything by definition, authorization plugin functions are skipped for them.</p>
+
+<p>Authorization plugin subtypes currently exist for the following actions (more actions might be added on request):</p>
+
+<dl class='ids'>
+<dt>regUser</dt>
+<dd>Registering a user account.</dd>
+<dt>viewBoard</dt>
+<dd>Viewing posts (called per board not post for performance reasons).</dd>
+<dt>newTopic</dt>
+<dd>Posting a new topic.</dd>
+<dt>newPost</dt>
+<dd>Posting a reply.</dd>
+<dt>editPost</dt>
+<dd>Editing/deleting a post.</dd>
+<dt>attach</dt>
+<dd>Uploading an attachment.</dd>
+</dl>
+
+<p>Since version 2.13.1, none of these actions except viewBoard get passed any additional parameters except the MwfMain object anymore, since always retrieving that data was in some cases a waste of performance, with almost nobody using an authz plugin. Any data needs to be retrieved through the main object now, e.g. by using the $m->paramXyz() functions to get to CGI parameters, plus additional database queries as required.</p>
+
+<p>See example/MwfPlgAuthz.pm for more details and two simple examples.</p>
+
+
+<h2 id='ajax'>AJAX</h2>
+
+<p>mwForum itself doesn't really serve AJAX requests, but version 2.21.3 makes some changes to enable addons to use AJAX on the server side (or AJAJ technically, as JSON and not XML is used). The same version also introduces jQuery on the client side, which makes Javascript a lot more fun to write.</p>
+
+<p>A minimal Perl script in AJAX mode would look like the following:</p>
+
+<pre><code>
+my ($m, $cfg, $lng, $user, $userId) = MwfMain-&gt;new($_[0], ajax =&gt; 1);
+$m-&gt;printHttpHeader();
+print $m-&gt;json({ foo => "bar" });
+$m-&gt;finish();
+</code></pre>
+
+<p>A minimal jQuery snippet using AJAX would look like this:</p>
+
+<pre><code>
+$.post('entity_verb' + mwf.p.m_ext, { foo: 'bar' }, function (json) { ... });
+</code></pre>
+
+<h3>Notes</h3>
+
+<ul>
+<li>Server input must be application/x-www-form-urlencoded or multipart/form-data.</li>
+<li>POST bodies must not be empty, use a dummy parameter if necessary.</li>
+<li>Server output must be in JSON format.</li>
+<li>In case of errors, the server output will be in the form <code>{ "error": "Error message text." }</code>.</li>
+<li>printHttpHeader() will end the HTTP header (unlike before, may break existing addons).</li>
+</ul>
+
+
+</body>
+</html>

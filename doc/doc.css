@@ -1,0 +1,81 @@
+body {
+	background-color: white;
+	font-family: verdana, sans-serif;
+	font-size: 13px;
+}
+
+h1, h2, h3, h4 {
+	font-family: arial, sans-serif;
+}
+
+h2 {
+	margin-top: 30px;
+	border-top: 1px solid black;
+	padding-top: 10px;
+}
+
+h3, h4 {
+	margin-left: 15px;
+}	
+
+code, samp, kbd, var, dl.ids dt {
+	font-family: 'andale mono', monospace;
+	font-size: 12px;
+}
+
+var {
+	white-space: nowrap;
+}
+
+code {
+	color: teal;
+}
+
+samp {
+	color: maroon;
+}
+
+kbd {
+	color: green;
+}
+
+var, dl.ids dt {
+	color: gray;
+	font-style: normal;
+}
+
+p {
+	margin-left: 15px;
+	margin-right: 15px;
+}
+
+pre {
+	margin-left: 30px;
+	margin-top: -1em;
+}
+
+ul.ext li, ol.ext li {
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+
+li pre {
+	margin-left: 15px;
+	margin-top: 0;
+}
+
+blockquote {
+	font-style: italic;
+}
+
+a {
+	text-decoration: none;
+}
+
+dt {
+	margin: 10px 15px 0 30px;
+}
+
+dd {
+	margin: 0 15px 0 45px;
+}

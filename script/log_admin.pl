@@ -1,0 +1,209 @@
+#!/usr/bin/perl
+#------------------------------------------------------------------------------
+#    mwForum - Web-based discussion forum
+#    Copyright (c) 1999-2012 Markus Wichitill
+#
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#------------------------------------------------------------------------------
+
+use strict;
+use warnings;
+no warnings qw(uninitialized redefine);
+
+# Imports
+use MwfMain;
+
+#------------------------------------------------------------------------------
+
+# Init
+my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
+
+# Check if user is admin
+$user->{admin} or $m->error('errNoAccess');
+
+# Print header
+$m->printHeader();
+
+# Get CGI parameters
+my $mode = $m->paramStrId('mode') || '';
+my $page = $m->paramInt('pg') || 1;
+my $search = $m->paramStr('search') || "";
+my $field = $m->paramStrId('field') || 'action';
+my $sort = $m->paramStrId('sort') || 'id';
+my $order = $m->paramStrId('order') || 'desc';
+
+# Define values and names for selectable fields
+my %fields = (
+	level => "Level",
+	entity => "Entity",
+	action => "Action",
+	userId => "User ID",
+	boardId => "Board ID",
+	topicId => "Topic ID",
+	postId => "Post ID",
+	extraId => "Other ID",
+	ip => "IP Address",
+	string => "String",
+);
+
+# Enforce valid options
+$field = 'action' if !$fields{$field};
+$sort = 'id' if $sort !~ /^(?:id|field)\z/;
+$order = 'desc' if $order !~ /^(?:asc|desc)\z/;
+
+# Preserve parameters in links
+my @params = (mode => $mode, search => $search, field => $field, sort => $sort, order => $order);
+
+# Search for
+my $fieldCast = $m->{pgsql} ? "CAST($field AS VARCHAR)" : $field;
+my $searchEsc = $m->escHtml($search);
+my $searchLike = $m->dbEscLike($searchEsc);
+my $searchStr = $search ? "WHERE $fieldCast = :search" : "";
+
+# Sort list by
+my $orderStr = "";
+if ($sort eq 'field') { $orderStr = "$field $order, id DESC" }
+else { $orderStr = "id $order" }
+
+# Get ids of log lines
+my $lines = [];
+if ($mode eq 'searches') {
+	$lines = $m->fetchAllArray("
+		SELECT id 
+		FROM log
+		WHERE entity = 'forum'
+			AND action = 'search'
+			AND string <> ''
+		ORDER BY id DESC
+		LIMIT 2000");
+}
+else {
+	$lines = $m->fetchAllArray("
+		SELECT id FROM log $searchStr ORDER BY $orderStr LIMIT 2000", { search => $search });
+}
+
+# Print page bar
+my $linesPP = 100;
+my $pageNum = int(@$lines / $linesPP) + (@$lines % $linesPP != 0);
+my @pageLinks = $pageNum < 2 ? () : $m->pageLinks('log_admin', \@params, $page, $pageNum);
+my @navLinks = ({ url => $m->url('forum_show'), txt => 'comUp', ico => 'up' });
+my @adminLinks = ();
+push @adminLinks, { url => $m->url('log_admin', mode => 'searches'),
+	txt => 'Searches', ico => 'search' };
+push @adminLinks, { url => $m->url('log_delete'),
+	txt => 'Delete', ico => 'delete' };
+$m->printPageBar(mainTitle => "Log", navLinks => \@navLinks, pageLinks => \@pageLinks,
+	adminLinks => \@adminLinks);
+
+# Get lines on page
+my @pageLines = @$lines[($page - 1) * $linesPP .. $m->min($page * $linesPP, scalar @$lines) - 1];
+my @pageLineIds = map($_->[0], @pageLines);
+if ($mode eq 'searches') {
+	$lines = $m->fetchAllHash("
+		SELECT * FROM log WHERE id IN (:pageLineIds) ORDER BY logTime DESC",
+		{ pageLineIds => \@pageLineIds });
+}
+else {
+	$lines = $m->fetchAllHash("
+		SELECT * FROM log WHERE id IN (:pageLineIds) ORDER BY $orderStr",
+		{ pageLineIds => \@pageLineIds });
+}
+
+# Determine listbox selections
+my %state = (
+	$sort => "selected='selected'",
+	$order => "selected='selected'",
+	"field$field" => "selected='selected'",
+);
+
+# Print log list form
+print
+	"<form action='log_admin$m->{ext}' method='get'>\n",
+	"<div class='frm'>\n",
+	"<div class='hcl'><span class='htt'>List Log Entries</span></div>\n",
+	"<div class='ccl'>\n",
+	"<div class='cli'>\n",
+	"<label>Search\n",
+	"<input type='text' name='search' style='width: 100px' value='$searchEsc'/></label>\n",
+	"<label>Field\n",
+	"<select name='field' size='1'>\n",
+	map("<option value='$_' $state{\"field$_\"}>$fields{$_}</option>\n",
+		sort({$fields{$a} cmp $fields{$b}} keys(%fields))),
+	"</select></label>\n",
+	"<label>Sort\n",
+	"<select name='sort' size='1'>\n",
+	"<option value='id' $state{id}>ID</option>\n",
+	"<option value='field' $state{field}>Field</option>\n",
+	"</select></label>\n",
+	"<label>Order\n",
+	"<select name='order' size='1'>\n",
+	"<option value='desc' $state{desc}>Desc</option>\n",
+	"<option value='asc' $state{asc}>Asc</option>\n",
+	"</select></label>\n",
+	$m->submitButton('List', 'search'),
+	"</div>\n",
+	$m->{sessionId} ? "<input type='hidden' name='sid' value='$m->{sessionId}'/>\n" : "",
+	"</div>\n",
+	"</div>\n",
+	"</form>\n\n";
+
+# Print log list header
+print
+	"<table class='tbl btb'>\n",
+	"<tr class='hrw'>\n",
+	"<th>ID</th>\n",
+	"<th>Time</th>\n",
+	"<th>Lvl</th>\n",
+	"<th>Entity</th>\n",
+	"<th>Action</th>\n",
+	"<th>IP Address</th>\n",
+	"<th>User</th>\n",
+	"<th>Board</th>\n",
+	"<th>Topic</th>\n",
+	"<th>Post</th>\n",
+	"<th>Other</th>\n",
+	"<th>String</th>\n",
+	"</tr>\n";
+
+# Print log list
+for my $line (@$lines) {
+	my $timeStr = $m->formatTime($line->{logTime}, $user->{timezone}, "%Y-%m-%d %H:%M:%S");
+	my $userStr = $line->{userId}
+		? "<a href='" . $m->url('user_info', uid => $line->{userId}) . "'>$line->{userId}</a>" : "";
+	my $boardStr = $line->{boardId}
+		? "<a href='" . $m->url('board_show', bid => $line->{boardId}) . "'>$line->{boardId}</a>" : "";
+	my $topicStr = $line->{topicId}
+		? "<a href='" . $m->url('topic_show', tid => $line->{topicId}) . "'>$line->{topicId}</a>" : "";
+	my $postStr = $line->{postId}
+		? "<a href='" . $m->url('topic_show', pid => $line->{postId}) . "'>$line->{postId}</a>" : "";
+	my $extraStr = $line->{extraId} ? $line->{extraId} : "";
+	print
+		"<tr class='crw'>\n",
+		"<td>$line->{id}</td>\n",
+		"<td>$timeStr</td>\n",
+		"<td>$line->{level}</td>\n",
+		"<td>$line->{entity}</td>\n",
+		"<td>$line->{action}</td>\n",
+		"<td>$line->{ip}</td>\n",
+		"<td>$userStr</td>\n",
+		"<td>$boardStr</td>\n",
+		"<td>$topicStr</td>\n",
+		"<td>$postStr</td>\n",
+		"<td>$extraStr</td>\n",
+		"<td>$line->{string}</td>\n",
+		"</tr>\n";
+}
+
+print "</table>\n\n";
+
+# Log action and finish
+$m->printFooter();
+$m->finish();
