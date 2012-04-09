@@ -85,8 +85,7 @@ if ($submitted) {
 			$newTopicId, $newBoardId, $oldTopicId);
 		
 		# Delete old topic
-		$m->dbDo("
-			DELETE FROM topics WHERE id = ?", $oldTopicId);
+		$m->deleteTopic($oldTopicId);
 		
 		# Delete topicReadTimes, otherwise too many posts might be marked as read
 		$m->dbDo("

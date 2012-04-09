@@ -26,12 +26,13 @@ use MwfMain;
 
 # Get arguments
 my %opts = ();
-Getopt::Std::getopts('f:p:', \%opts);
+Getopt::Std::getopts('sf:p:', \%opts);
+my $spawned = $opts{s};
 my $forumId = $opts{f};
 my $postId = int($opts{p});
 
 # Init
-my ($m, $cfg, $lng) = MwfMain->newShell(forumId => $forumId, spawn => 1);
+my ($m, $cfg, $lng) = MwfMain->newShell(forumId => $forumId, spawned => $spawned);
 exit if !$cfg->{subsInstant};
 $m->dbBegin();
 

@@ -18,7 +18,7 @@ use 5.008001;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine once);
-our $VERSION = "2.26.0";
+our $VERSION = "2.26.1";
 
 #------------------------------------------------------------------------------
 
@@ -157,17 +157,9 @@ sub newShell
 	my $class = shift();
 	my %params = @_;
 	my $allowCgi = $params{allowCgi};  # Allow execution over CGI
+	my $spawned = $params{spawned};  # Signal spawned by mwForum, in case $MP/$CGI get inherited
 	my $upgrade = $params{upgrade};  # Avoid incompatibilities with install/upgrade scripts
 	my $forumId = $params{forumId};  # Hostname or path of forum in multi-forum installation
-	my $spawn = $params{spawn};  # Spawned (fork/exec or whatever) subprocess?
-
-	# Detach from parent process
-	if ($spawn && $^O ne 'MSWin32') {
-		#open STDERR, ">>", "/tmp/mwf_spawn.log" or die "Reopening STDERR failed. $!";
-		#open STDOUT, ">&", STDERR or die "Reopening STDOUT failed. $!";
-		require POSIX;
-		POSIX::setsid() or die "setsid() failed. $!";
-	}
 
 	# Load global configuration
 	eval { require MwfConfigGlobal } or die "MwfConfigGlobal module not available"
@@ -181,11 +173,11 @@ sub newShell
 	bless $m, $class;
 
 	# Don't run this over CGI unless explicitly allowed
-	!$CGI && !$MP || $allowCgi || $ENV{MWF_ALLOWCGI}
+	!$CGI && !$MP || $allowCgi || $spawned
 		or die "This script must not be executed via CGI or mod_perl.";
 
-	# Print HTTP header under CGI if started directly (not spawned by forum)
-	print "Content-Type: text/plain\n\n" if ($CGI || $MP) && !$ENV{MWF_ALLOWCGI};
+	# Print HTTP header under CGI (e.g. for install.pl and upgrade.pl)
+	print "Content-Type: text/plain\n\n" if ($CGI || $MP) && !$spawned;
 
 	# Load base configuration
 	$m->{env}{realHost} = $forumId;
@@ -940,9 +932,9 @@ sub spawnScript
 	my $cfg = $m->{cfg};
 
 	# Add forum id for multi-forum setups
+	push @args, "-s";
 	push @args, "-f" => $m->{forumId} if $m->{forumId};
 
-	$ENV{MWF_ALLOWCGI} = 1;
 	if ($cfg->{oldSpawnMethod}) {
 		# Old method that waits for forked process, uses cwd and $^X, and may timeout
 		system("$^X $script$m->{ext} " . join(" ", @args)) != -1 
@@ -958,17 +950,19 @@ sub spawnScript
 			or $m->logError("CreateProcess() failed. " . Win32::FormatMessage(Win32::GetLastError()));
 	}
 	else {
-		# Might not work everywhere
+		# Unix forking voodoo nonsense
 		require POSIX;
 		$SIG{CHLD} = 'IGNORE';
 		$script = "$cfg->{scriptFsPath}/$script$m->{ext}";
 		defined(my $kid = fork()) or $m->logError("fork() failed. $!");
-		if ($kid == 0) {
-			for (my $fd = 0; $fd < 20; $fd++) { POSIX::close($fd) }
-			exec($cfg->{perlBinary}, "-I", $cfg->{scriptFsPath}, $script, @args) or CORE::exit;
-		}
+		return if $kid;
+		open STDIN, "<", "/dev/null";
+		open STDOUT, ">>", "/dev/null";
+		open STDERR, ">>", "/dev/null";
+		for (my $fd = 3; $fd < 20; $fd++) { POSIX::close($fd) }
+		POSIX::setsid() != -1 or die "setsid() failed. $!";
+		exec($cfg->{perlBinary}, "-I", $cfg->{scriptFsPath}, $script, @args) or CORE::exit;
 	}
-	$ENV{MWF_ALLOWCGI} = 0;
 }
 
 #------------------------------------------------------------------------------

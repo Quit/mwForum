@@ -26,11 +26,12 @@ use MwfMain;
 
 # Get arguments
 my %opts = ();
-Getopt::Std::getopts('f:', \%opts);
+Getopt::Std::getopts('sf:', \%opts);
+my $spawned = $opts{s};
 my $forumId = $opts{f};
 
 # Init
-my ($m, $cfg, $lng) = MwfMain->newShell(forumId => $forumId);
+my ($m, $cfg, $lng) = MwfMain->newShell(forumId => $forumId, spawned => $spawned);
 exit if !$cfg->{subsDigest};
 $m->dbBegin();
 

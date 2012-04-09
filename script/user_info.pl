@@ -256,7 +256,7 @@ print
 	"<tr class='crw'>\n",
 	"<td class='hco'>$lng->{uifProfGeoIp}</td>\n",
 	$cfg->{userFlags}
-		? "<td>$geoLocation <img class='flg' src='$cfg->{dataPath}/flags/$countryCode.png' alt=''/>"
+		? "<td>$geoLocation <img class='flg' src='$cfg->{dataPath}/flags/$countryCode.png' alt=''/></td>"
 		: "<td>$geoLocation</td>\n",
 	"</tr>\n"
 	if $countryCode;
