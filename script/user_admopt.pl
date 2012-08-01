@@ -64,7 +64,7 @@ if ($submitted) {
 		$oldNames = join(", ", $optUser->{userName}, $optUser->{oldNames} ? $optUser->{oldNames} : ())
 			if $userName ne $optUser->{userName};
 		
-		# Escape strings
+		# Escape submitted values
 		my $oldNamesEsc = $m->escHtml($oldNames);
 		my $commentEsc = $m->escHtml($comment, 2);
 
@@ -85,7 +85,7 @@ if ($submitted) {
 		
 		# Log action and finish
 		$m->logAction(1, 'user', 'admopt', $userId, 0, 0, 0, $optUserId);
-		$m->redirect('forum_show');
+		$m->redirect('user_info', uid => $optUserId);
 	}
 }
 
@@ -98,6 +98,9 @@ if (!$submitted || @{$m->{formErrors}}) {
 	my @navLinks = ({ url => $m->url('user_info', uid => $optUserId), txt => 'comUp', ico => 'up' });
 	$m->printPageBar(mainTitle => $lng->{uopTitle}, subTitle => $optUser->{userName},
 		navLinks => \@navLinks);
+
+	# Print hints and form errors
+	$m->printFormErrors();
 	
 	# Set submitted or database values
 	my $oldNamesEsc = $submitted ? $m->escHtml($oldNames) : $optUser->{oldNames};
@@ -108,19 +111,12 @@ if (!$submitted || @{$m->{formErrors}}) {
 	$admin = $submitted ? $admin : $optUser->{admin};
 	
 	# Prepare admin comment
-	$commentEsc =~ s!<br/>!\n!g;
+	$commentEsc =~ s!<br/?>!\n!g;
 
 	# Determine checkbox, radiobutton and listbox states
-	my $checked = "checked='checked'";
-	my $selected = "selected='selected'";
-	my %state = (
-		dontEmail => $dontEmail ? $checked : undef,
-		admin => $admin ? $checked : undef,
-	);
+	my $adminChk = $admin ? 'checked' : "";
+	my $dontEmailChk = $dontEmail ? 'checked' : "";
 
-	# Print hints and form errors
-	$m->printFormErrors();
-	
 	# Print admin only options
 	print
 		"<form action='user_admopt$m->{ext}' method='post'>\n",
@@ -129,40 +125,28 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='ccl'>\n",
 		"<fieldset>\n",
 		"<label class='lbw'>Username\n",
-		"<input type='text' class='fcs hwi' name='userName' maxlength='$cfg->{maxUserNameLen}'",
-		" autofocus='autofocus' required='required' value='$optUser->{userName}'/></label>\n",
+		"<input type='text' class='hwi' name='userName' maxlength='$cfg->{maxUserNameLen}'",
+		" value='$optUser->{userName}' autofocus required></label>\n",
 		"<label class='lbw'>Old usernames (will be extended automatically when user is renamed)\n",
-		"<input type='text' class='fwi' name='oldNames' value='$oldNamesEsc'/></label>",
+		"<input type='text' class='fwi' name='oldNames' value='$oldNamesEsc'></label>",
 		"<label class='lbw'>Remaining number of times user can change username\n",
-		"<input type='number' name='renamesLeft' value='$renamesLeft'/></label>\n",
-		"</fieldset>\n",
-		"<fieldset>\n",
+		"<input type='number' name='renamesLeft' value='$renamesLeft'></label>\n",
+		"<datalist id='titles'>\n",
+		map("<option value='" . $m->escHtml($_) . "'>\n", @{$cfg->{userTitles}}),
+		"</datalist>\n",
 		"<label class='lbw'>Title (see FAQ.html for details)\n",
-		"<select name='titleSel' size='1'>\n",
-		"<option value=''>(individual title below)</option>\n";
-	
-	for my $ttl (@{$cfg->{userTitles}}) {
-		my $ttlEsc = $m->escHtml($ttl);
-		my $sel = $ttlEsc eq $title ? "selected='selected'" : "";
-		print "<option value='$ttlEsc' $sel>$ttlEsc</option>\n";
-	}
-	
-	print
-		"</select></label>\n",
-		"<input type='text' class='hwi' name='title' value='$titleEsc'/>\n",
-		"</fieldset>\n",
-		"<fieldset>\n",
+		"<input type='text' class='hwi' name='title' list='titles' value='$titleEsc'></label>\n",
 		"<label class='lbw'>Comments (only visible to admins)\n",
 		"<textarea name='comment' rows='4'>$commentEsc</textarea></label>\n",
 		"</fieldset>\n",
 		"<fieldset>\n",
-		"<div><label><input type='checkbox' name='admin' $state{admin}/>",
+		"<div><label><input type='checkbox' name='admin' $adminChk>",
 		" User is a forum admin</label></div>\n",
-		"<div><label><input type='checkbox' name='dontEmail' $state{dontEmail}/>",
+		"<div><label><input type='checkbox' name='dontEmail' $dontEmailChk>",
 		" Don't send email to this user</label></div>\n",
 		"</fieldset>\n",
 		$m->submitButton("Change", 'admopt'),
-		"<input type='hidden' name='uid' value='$optUserId'/>\n",
+		"<input type='hidden' name='uid' value='$optUserId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

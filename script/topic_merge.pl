@@ -36,31 +36,30 @@ my $submitted = $m->paramBool('subm');
 my $newTopicId = $newTopicId2 || $newTopicId1;
 $oldTopicId or $m->error('errParamMiss');
 
-# Get topic
-my $topic = $m->fetchHash("
-	SELECT topics.boardId, topics.lastPostTime,
-		posts.userId
+# Get source topic
+my ($oldBoardId, $oldLastPostTime, $topicUserId) = $m->fetchArray("
+	SELECT topics.boardId, topics.lastPostTime, posts.userId
 	FROM topics AS topics
 		INNER JOIN posts AS posts
 			ON posts.id = topics.basePostId
-	WHERE topics.id = ?", $oldTopicId);
-$topic or $m->error('errTpcNotFnd');
-my $oldBoardId = $topic->{boardId};
+	WHERE topics.id = ?", 
+	$oldTopicId);
+$oldBoardId or $m->error('errTpcNotFnd');
 
 # Check if user is admin or moderator in source board
 $user->{admin} || $m->boardAdmin($userId, $oldBoardId) or $m->error('errNoAccess');
 
 # Destination topic must not be source topic
-$newTopicId != $oldTopicId or $m->error('errTpcNotFnd');
+$newTopicId != $oldTopicId or $m->error("No self-merging.");
 
 # Process form
 if ($submitted) {
 	# Check request source authentication
 	$m->checkSourceAuth() or $m->formError('errSrcAuth');
 
-	# Get destination board
-	my $newBoardId = $m->fetchArray("
-		SELECT boardId FROM topics WHERE id = ?", $newTopicId);
+	# Get destination topic
+	my ($newBoardId, $newLastPostTime) = $m->fetchArray("
+		SELECT boardId, lastPostTime FROM topics WHERE id = ?", $newTopicId);
 	$newBoardId or $m->formError('errTpcNotFnd');
 
 	# Check if user is admin or moderator in destination board
@@ -77,7 +76,7 @@ if ($submitted) {
 				AND lastPostTime > :lastPostTime
 			ORDER BY lastPostTime
 			LIMIT 1",
-			{ oldBoardId => $oldBoardId, lastPostTime => $topic->{lastPostTime} });
+			{ oldBoardId => $oldBoardId, lastPostTime => $oldLastPostTime });
 		
 		# Update posts
 		$m->dbDo("
@@ -87,21 +86,79 @@ if ($submitted) {
 		# Delete old topic
 		$m->deleteTopic($oldTopicId);
 		
-		# Delete topicReadTimes, otherwise too many posts might be marked as read
-		$m->dbDo("
-			DELETE FROM topicReadTimes WHERE topicId = ?", $newTopicId);
+		# Handle read times
+		if ($m->{mysql}) {
+			# Special treatment for users who have both topics completely read
+			$m->dbDo("
+				UPDATE topicReadTimes 
+				INNER JOIN (
+					SELECT oldTimes.userId
+					FROM topicReadTimes AS oldTimes 
+						INNER JOIN topicReadTimes AS newTimes
+							ON newTimes.userId = oldTimes.userId
+					WHERE oldTimes.topicId = :oldTopicId
+						AND oldTimes.lastReadTime >= :oldLastPostTime
+						AND newTimes.topicId = :newTopicId
+						AND newTimes.lastReadTime >= :newLastPostTime
+				) AS updates
+				SET lastReadTime = :now
+				WHERE topicReadTimes.userId = updates.userId
+					AND (topicId = :oldTopicId OR topicId = :newTopicId)",
+				{ now => $m->{now}, oldTopicId => $oldTopicId, newTopicId => $newTopicId,
+					oldLastPostTime => $oldLastPostTime, newLastPostTime => $newLastPostTime });
+
+			# Set read times to older of the two
+			$m->dbDo("
+				UPDATE topicReadTimes AS o
+					LEFT JOIN topicReadTimes AS i 
+						ON i.userId = o.userId 
+						AND i.topicId = :oldTopicId
+				SET o.lastReadTime = LEAST(o.lastReadTime, COALESCE(i.lastReadTime, 0))
+				WHERE o.topicId = :newTopicId",
+				{ oldTopicId => $oldTopicId, newTopicId => $newTopicId });
+		}
+		else {
+			# Special treatment for users who have both topics completely read
+			$m->dbDo("
+				UPDATE topicReadTimes SET lastReadTime = :now 
+				FROM (
+					SELECT oldTimes.userId
+					FROM topicReadTimes AS oldTimes 
+						INNER JOIN topicReadTimes AS newTimes
+							ON newTimes.userId = oldTimes.userId
+					WHERE oldTimes.topicId = :oldTopicId
+						AND oldTimes.lastReadTime >= :oldLastPostTime
+						AND newTimes.topicId = :newTopicId
+						AND newTimes.lastReadTime >= :newLastPostTime
+					) AS updates
+				WHERE topicReadTimes.userId = updates.userId
+					AND (topicId = :oldTopicId OR topicId = :newTopicId)",
+				{ now => $m->{now}, oldTopicId => $oldTopicId, newTopicId => $newTopicId,
+					oldLastPostTime => $oldLastPostTime, newLastPostTime => $newLastPostTime })
+				if $m->{pgsql};
+
+			# Set read times to older of the two
+			my $least = $m->{sqlite} ? 'MIN' : 'LEAST';
+			$m->dbDo("
+				UPDATE topicReadTimes SET 
+					lastReadTime = $least(lastReadTime, COALESCE((
+						SELECT lastReadTime
+						FROM topicReadTimes AS i 
+						WHERE i.userId = topicReadTimes.userId 
+							AND i.topicId = :oldTopicId
+					), 0))
+				WHERE topicId = :newTopicId",
+				{ oldTopicId => $oldTopicId, newTopicId => $newTopicId });
+		}
 		
 		# Update statistics
 		$m->recalcStats(undef, $newTopicId);
-		if ($oldBoardId != $newBoardId) {
-			$m->recalcStats($oldBoardId);
-			$m->recalcStats($newBoardId);
-		}
+		$m->recalcStats([ $oldBoardId, $newBoardId ]) if $oldBoardId != $newBoardId;
 
 		# Add notification message
-		if ($notify && $topic->{userId} && $topic->{userId} != $userId) {
+		if ($notify && $topicUserId && $topicUserId != $userId) {
 			my $url = "topic_show$m->{ext}?tid=$newTopicId";
-			$m->addNote('tpcMrg', $topic->{userId}, 'notTpcMrg', tpcUrl => $url, reason => $reason);
+			$m->addNote('tpcMrg', $topicUserId, 'notTpcMrg', tpcUrl => $url, reason => $reason);
 		}
 		
 		# Log action and finish
@@ -125,6 +182,9 @@ if (!$submitted || @{$m->{formErrors}}) {
 	my @navLinks = ({ url => $m->url('topic_show', tid => $oldTopicId), 
 		txt => 'comUp', ico => 'up' });
 	$m->printPageBar(mainTitle => $lng->{mgtTitle}, subTitle => $subject, navLinks => \@navLinks);
+
+	# Print hints and form errors
+	$m->printFormErrors();
 	
 	# Get other topics
 	my $topics = $m->fetchAllHash("
@@ -136,9 +196,6 @@ if (!$submitted || @{$m->{formErrors}}) {
 		LIMIT 200", 
 		{ oldBoardId => $oldBoardId, oldTopicId => $oldTopicId });
 
-	# Print hints and form errors
-	$m->printFormErrors();
-	
 	# Print destination topic form
 	print
 		"<form action='topic_merge$m->{ext}' method='post'>\n",
@@ -147,25 +204,29 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='ccl'>\n",
 		"<fieldset>\n",
 		"<label class='lbw'>$lng->{mgtMrgDest}\n",
-		"<select class='fcs' name='newTopic1' size='10' autofocus='autofocus'>\n",
+		"<select name='newTopic1' size='10' autofocus>\n",
 		map("<option value='$_->{id}'>$_->{subject}</option>\n", @$topics),
 		"</select></label>\n",
 		"<label class='lbw'>$lng->{mgtMrgDest2}\n",
-		"<input type='text' class='qwi' name='newTopic2' maxlength='8'/></label>\n",
+		"<input type='text' class='qwi' name='newTopic2' maxlength='8'></label>\n",
 		"</fieldset>\n";
 
-	# Print notification checkbox
-	my $checked = $cfg->{noteDefMod} ? "checked='checked'" : "";
+	# Print notification section
+	my $noteChk = $cfg->{noteDefMod} ? 'checked' : "";
 	print
 		"<fieldset>\n",
-		"<div><label><input type='checkbox' name='notify' $checked/>$lng->{notNotify}</label></div>\n",
-		"<input type='text' class='fwi' name='reason'/>\n",
+		"<div><label><input type='checkbox' name='notify' $noteChk>$lng->{notNotify}</label></div>\n",
+		"<datalist id='reasons'>\n",
+		map("<option value='$_'>\n", @{$cfg->{modReasons}}),
+		"</datalist>\n",
+		"<input type='text' class='fwi' name='reason' list='reasons'>\n",
 		"</fieldset>\n"
-		if $topic->{userId} > 0 && $topic->{userId} != $userId;
+		if $topicUserId > 0 && $topicUserId != $userId;
 
+	# Print submit section
 	print
 		$m->submitButton('mgtMrgB', 'merge'),
-		"<input type='hidden' name='tid' value='$oldTopicId'/>\n",
+		"<input type='hidden' name='tid' value='$oldTopicId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

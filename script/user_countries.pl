@@ -94,12 +94,12 @@ my @numbers = map($countries{$_}[1], @codes);
 my $factor = 100 / $m->max(@numbers, 1);
 my $codes = join("|", map(uc, @codes));
 my $numbers = "t:" . join(",", map(int($_ * $factor + .5), @numbers));
-my $url = "$m->{http}://chart.googleapis.com/chart?";
+my $url = "//chart.googleapis.com/chart?";
 my %params = (cht => "map:fixed=-50,-129,73,180", chs => "740x400",
 	chf => "bg,s,e6efff", chco => "ffffff,ddffdd,00aa00", chld => $codes, chd => $numbers);
 for my $key (keys %params) {
 	my $value = $params{$key};
-	$value =~ s/([^A-Za-z_0-9.!~()-|,])/'%'.unpack("H2",$1)/eg;
+	$value =~ s/([^A-Za-z_0-9.!~()|,-])/'%'.unpack("H2",$1)/eg;
 	$url .= "$key=$value&amp;";
 }
 
@@ -108,7 +108,7 @@ print
 	"<div class='frm'>\n",
 	"<div class='hcl'><span class='htt'>$lng->{ucoMapTtl}</span></div>\n",
 	"<div class='ccl'>\n",
-	"<img src='$url' width='740' height='400' alt='$lng->{ucoMapTtl}'/>\n",
+	"<img src='$url' width='740' height='400' alt='$lng->{ucoMapTtl}'>\n",
 	"</div>\n",
 	"</div>\n\n";
 
@@ -119,7 +119,7 @@ print
 for my $code (sort { $countries{$b}[1] <=> $countries{$a}[1] } @codes) {
 	print 
 		"<tr class='crw'><td class='hco'>",
-		#"<img class='flg' src='$cfg->{dataPath}/flags/$code.png' alt='$code' title='$code'/> ",
+		#"<img class='flg' src='$cfg->{dataPath}/flags/$code.png' title='$code' alt='$code'> ",
 		"$countries{$code}[0]</td><td>$countries{$code}[1]</td></tr>\n";
 }
 print "</table>\n\n";

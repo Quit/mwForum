@@ -2,7 +2,7 @@ package MwfConfig;
 use strict;
 use warnings;
 our ($VERSION, $cfg);
-$VERSION = "2.23.1";
+$VERSION = "2.27.2";
 
 #-----------------------------------------------------------------------------
 # Basic options
@@ -45,7 +45,7 @@ $cfg->{dbHideError}    = 0;
 
 # Max. size of attachments 
 # Also limits general CGI input. Don't set it below a few thousand byte.
-$cfg->{maxAttachLen}   = 1000000;
+$cfg->{maxAttachLen}   = 1048576;
 
 #-----------------------------------------------------------------------------
 # The following options can only be changed here and not in the online form 
@@ -66,7 +66,8 @@ $cfg->{scriptFsPath}   = "";
 # Required for cron emu, manual cron starting and instant subscriptions
 $cfg->{perlBinary}     = "/usr/bin/perl";
 
-# Limit forum options page to certain admins (otherwise all admins have access)
+# Limit forum options and details pages to certain admins, otherwise
+# all admins have access
 # Comma-sep. list of numeric user IDs, example: "1,2,3"
 $cfg->{cfgAdmins}      = "";
 

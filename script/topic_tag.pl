@@ -97,27 +97,30 @@ if (!$submitted || @{$m->{formErrors}}) {
 	# Print hints and form errors
 	$m->printFormErrors();
 
+	# Prepare values
+	my $noTagChk = !$oldTag ? 'checked' : "";
+
 	# Print tag form
-	my $chk = !$oldTag ? "checked='checked'" : "";
 	print
 		"<form action='topic_tag$m->{ext}' method='post'>\n",
 		"<div class='frm'>\n",
 		"<div class='hcl'><span class='htt'>$lng->{ttgTagTtl}</span></div>\n",
 		"<div class='ccl'>\n",
-		"<div><label><input type='radio' class='fcs' name='tag' autofocus='autofocus'",
-		" value='' $chk/></label></div>\n";
-	
+		"<div><label><input type='radio' name='tag' value='' autofocus $noTagChk></label></div>\n";
+
+	# Print tag list	
 	for my $key (sort keys %{$cfg->{topicTags}}) {
-		$chk = $key eq $oldTag ? "checked='checked'" : "";
+		my $chk = $key eq $oldTag ? 'checked' : "";
 		my ($title) = $cfg->{topicTags}{$key} =~ /[\w.]+\s*(.*)?/;
 		print
-			"<div><label><input type='radio' name='tag' value='$key' $chk/>",
+			"<div><label><input type='radio' name='tag' value='$key' $chk>",
 			$m->formatTopicTag($key), " $title</label></div>\n";
 	}
-	
+
+	# Print submit section	
 	print
 		$m->submitButton('ttgTagB', 'tag'),
-		"<input type='hidden' name='tid' value='$topicId'/>\n",
+		"<input type='hidden' name='tid' value='$topicId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

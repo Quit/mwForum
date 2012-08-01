@@ -16,7 +16,7 @@
 
 use strict;
 use warnings;
-no warnings qw(uninitialized redefine);
+no warnings qw(uninitialized);
 
 # Imports
 use Getopt::Std ();
@@ -36,10 +36,7 @@ my ($m, $cfg, $lng) = MwfMain->newShell(forumId => $forumId, spawned => $spawned
 
 # Create xml directory
 my $feedFsPath = "$cfg->{attachFsPath}/xml";
-if (!-d $feedFsPath) {
-	mkdir $feedFsPath;
-	$m->setMode($feedFsPath, 'dir');
-}
+$m->createDirectories($feedFsPath);
 
 #------------------------------------------------------------------------------
 # Generate Atom/RSS feeds

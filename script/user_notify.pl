@@ -64,15 +64,15 @@ if (!$submitted || @{$m->{formErrors}}) {
 	$m->printHeader();
 
 	# Print page bar
-	my @navLinks = ({ url => $m->url('message_list'), txt => 'comUp', ico => 'up' });
+	my @navLinks = ({ url => $m->url('user_info', uid => $recvId), txt => 'comUp', ico => 'up' });
 	$m->printPageBar(mainTitle => "User", subTitle => $recvUser->{userName}, navLinks => \@navLinks);
-	
-	# Prepare other values
-	my $bodyEsc = $m->escHtml($body, 1);
 
 	# Print hints and form errors
 	$m->printFormErrors();
 	
+	# Prepare values
+	my $bodyEsc = $m->escHtml($body, 1);
+
 	# Print notification message form
 	print
 		"<form action='user_notify$m->{ext}' method='post'>\n",
@@ -80,10 +80,9 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='hcl'><span class='htt'>Send Notification Message</span></div>\n",
 		"<div class='ccl'>\n",
 		"<label class='lbw'>Text\n",
-		"<textarea class='fcs' name='body' rows='4' autofocus='autofocus' required='required'>",
-		"$bodyEsc</textarea></label>\n",
+		"<textarea name='body' rows='4' autofocus required>$bodyEsc</textarea></label>\n",
 		$m->submitButton("Send", 'write', 'add'),
-		"<input type='hidden' name='uid' value='$recvId'/>\n",
+		"<input type='hidden' name='uid' value='$recvId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

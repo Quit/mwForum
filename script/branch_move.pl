@@ -39,20 +39,33 @@ my ($oldBoardId, $oldTopicId, $oldParentId) = $m->fetchArray("
 	SELECT boardId, topicId, parentId FROM posts WHERE id = ?", $postId);
 $oldBoardId or $m->error('errPstNotFnd');
 
-# Get topic base post
-my $basePostId = $m->fetchArray("
-	SELECT basePostId FROM topics WHERE id = ?", $oldTopicId);
+# Get source topic
+my ($basePostId, $oldLastPostTime) = $m->fetchArray("
+	SELECT basePostId, lastPostTime FROM topics WHERE id = ?", $oldTopicId);
 $basePostId != $postId or $m->error('errPromoTpc');
 
 # Check if user is admin or moderator in source board
 $user->{admin} || $m->boardAdmin($userId, $oldBoardId) or $m->error('errNoAccess');
 
-# If moving to other parent post
+# Get new parent post
+my $newBoardId = $oldBoardId;
+my $newTopicId = $oldTopicId;
 if ($newParentId) {
-	# Get new parent post
-	my ($newBoardId, $newTopicId) = $m->fetchArray("
+	($newBoardId, $newTopicId) = $m->fetchArray("
 		SELECT boardId, topicId FROM posts WHERE id = ?", $newParentId);
-	$newTopicId or $m->error('errPstNotFnd');
+	$newBoardId or $m->error('errPstNotFnd');
+}
+
+# Move inside topic or to other topic and maybe board
+if ($oldTopicId == $newTopicId) {
+	# Only update post
+	$m->dbDo("
+		UPDATE posts SET parentId = ? WHERE id = ?", $newParentId, $postId);
+}
+else {
+	# Check if user is admin or moderator in destination board
+	$user->{admin} || $m->boardAdmin($userId, $newBoardId) or $m->error('errNoAccess')
+		if $oldBoardId != $newBoardId;
 
 	# Get IDs of posts that belong to branch
 	my %postsByParent = ();
@@ -71,46 +84,84 @@ if ($newParentId) {
 		}
 	};
 	$getBranchPostIds->($getBranchPostIds, $postId);
-	
-	# If moving to parent post in other topic and/or board
-	if ($oldTopicId != $newTopicId || $oldBoardId != $newBoardId) {
-		# Check if user is admin or moderator in destination board
-		$user->{admin} || $m->boardAdmin($userId, $newBoardId) or $m->error('errNoAccess')
-			if $oldBoardId != $newBoardId;
 
-		# Update base post's parentId
-		$m->dbDo("
-			UPDATE posts SET parentId = ? WHERE id = ?", $newParentId, $postId);
-		
-		# Update posts
-		$m->dbDo("
-			UPDATE posts SET
-				boardId = :newBoardId,
-				topicId = :newTopicId
-			WHERE id IN (:branchPostIds)",
-			{ newBoardId => $newBoardId, newTopicId => $newTopicId, branchPostIds => \@branchPostIds });
-	
-		# Update statistics
-		if ($oldBoardId != $newBoardId) {
-			$m->recalcStats($oldBoardId, $oldTopicId);
-			$m->recalcStats($newBoardId, $newTopicId);
-		}
-		elsif ($oldTopicId != $newTopicId) {
-			$m->recalcStats(undef, $oldTopicId);
-			$m->recalcStats(undef, $newTopicId);
-		}
-	}
-	# If moving to other parent post in same topic
-	else {
-		# Update base post's parentId
-		$m->dbDo("
-			UPDATE posts SET parentId = ? WHERE id = ?", $newParentId, $postId);
-	}
-}
-else {
-	# Move post to topic level when parentId is 0
+	# Update posts, topics and boards
 	$m->dbDo("
-		UPDATE posts SET parentId = 0 WHERE id = ?", $postId);
+		UPDATE posts SET parentId = ? WHERE id = ?", $newParentId, $postId);
+	$m->dbDo("
+		UPDATE posts SET boardId = :newBoardId, topicId = :newTopicId WHERE id IN (:branchPostIds)",
+		{ newBoardId => $newBoardId, newTopicId => $newTopicId, branchPostIds => \@branchPostIds });
+
+	# Handle read times
+	my $newLastPostTime = $m->fetchArray("
+		SELECT lastPostTime FROM topics WHERE id = ?", $newTopicId);
+	if ($m->{mysql}) {
+		# Special treatment for users who have both topics completely read
+		$m->dbDo("
+			UPDATE topicReadTimes 
+			INNER JOIN (
+				SELECT oldTimes.userId
+				FROM topicReadTimes AS oldTimes 
+					INNER JOIN topicReadTimes AS newTimes
+						ON newTimes.userId = oldTimes.userId
+				WHERE oldTimes.topicId = :oldTopicId
+					AND oldTimes.lastReadTime >= :oldLastPostTime
+					AND newTimes.topicId = :newTopicId
+					AND newTimes.lastReadTime >= :newLastPostTime
+			) AS updates
+			SET lastReadTime = :now
+			WHERE topicReadTimes.userId = updates.userId
+				AND (topicId = :oldTopicId OR topicId = :newTopicId)",
+			{ now => $m->{now}, oldTopicId => $oldTopicId, newTopicId => $newTopicId,
+				oldLastPostTime => $oldLastPostTime, newLastPostTime => $newLastPostTime });
+
+		# Set read times to older of the two
+		$m->dbDo("
+			UPDATE topicReadTimes AS o
+				LEFT JOIN topicReadTimes AS i 
+					ON i.userId = o.userId 
+					AND i.topicId = :oldTopicId
+			SET o.lastReadTime = LEAST(o.lastReadTime, COALESCE(i.lastReadTime, 0))
+			WHERE o.topicId = :newTopicId",
+			{ oldTopicId => $oldTopicId, newTopicId => $newTopicId });
+	}
+	else {
+		# Special treatment for users who have both topics completely read
+		$m->dbDo("
+			UPDATE topicReadTimes SET lastReadTime = :now 
+			FROM (
+				SELECT oldTimes.userId
+				FROM topicReadTimes AS oldTimes 
+					INNER JOIN topicReadTimes AS newTimes
+						ON newTimes.userId = oldTimes.userId
+				WHERE oldTimes.topicId = :oldTopicId
+					AND oldTimes.lastReadTime >= :oldLastPostTime
+					AND newTimes.topicId = :newTopicId
+					AND newTimes.lastReadTime >= :newLastPostTime
+				) AS updates
+			WHERE topicReadTimes.userId = updates.userId
+				AND (topicId = :oldTopicId OR topicId = :newTopicId)",
+			{ now => $m->{now}, oldTopicId => $oldTopicId, newTopicId => $newTopicId,
+				oldLastPostTime => $oldLastPostTime, newLastPostTime => $newLastPostTime })
+			if $m->{pgsql};
+
+		# Set read times to older of the two
+		my $least = $m->{sqlite} ? 'MIN' : 'LEAST';
+		$m->dbDo("
+			UPDATE topicReadTimes SET 
+				lastReadTime = $least(lastReadTime, COALESCE((
+					SELECT lastReadTime
+					FROM topicReadTimes AS i 
+					WHERE i.userId = topicReadTimes.userId 
+						AND i.topicId = :oldTopicId
+				), 0))
+			WHERE topicId = :newTopicId",
+			{ oldTopicId => $oldTopicId, newTopicId => $newTopicId });
+	}
+
+	# Update statistics
+	$m->recalcStats(undef, [ $oldTopicId, $newTopicId ]) if $oldTopicId != $newTopicId;
+	$m->recalcStats([ $oldBoardId, $newBoardId ]) if $oldBoardId != $newBoardId;
 }
 
 # Log action and finish

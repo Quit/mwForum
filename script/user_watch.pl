@@ -24,7 +24,7 @@ use MwfMain;
 #------------------------------------------------------------------------------
 
 # Init
-my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
+my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_, autocomplete => 1);
 
 # Check if access should be denied
 $userId or $m->error('errNoAccess');
@@ -138,19 +138,19 @@ if (!$submitted || @{$m->{formErrors}}) {
 	# Print header
 	$m->printHeader();
 
-	# Print bar
+	# Print page bar
 	my @navLinks = ({ url => $m->url('user_options', uid => $optUserId), 
 		txt => 'comUp', ico => 'up' });
 	$m->printPageBar(mainTitle => $lng->{watTitle}, subTitle => $optUser->{userName},
 		navLinks => \@navLinks);
 
-	# Escape submitted values
-	my $wordEsc = $m->escHtml($word);
-	my $userNameEsc = $m->escHtml($userName);
-
 	# Print hints and form errors
 	$m->printHints(['watWrdAddT', 'watUsrAddT']);
 	$m->printFormErrors();
+
+	# Escape submitted values
+	my $wordEsc = $m->escHtml($word);
+	my $userNameEsc = $m->escHtml($userName);
 
 	if ($cfg->{watchWords}) {
 		# Print add word form
@@ -160,11 +160,10 @@ if (!$submitted || @{$m->{formErrors}}) {
 			"<div class='hcl'><span class='htt'>$lng->{watWrdAddTtl}</span></div>\n",
 			"<div class='ccl'>\n",
 			"<label class='lbw'>$lng->{watWrdAddWrd}",
-			"<input type='text' class='fcs qwi' name='word'",
-			" autofocus='autofocus' required='required' value='$wordEsc'/></label>\n",
+			"<input type='text' class='qwi' name='word' value='$wordEsc' autofocus required></label>\n",
 			$m->submitButton('watWrdAddB', 'watch'),
-			"<input type='hidden' name='act' value='addWord'/>\n",
-			"<input type='hidden' name='uid' value='$optUserId'/>\n",
+			"<input type='hidden' name='act' value='addWord'>\n",
+			"<input type='hidden' name='uid' value='$optUserId'>\n",
 			$m->stdFormFields(),
 			"</div>\n",
 			"</div>\n",
@@ -186,8 +185,8 @@ if (!$submitted || @{$m->{formErrors}}) {
 				map("<option value='$_->[0]'>$_->[0]</option>\n", @$words),
 				"</select></label>\n",
 				$m->submitButton('watWrdRemB', 'remove'),
-				"<input type='hidden' name='act' value='removeWord'/>\n",
-				"<input type='hidden' name='uid' value='$optUserId'/>\n",
+				"<input type='hidden' name='act' value='removeWord'>\n",
+				"<input type='hidden' name='uid' value='$optUserId'>\n",
 				$m->stdFormFields(),
 				"</div>\n",
 				"</div>\n",
@@ -202,33 +201,12 @@ if (!$submitted || @{$m->{formErrors}}) {
 			"<div class='frm'>\n",
 			"<div class='hcl'><span class='htt'>$lng->{watUsrAddTtl}</span></div>\n",
 			"<div class='ccl'>\n",
-			"<label class='lbw'>$lng->{watUsrAddUsr}";
-
-		my $userNum = $m->fetchArray("
-			SELECT COUNT(*) FROM users");
-		if ($userNum > $cfg->{maxListUsers}) {
-			print 
-				"<input type='text' class='fcs qwi' name='userName' required='required'",
-				" value='$userNameEsc'/></label>\n";
-		}
-		else {
-			my $users = $m->fetchAllArray("
-				SELECT id, userName 
-				FROM users
-				WHERE id NOT IN (SELECT watchedId FROM watchUsers WHERE userId = :userId)
-				ORDER BY userName",
-				{ userId => $userId });
-			my %sel = ( $watchedId => "selected='selected'" );
-			print 
-				"<select class='fcs' name='userId' size='5'>\n",
-				map("<option value='$_->[0]' $sel{$_->[0]}>$_->[1]</option>\n", @$users),
-				"</select></label>\n";
-		}
-
-		print
+			"<label class='lbw'>$lng->{watUsrAddUsr}",
+			"<input type='text' class='qwi acu acs' name='userName' value='$userNameEsc'",
+			" required></label>\n",
 			$m->submitButton('watUsrAddB', 'watch'),
-			"<input type='hidden' name='act' value='addUser'/>\n",
-			"<input type='hidden' name='uid' value='$optUserId'/>\n",
+			"<input type='hidden' name='act' value='addUser'>\n",
+			"<input type='hidden' name='uid' value='$optUserId'>\n",
 			$m->stdFormFields(),
 			"</div>\n",
 			"</div>\n",
@@ -246,7 +224,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 
 		if (@$users) {
 			# Print remove user form
-			my %sel = ( $watchedId => "selected='selected'" );
+			my %state = ( $watchedId => 'selected' );
 			print
 				"<form action='user_watch$m->{ext}' method='post'>\n",
 				"<div class='frm'>\n",
@@ -254,11 +232,11 @@ if (!$submitted || @{$m->{formErrors}}) {
 				"<div class='ccl'>\n",
 				"<label class='lbw'>$lng->{watUsrRemUsr}",
 				"<select name='userId' size='5'>\n",
-				map("<option value='$_->[0]' $sel{$_->[0]}>$_->[1]</option>\n", @$users),
+				map("<option value='$_->[0]' $state{$_->[0]}>$_->[1]</option>\n", @$users),
 				"</select></label>\n",
 				$m->submitButton('watUsrRemB', 'remove'),
-				"<input type='hidden' name='act' value='removeUser'/>\n",
-				"<input type='hidden' name='uid' value='$optUserId'/>\n",
+				"<input type='hidden' name='act' value='removeUser'>\n",
+				"<input type='hidden' name='uid' value='$optUserId'>\n",
 				$m->stdFormFields(),
 				"</div>\n",
 				"</div>\n",

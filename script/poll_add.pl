@@ -121,15 +121,17 @@ if (!$submitted || @{$m->{formErrors}}) {
 	$m->printPageBar(mainTitle => $lng->{tpcTitle}, subTitle => $topic->{subject}, 
 		navLinks => \@navLinks);
 
-	# Prepare values
-	my $titleEsc = $m->escHtml($title);
-	my $optionTextEsc = $m->escHtml($optionText, 1);
-	my $multiChecked = $multi ? "checked='checked'" : "";
-
 	# Print hints and form errors
 	$m->printHints(['aplPollNote']);
 	$m->printFormErrors();
-	
+
+	# Escape submitted values
+	my $titleEsc = $m->escHtml($title);
+	my $optionTextEsc = $m->escHtml($optionText, 1);
+
+	# Prepare values
+	my $multiChk = $multi ? 'checked' : "";
+
 	# Print add poll form
 	print
 		"<form action='poll_add$m->{ext}' method='post'>\n",
@@ -138,18 +140,18 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='ccl'>\n",
 		"<fieldset>\n",
 		"<label class='lbw'>$lng->{aplPollTitle}\n",
-		"<input type='text' class='fcs fwi' name='title' maxlength='200'",
-		" autofocus='autofocus' required='required' value='$titleEsc'/></label>\n",
+		"<input type='text' class='fwi' name='title' maxlength='200' value='$titleEsc'",
+		" autofocus required></label>\n",
 		"</fieldset>\n",
 		"<fieldset>\n",
 		"<label class='lbw'>$lng->{aplPollOpts}\n",
-		"<textarea name='options' rows='14' required='required'>$optionTextEsc</textarea></label>\n",
+		"<textarea name='options' rows='14' required>$optionTextEsc</textarea></label>\n",
 		"</fieldset>\n",
 		"<fieldset>\n",
-		"<label><input type='checkbox' name='multi' $multiChecked/>$lng->{aplPollMulti}</label>\n",
+		"<label><input type='checkbox' name='multi' $multiChk>$lng->{aplPollMulti}</label>\n",
 		"</fieldset>\n",
 		$m->submitButton('aplPollAddB', 'poll'),
-		"<input type='hidden' name='tid' value='$topicId'/>\n",
+		"<input type='hidden' name='tid' value='$topicId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

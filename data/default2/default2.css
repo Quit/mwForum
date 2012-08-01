@@ -1,4 +1,4 @@
-/* mwForum Default2 Style 2.25.2 */
+/* mwForum Default2 Style 2.27.2 */
 /* buttonIcons="1" */
 
 /* Body */
@@ -44,9 +44,7 @@ a img {
 /* Frame */
 div.frm {
 	margin-top: 10px;
-	box-shadow: 2px 2px 2px silver;
-	-moz-box-shadow: 2px 2px 2px silver;
-	-webkit-box-shadow: 2px 2px 2px silver;
+	box-shadow: 2px 2px 2px #cccccc;
 }
 
 /* Header cell */
@@ -54,10 +52,10 @@ div.hcl {
 	border-bottom: 1px solid #d0e0ee;
 	background-color: #d0e0ee;
 	background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAxIDEiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPgo8bGluZWFyR3JhZGllbnQgaWQ9ImcyMjEiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjAlIiB5Mj0iMTAwJSI+CjxzdG9wIHN0b3AtY29sb3I9IiNERkVGRkYiIG9mZnNldD0iMCIvPjxzdG9wIHN0b3AtY29sb3I9IiNEMEUwRUUiIG9mZnNldD0iMSIvPgo8L2xpbmVhckdyYWRpZW50Pgo8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBmaWxsPSJ1cmwoI2cyMjEpIiAvPgo8L3N2Zz4=);
-	background-image: linear-gradient(#dfefff, #d0e0ee);
-	background-image: -o-linear-gradient(#dfefff, #d0e0ee);
-	background-image: -moz-linear-gradient(#dfefff, #d0e0ee);
 	background-image: -webkit-gradient(linear, left top, left bottom, from(#dfefff), to(#d0e0ee));
+	background-image: -moz-linear-gradient(#dfefff, #d0e0ee);
+	background-image: -o-linear-gradient(#dfefff, #d0e0ee);
+	background-image: linear-gradient(#dfefff, #d0e0ee);
 	padding: 3px 4px;
 }
 
@@ -118,9 +116,7 @@ span.nav {
 /* Table frame */
 table.tbl {
 	margin-top: 10px;
-	box-shadow: 2px 2px 2px silver;
-	-moz-box-shadow: 2px 2px 2px silver;
-	-webkit-box-shadow: 2px 2px 2px silver;
+	box-shadow: 2px 2px 2px #cccccc;
 	width: 100%;
 	border-spacing: 0;
 	empty-cells: show;
@@ -133,10 +129,10 @@ table.tbl {
 table.tbl th {
 	background-color: #d0e0ee;
 	background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAxIDEiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPgo8bGluZWFyR3JhZGllbnQgaWQ9ImcyMjEiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjAlIiB5Mj0iMTAwJSI+CjxzdG9wIHN0b3AtY29sb3I9IiNERkVGRkYiIG9mZnNldD0iMCIvPjxzdG9wIHN0b3AtY29sb3I9IiNEMEUwRUUiIG9mZnNldD0iMSIvPgo8L2xpbmVhckdyYWRpZW50Pgo8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBmaWxsPSJ1cmwoI2cyMjEpIiAvPgo8L3N2Zz4=);
-	background-image: linear-gradient(#dfefff, #d0e0ee);
-	background-image: -o-linear-gradient(#dfefff, #d0e0ee);
-	background-image: -moz-linear-gradient(#dfefff, #d0e0ee);
 	background-image: -webkit-gradient(linear, left top, left bottom, from(#dfefff), to(#d0e0ee));
+	background-image: -moz-linear-gradient(#dfefff, #d0e0ee);
+	background-image: -o-linear-gradient(#dfefff, #d0e0ee);
+	background-image: linear-gradient(#dfefff, #d0e0ee);
 	padding: 3px 4px;
 	text-align: left;
 	font-weight: bold;
@@ -153,10 +149,10 @@ table.tbl td {
 	border-top: 1px solid #d0e0ee;
 	background-color: #efffff;
 	background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAxIDEiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPgo8bGluZWFyR3JhZGllbnQgaWQ9ImcxMiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjAlIj4KPHN0b3Agc3RvcC1jb2xvcj0iI0VGRkZGRiIgb2Zmc2V0PSIwIi8+PHN0b3Agc3RvcC1jb2xvcj0iI0U2RUZGRiIgb2Zmc2V0PSIxIi8+CjwvbGluZWFyR3JhZGllbnQ+CjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9InVybCgjZzEyKSIgLz4KPC9zdmc+);
-	background-image: linear-gradient(left, #efffff, #e6efff);
-	background-image: -o-linear-gradient(left, #efffff, #e6efff);
-	background-image: -moz-linear-gradient(left, #efffff, #e6efff);
 	background-image: -webkit-gradient(linear, left top, right top, from(#efffff), to(#e6efff));
+	background-image: -moz-linear-gradient(left, #efffff, #e6efff);
+	background-image: -o-linear-gradient(left, #efffff, #e6efff);
+	background-image: linear-gradient(to right, #efffff, #e6efff);
 	padding: 2px 4px;
 }
 
@@ -216,8 +212,8 @@ p.cpr, p.pct {
 	color: silver;
 }
 p.cpr a {
-	color: silver !important;
-}	
+	color: #aaaaff;
+}
 
 /* Board description */
 div.bds {
@@ -251,19 +247,19 @@ div.pst.unr div.hcl {
 	border-bottom: 1px solid #bbe4bb;
 	background-color: #bbe4bb;
 	background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAxIDEiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPgo8bGluZWFyR3JhZGllbnQgaWQ9Imc2MDQiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjAlIiB5Mj0iMTAwJSI+CjxzdG9wIHN0b3AtY29sb3I9IiNEOUYwRDkiIG9mZnNldD0iMCIvPjxzdG9wIHN0b3AtY29sb3I9IiNCQkU0QkIiIG9mZnNldD0iMSIvPgo8L2xpbmVhckdyYWRpZW50Pgo8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBmaWxsPSJ1cmwoI2c2MDQpIiAvPgo8L3N2Zz4=);
-	background-image: linear-gradient(#d9f0d9, #bbe4bb);
-	background-image: -o-linear-gradient(#d9f0d9, #bbe4bb);
-	background-image: -moz-linear-gradient(#d9f0d9, #bbe4bb);
 	background-image: -webkit-gradient(linear, left top, left bottom, from(#d9f0d9), to(#bbe4bb));
+	background-image: -moz-linear-gradient(#d9f0d9, #bbe4bb);
+	background-image: -o-linear-gradient(#d9f0d9, #bbe4bb);
+	background-image: linear-gradient(#d9f0d9, #bbe4bb);
 }
 div.pst.new div.hcl {
 	border-bottom: 1px solid #e4e4bb;
 	background-color: #e4e4bb;
 	background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAxIDEiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPgo8bGluZWFyR3JhZGllbnQgaWQ9Imc5NjMiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjAlIiB5Mj0iMTAwJSI+CjxzdG9wIHN0b3AtY29sb3I9IiNGMEYwRDkiIG9mZnNldD0iMCIvPjxzdG9wIHN0b3AtY29sb3I9IiNFNEU0QkIiIG9mZnNldD0iMSIvPgo8L2xpbmVhckdyYWRpZW50Pgo8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBmaWxsPSJ1cmwoI2c5NjMpIiAvPgo8L3N2Zz4=);
-	background-image: linear-gradient(#f0f0d9, #e4e4bb);
-	background-image: -o-linear-gradient(#f0f0d9, #e4e4bb);
-	background-image: -moz-linear-gradient(#f0f0d9, #e4e4bb);
 	background-image: -webkit-gradient(linear, left top, left bottom, from(#f0f0d9), to(#e4e4bb));
+	background-image: -moz-linear-gradient(#f0f0d9, #e4e4bb);
+	background-image: -o-linear-gradient(#f0f0d9, #e4e4bb);
+	background-image: linear-gradient(#f0f0d9, #e4e4bb);
 }
 
 /* Focused post */
@@ -349,9 +345,9 @@ table.igl td {
 
 /* Attachment page */
 p.ims img {
-	cursor: zoom-in;
 	cursor: -moz-zoom-in;
 	cursor: -webkit-zoom-in;
+	cursor: zoom-in;
 }
 p.ims, p.imc {
 	text-align: center;
@@ -384,8 +380,9 @@ table.tiv {
 table.tiv tr {
 	border: none;
 }
-table.tiv td {
+table.tiv th, table.tiv td {
 	border: none;
+	background: transparent;
 	padding: 0 5px 0 0;
 	vertical-align: top;
 }

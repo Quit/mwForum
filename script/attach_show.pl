@@ -39,6 +39,26 @@ my $postId = $attach->{postId};
 my $board = $m->fetchHash("
 	SELECT * FROM boards WHERE id = (SELECT boardId FROM posts WHERE id = ?)", $postId);
 
+# Get prev/next image attachment id
+my $prevAttachId = $m->fetchArray("
+	SELECT id 
+	FROM attachments 
+	WHERE postId = :postId
+		AND webImage > 0
+		AND id < :id
+	ORDER BY id DESC
+	LIMIT 1",
+	{ postId => $postId, id => $attachId });
+my $nextAttachId = $m->fetchArray("
+	SELECT id 
+	FROM attachments 
+	WHERE postId = :postId
+		AND webImage > 0
+		AND id > :id
+	ORDER BY id ASC
+	LIMIT 1",
+	{ postId => $postId, id => $attachId });
+
 # Check if user can see board
 $m->boardVisible($board) or $m->error('errNoAccess');
 
@@ -47,10 +67,10 @@ $m->printHeader();
 
 # Print page bar
 my @navLinks = ();
-push @navLinks, { url => $m->url('prevnext', aid => $attachId, dir => 'prev'), 
-	txt => 'atsPrev', ico => 'prev' };
-push @navLinks, { url => $m->url('prevnext', aid => $attachId, dir => 'next'), 
-	txt => 'atsNext', ico => 'next' };
+push @navLinks, { url => $m->url('attach_show', aid => $prevAttachId), 
+	txt => 'atsPrev', ico => 'prev', dsb => $prevAttachId ? 0 : 1 };
+push @navLinks, { url => $m->url('attach_show', aid => $nextAttachId), 
+	txt => 'atsNext', ico => 'next', dsb => $nextAttachId ? 0 : 1 };
 push @navLinks, { url => $m->url('topic_show', pid => $postId), 
 	txt => 'comUp', ico => 'up' };
 $m->printPageBar(mainTitle => $lng->{atsTitle}, subTitle => $attach->{fileName}, 
@@ -59,7 +79,9 @@ $m->printPageBar(mainTitle => $lng->{atsTitle}, subTitle => $attach->{fileName},
 # Print image
 my $postIdMod = $postId % 100;
 my $url = "$cfg->{attachUrlPath}/$postIdMod/$postId/$attach->{fileName}";
-print "<p class='ims'><img src='$url' alt=''/></p>\n\n";
+print "<p class='ims'><img src='$url' alt=''></p>\n\n";
+
+# Print caption
 print
 	"<div class='frm'>\n",
 	"<div class='ccl'>\n",

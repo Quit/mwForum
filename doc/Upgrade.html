@@ -59,6 +59,20 @@ shell&gt; rm upgrade.pl install.pl
 <p>If additional steps are required for specific upgrades, or there are important things to know, they are listed below. Follow them chronologically. Even if you skip some versions when upgrading, you still have to execute all upgrade steps between your last and the new version.</p>
 
 
+<h2>2.27.3</h2>
+
+<h3>upgrade.pl CGI Execution</h3>
+
+<p>To avoid serious problems with long-running upgrade.pl processes getting interrupted by webserver timeouts, the script can't be executed over CGI anymore. Instead, admins who don't have the ability to start upgrade.pl over a command line can now use spawn_upgrade.pl, a page that launches upgrade.pl the same way as manual/emulated cronjobs and instant subscriptions (i.e. with fork() on Un*x-like systems). The page will show the database-stored output of upgrade.pl, so completion of the upgrade process can be verified. Unfortunately, even this method can be foiled by webhosters that just kill any long-running customer process. Use the Test feature on the page before upgrading.</p>
+
+
+<h2>2.27.2</h2>
+
+<h3>Password Hashing</h3>
+
+<p>The improved password hashing and authentication token handling means that everybody has to login again and that upgrade.pl will take longer than usual. The main point of the changes is to make it a lot more difficult to recover the original passwords from the salted hashes stored in the database by using the brute force of modern hardware, in case the database gets stolen from the server - something that has happened to a lot of big companies recently.</p>
+
+
 <h2>2.21.3</h2>
 
 <h3>Smileys</h3>
@@ -66,26 +80,26 @@ shell&gt; rm upgrade.pl install.pl
 <p>The optional text smiley to icon replacement feature has been removed in favor of an integrated smiley pack for the :tag: feature. It is enabled by default for new forums, existing forums might want to set the <var>tagButtons</var> forum option to "Yes, show buttons for [tags] and :tags:" and add the following to the <var>tags</var> forum option:</p>
 
 <pre><kbd>
-confused=&lt;img class='fsm fsm_confused' src='[[dataPath]]/epx.png' title='confused' alt=':confused:'/&gt;
-cool=&lt;img class='fsm fsm_cool' src='[[dataPath]]/epx.png' title='cool' alt=':cool:'/&gt;
-cry=&lt;img class='fsm fsm_cry' src='[[dataPath]]/epx.png' title='cry' alt=':cry:'/&gt;
-eek=&lt;img class='fsm fsm_eek' src='[[dataPath]]/epx.png' title='eek' alt=':eek:'/&gt;
-evil=&lt;img class='fsm fsm_evil' src='[[dataPath]]/epx.png' title='evil' alt=':evil:'/&gt;
-fat=&lt;img class='fsm fsm_fat' src='[[dataPath]]/epx.png' title='fat' alt=':fat:'/&gt;
-grin=&lt;img class='fsm fsm_grin' src='[[dataPath]]/epx.png' title='grin' alt=':grin:'/&gt;
-lol=&lt;img class='fsm fsm_lol' src='[[dataPath]]/epx.png' title='lol' alt=':lol:'/&gt;
-mad=&lt;img class='fsm fsm_mad' src='[[dataPath]]/epx.png' title='mad' alt=':mad:'/&gt;
-neutral=&lt;img class='fsm fsm_neutral' src='[[dataPath]]/epx.png' title='neutral' alt=':neutral:'/&gt;
-razz=&lt;img class='fsm fsm_razz' src='[[dataPath]]/epx.png' title='razz' alt=':razz:'/&gt;
-red=&lt;img class='fsm fsm_red' src='[[dataPath]]/epx.png' title='red' alt=':red:'/&gt;
-roll=&lt;img class='fsm fsm_roll' src='[[dataPath]]/epx.png' title='roll' alt=':roll:'/&gt;
-sad=&lt;img class='fsm fsm_sad' src='[[dataPath]]/epx.png' title='sad' alt=':sad:'/&gt;
-slim=&lt;img class='fsm fsm_slim' src='[[dataPath]]/epx.png' title='slim' alt=':slim:'/&gt;
-smile=&lt;img class='fsm fsm_smile' src='[[dataPath]]/epx.png' title='smile' alt=':smile:'/&gt;
-surprised=&lt;img class='fsm fsm_surprised' src='[[dataPath]]/epx.png' title='surprised' alt=':surprised:'/&gt;
-twisted=&lt;img class='fsm fsm_twisted' src='[[dataPath]]/epx.png' title='twisted' alt=':twisted:'/&gt;
-wink=&lt;img class='fsm fsm_wink' src='[[dataPath]]/epx.png' title='wink' alt=':wink:'/&gt;
-yell=&lt;img class='fsm fsm_yell' src='[[dataPath]]/epx.png' title='yell' alt=':yell:'/&gt;
+confused=&lt;img class='fsm fsm_confused' src='[[dataPath]]/epx.png' title='confused' alt=':confused:'&gt;
+cool=&lt;img class='fsm fsm_cool' src='[[dataPath]]/epx.png' title='cool' alt=':cool:'&gt;
+cry=&lt;img class='fsm fsm_cry' src='[[dataPath]]/epx.png' title='cry' alt=':cry:'&gt;
+eek=&lt;img class='fsm fsm_eek' src='[[dataPath]]/epx.png' title='eek' alt=':eek:'&gt;
+evil=&lt;img class='fsm fsm_evil' src='[[dataPath]]/epx.png' title='evil' alt=':evil:'&gt;
+fat=&lt;img class='fsm fsm_fat' src='[[dataPath]]/epx.png' title='fat' alt=':fat:'&gt;
+grin=&lt;img class='fsm fsm_grin' src='[[dataPath]]/epx.png' title='grin' alt=':grin:'&gt;
+lol=&lt;img class='fsm fsm_lol' src='[[dataPath]]/epx.png' title='lol' alt=':lol:'&gt;
+mad=&lt;img class='fsm fsm_mad' src='[[dataPath]]/epx.png' title='mad' alt=':mad:'&gt;
+neutral=&lt;img class='fsm fsm_neutral' src='[[dataPath]]/epx.png' title='neutral' alt=':neutral:'&gt;
+razz=&lt;img class='fsm fsm_razz' src='[[dataPath]]/epx.png' title='razz' alt=':razz:'&gt;
+red=&lt;img class='fsm fsm_red' src='[[dataPath]]/epx.png' title='red' alt=':red:'&gt;
+roll=&lt;img class='fsm fsm_roll' src='[[dataPath]]/epx.png' title='roll' alt=':roll:'&gt;
+sad=&lt;img class='fsm fsm_sad' src='[[dataPath]]/epx.png' title='sad' alt=':sad:'&gt;
+slim=&lt;img class='fsm fsm_slim' src='[[dataPath]]/epx.png' title='slim' alt=':slim:'&gt;
+smile=&lt;img class='fsm fsm_smile' src='[[dataPath]]/epx.png' title='smile' alt=':smile:'&gt;
+surprised=&lt;img class='fsm fsm_surprised' src='[[dataPath]]/epx.png' title='surprised' alt=':surprised:'&gt;
+twisted=&lt;img class='fsm fsm_twisted' src='[[dataPath]]/epx.png' title='twisted' alt=':twisted:'&gt;
+wink=&lt;img class='fsm fsm_wink' src='[[dataPath]]/epx.png' title='wink' alt=':wink:'&gt;
+yell=&lt;img class='fsm fsm_yell' src='[[dataPath]]/epx.png' title='yell' alt=':yell:'&gt;
 </kbd></pre>
 
 <p>Anyone who has previously installed the Fugue Smiley Pack must remove its CSS rules from their forum's local stylesheet.</p>
@@ -95,7 +109,7 @@ yell=&lt;img class='fsm fsm_yell' src='[[dataPath]]/epx.png' title='yell' alt=':
 
 <h3>Email Subscriptions</h3>
 
-<p>Subscriptions are now available as instant subscriptions (that are sent out the moment a new post gets submitted) and as digest subscriptions (the cronjob-driven feature available before). The forum options to enable either are now in the Email Options section, and digest subscriptions have to be re-enabled if used before. The <var>$cfg-&gt;{scriptFsPath}</var> and <var>$cfg-&gt;{perlBinary}</var> options in MwfConfig.pm have to be configured for instant subscriptions. Instant subscriptions may not work everywhere for technical reasons, but they are an alternative for places where no cronjobs are available.</p>
+<p>Subscriptions are now available as instant subscriptions (that are sent out the moment a new post gets submitted) and as digest subscriptions (the cronjob-driven feature available before). The forum options to enable either are now in the Email Options section, and digest subscriptions have to be re-enabled if used before. The <var>$cfg-&gt;{scriptFsPath}</var> and <var>$cfg-&gt;{perlBinary}</var> options in MwfConfig.pm have to be configured for instant subscriptions. Instant subscriptions are also an alternative for places where no cronjobs are available.</p>
 
 <h3>Cron Emulation and Manual Cronjobs</h3>
 
@@ -139,7 +153,7 @@ yell=&lt;img class='fsm fsm_yell' src='[[dataPath]]/epx.png' title='yell' alt=':
 
 <h3>Board Members and Moderators</h3>
 
-<p>If you use any direct board membership or moderator entries, you should change these relations to be based on user groups with the equivalent permissions <em>before</em> upgrading, as the upgrade process will delete these entries. The [so far untested] script util_migratexs.pl creates a moderator and a member group for every board that has direct moderator and/or member entries, and adds the respective users to them. This is only useful if most or all boards have (and are meant to have) individual sets of mods/members, otherwise you should manually create groups that apply to multiple boards instead. Make a backup before doing this in addition to the backup before the upgrade itself.</p>
+<p>If you use any direct board membership or moderator entries, you should change these relations to be based on user groups with the equivalent permissions <em>before</em> upgrading, as the upgrade process will delete these entries.</p>
 
 
 <h2>2.15.0</h2>

@@ -36,7 +36,7 @@ $m->printHeader();
 # Get CGI parameters
 my $page = $m->paramInt('pg') || 1;
 my $search = $m->paramStr('search') || "";
-my $field = $m->paramStrId('field') || 'regTime';
+my $field = $m->paramStrId('field') || 'userName';
 my $sort = $m->paramStrId('sort') || 'field';
 my $order = $m->paramStrId('order') || 'desc';
 my $hideEmpty = $m->paramBool('hide');
@@ -60,7 +60,7 @@ $fields{extra2} = $cfg->{extra2} if $cfg->{extra2} && $cfg->{showExtra2};
 $fields{extra3} = $cfg->{extra3} if $cfg->{extra3} && $cfg->{showExtra3};
 
 # Enforce valid options
-$field = 'regTime' if !$fields{$field};
+$field = 'userName' if !$fields{$field};
 $sort = 'userName' if $sort !~ /^(?:userName|id|field)\z/;
 $order = 'desc' if $order !~ /^(?:asc|desc)\z/;
 
@@ -79,7 +79,7 @@ my $searchStr = $search ? "AND $fieldCast $like :search" : "";
 # Sort list by
 my $orderStr = "";
 if ($sort eq 'userName') { $orderStr = "userName $order" }
-elsif ($sort eq 'field') { $orderStr = "$field $order, id ASC" }
+elsif ($sort eq 'field') { $orderStr = "$field $order" }
 else { $orderStr = "id $order" }
 
 # Get ids of users
@@ -109,13 +109,9 @@ $users = $m->fetchAllHash("
 	ORDER BY $orderStr",
 	{ pageUserIds => \@pageUserIds });
 
-# Determine listbox selections
-my %state = (
-	$sort => "selected='selected'",
-	$order => "selected='selected'",
-	"field$field" => "selected='selected'",
-	hideEmpty => $hideEmpty ? "checked='checked'" : "",
-);
+# Determine checkbox, radiobutton and listbox states
+my $hideEmptyChk = $hideEmpty ? 'checked' : "";
+my %state = ( $sort => 'selected', $order => 'selected', "field$field" => 'selected' );
 
 # Print user list form
 print
@@ -125,12 +121,9 @@ print
 	"<div class='ccl'>\n",
 	"<div class='cli'>\n",
 	"<label>$lng->{uliLfmField}\n",
-	"<select name='field' size='1'>\n";
-
-print "<option value='$_' $state{\"field$_\"}>$fields{$_}</option>\n"
-	for sort({$fields{$a} cmp $fields{$b}} keys(%fields));
-
-print
+	"<select name='field' size='1'>\n",
+	map("<option value='$_' $state{\"field$_\"}>$fields{$_}</option>\n",
+		sort({$fields{$a} cmp $fields{$b}} keys(%fields))),
 	"</select></label>\n",
 	"<label>$lng->{uliLfmSort}\n",
 	"<select name='sort' size='1'>\n",
@@ -144,12 +137,10 @@ print
 	"<option value='asc' $state{asc}>$lng->{uliLfmOrdAsc}</option>\n",
 	"</select></label>\n",
 	"<label>$lng->{uliLfmSearch}\n",
-	"<input type='text' class='fcs' name='search'",
-	" autofocus='autofocus' style='width: 100px' value='$searchEsc'/></label>\n",
-	"<label><input type='checkbox' name='hide' $state{hideEmpty}/>$lng->{uliLfmHide}</label>\n",
+	"<input type='text' name='search' style='width: 100px' value='$searchEsc'></label>\n",
+	"<label><input type='checkbox' name='hide' $hideEmptyChk>$lng->{uliLfmHide}</label>\n",
 	$m->submitButton('uliLfmListB', 'search'),
 	"</div>\n",
-	$m->{sessionId} ? "<input type='hidden' name='sid' value='$m->{sessionId}'/>\n" : "",
 	"</div>\n",
 	"</div>\n",
 	"</form>\n\n";
@@ -159,37 +150,37 @@ print
 	"<table class='tbl'>\n",
 	"<tr class='hrw'>\n",
 	"<th class='shr'>$lng->{uliLstName}</th>\n",
-	"<th>$fields{$field}</th>\n",
+	$field ne 'userName' ? "<th>$fields{$field}</th>\n" : "",
 	"</tr>\n";
 
 # Print user list
 for my $listUser (@$users) {
 	# Get string for selectable field
 	my $fieldStr = $listUser->{$field};
-	if ($field eq 'avatar' && $fieldStr) { 
+	if ($field eq 'userName') { $fieldStr = "" }
+	elsif ($field eq 'postNum') { $fieldStr .= " " . $m->formatUserRank($fieldStr) }
+	elsif ($field eq 'birthday' && $listUser->{birthyear}) {
+		$fieldStr = "$listUser->{birthyear}-$fieldStr";
+	}
+	elsif ($field =~ /Time\z/) { $fieldStr = $m->formatTime($fieldStr, $user->{timezone}) }
+	elsif ($fieldStr =~ /^https?:/) { $fieldStr = "<a href='$fieldStr'>$fieldStr</a>" }
+	elsif ($field eq 'avatar' && $fieldStr) { 
 		my $url = "";
 		if (index($fieldStr, "gravatar:") == 0) {
 			my $md5 = $m->md5(substr($fieldStr, 9));
-			$url = "$m->{http}://gravatar.com/avatar/$md5?s=$cfg->{avatarWidth}";
+			$url = "//gravatar.com/avatar/$md5?s=$cfg->{avatarWidth}";
 		}
 		else {
 			$url = "$cfg->{attachUrlPath}/avatars/$fieldStr";
 		}
-		$fieldStr = "<img src='$url' alt=''/>";
+		$fieldStr = "<img src='$url' alt=''>";
 	}
-	elsif ($field eq 'birthday' && $listUser->{birthyear}) {
-		$fieldStr = "$listUser->{birthyear}-$fieldStr";
-	}
-	elsif ($field eq 'postNum') { $fieldStr .= " " . $m->formatUserRank($fieldStr) }
-	elsif ($field =~ /Time\z/) { $fieldStr = $m->formatTime($fieldStr, $user->{timezone}) }
-	elsif ($fieldStr =~ /^https?:/) { $fieldStr = "<a href='$fieldStr'>$fieldStr</a>" }
 
 	my $url = $m->url('user_info', uid => $listUser->{id});
-	
 	print
 		"<tr class='crw'>\n",
 		"<td><a href='$url'>$listUser->{userName}</a></td>\n",
-		"<td>$fieldStr</td>\n",
+		$field ne 'userName' ? "<td>$fieldStr</td>\n" : "",
 		"</tr>\n";
 }
 

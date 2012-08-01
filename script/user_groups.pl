@@ -96,14 +96,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 
 	# Print hints and form errors
 	$m->printFormErrors();
-	
-	# Print group status table
-	my $colspan = $user->{admin} ? 3 : 2;	
-	print 
-		"<form action='user_groups$m->{ext}' method='post'>\n",
-		"<table class='tbl'>\n",
-		"<tr class='hrw'><th colspan='$colspan'>$lng->{ugrGrpStTtl}</th></tr>\n";
-		
+
 	# Get groups including status
 	my $openStr = $user->{admin} ? "" : "WHERE groups.open = 1";
 	my $groups = $m->fetchAllHash("
@@ -120,12 +113,19 @@ if (!$submitted || @{$m->{formErrors}}) {
 		$openStr
 		ORDER BY groups.title",
 		{ optUserId => $optUserId });
-
+	
+	# Print group status table
+	my $colspan = $user->{admin} ? 3 : 2;	
+	print 
+		"<form action='user_groups$m->{ext}' method='post'>\n",
+		"<table class='tbl'>\n",
+		"<tr class='hrw'><th colspan='$colspan'>$lng->{ugrGrpStTtl}</th></tr>\n";
+		
 	# Print group list
 	for my $group (@$groups) {
 		my $groupId = $group->{id};
-		my $admin = $group->{admin} ? "checked='checked'" : '';
-		my $member = $group->{member} ? "checked='checked'" : '';
+		my $adminChk = $group->{admin} ? 'checked' : "";
+		my $memberChk = $group->{member} ? 'checked' : "";
 		my $url = $m->url('group_info', gid => $groupId);
 		my $title = $group->{public} || $group->{admin} || $group->{member} || $user->{admin}
 			? "<a href='$url'>$group->{title}</a>" : $group->{title};
@@ -134,12 +134,12 @@ if (!$submitted || @{$m->{formErrors}}) {
 			"<td>$title</td>\n";
 
 		print			
-			"<td class='shr'><label><input type='checkbox' name='admin_$groupId' $admin/>",
+			"<td class='shr'><label><input type='checkbox' name='admin_$groupId' $adminChk>",
 			"$lng->{ugrGrpStAdm}</label></td>\n"
 			if $user->{admin};
 
 		print
-			"<td class='shr'><label><input type='checkbox' name='member_$groupId' $member/>",
+			"<td class='shr'><label><input type='checkbox' name='member_$groupId' $memberChk>",
 			"$lng->{ugrGrpStMbr}</label></td>\n",
 			"</tr>\n";
 	}
@@ -152,7 +152,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='hcl'><span class='htt'>$lng->{ugrSubmitTtl}</span></div>\n",
 		"<div class='ccl'>\n",
 		$m->submitButton('ugrChgB', 'group'),
-		"<input type='hidden' name='uid' value='$optUserId'/>\n",
+		"<input type='hidden' name='uid' value='$optUserId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

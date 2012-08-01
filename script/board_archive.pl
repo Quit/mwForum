@@ -93,7 +93,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='hcl'><span class='htt'>Archive Board</span></div>\n",
 		"<div class='ccl'>\n",
 		$m->submitButton("Archive", 'archive'),
-		"<input type='hidden' name='bid' value='$boardId'/>\n",
+		"<input type='hidden' name='bid' value='$boardId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

@@ -54,8 +54,15 @@ if ($submitted) {
 	my $emailAdded = !$optUser->{email} && $email;
 	$emailChanged || $emailAdded or $m->formError('errEmlGone');
 	
-	# Check if email is free
-	if (!($user->{admin} && !length($email))) {
+	if ($user->{admin} && !length($email)) {
+		# Reset subscriptions if admin is removing address
+		$m->dbDo("
+			DELETE FROM boardSubscriptions WHERE userId = ?", $optUserId);
+		$m->dbDo("
+			DELETE FROM topicSubscriptions WHERE userId = ?", $optUserId);
+	}
+	else {
+		# Check if email is free
 		!$m->fetchArray("
 			SELECT id FROM users WHERE email = ? AND id <> ?", $email, $optUserId)
 			or $m->formError('errEmlGone');
@@ -63,13 +70,15 @@ if ($submitted) {
 
 	# If there's no error, finish action
 	if (!@{$m->{formErrors}}) {
-		# If email changed by non-admin, send ticket
-		if (!$user->{admin}) {
-			# Delete previous tickets
+		if ($user->{admin}) {
+			# Update email directly if changed by admin
+			$m->dbDo("
+				UPDATE users SET email = ? WHERE id = ?", $email, $optUserId);
+		}
+		else {
+			# If email changed by non-admin, send ticket
 			$m->dbDo("
 				DELETE FROM tickets WHERE type = ? AND userId = ?", 'emlChg', $optUserId);
-			
-			# Create ticket
 			my $ticketId = $m->randomId();
 			$m->dbDo("
 				INSERT INTO tickets (id, userId, issueTime, type, data) VALUES (?, ?, ?, ?, ?)",
@@ -77,21 +86,15 @@ if ($submitted) {
 			
 			# Email ticket to user
 			$optUser->{email} = $email;
-			$m->sendEmail($m->createEmail(
-				type => 'emlChg', 
-				user => $optUser, 
-				url => "$cfg->{baseUrl}$m->{env}{scriptUrlPath}/user_ticket$m->{ext}?t=$ticketId",
-			));
-		}
-		else {
-			# Update email directly if changed by admin
-			$m->dbDo("
-				UPDATE users SET email = ? WHERE id = ?", $email, $optUserId);
+			my $subject = "$cfg->{forumName}: $lng->{emlChgMlSubj}";
+			my $body = "$lng->{emlChgMlT}\n\n"
+				. "$cfg->{baseUrl}$m->{env}{scriptUrlPath}/user_ticket$m->{ext}?t=$ticketId\n";
+			$m->sendEmail(user => $optUser, subject => $subject, body => $body);
 		}
 		
 		# Log action and finish
 		$m->logAction(1, 'user', 'email', $userId, 0, 0, 0, $optUserId);
-		$m->redirect('user_profile', uid => $optUserId, !$user->{admin} ? (msg => 'EmlChange') : ());
+		$m->redirect('user_options', uid => $optUserId, !$user->{admin} ? (msg => 'EmlChange') : ());
 	}
 }
 
@@ -105,30 +108,32 @@ if (!$submitted || @{$m->{formErrors}}) {
 		txt => 'comUp', ico => 'up' });
 	$m->printPageBar(mainTitle => $lng->{emlTitle}, subTitle => $optUser->{userName}, 
 		navLinks => \@navLinks);
-	
-	# Set submitted or database values
-	my $emailEsc = $submitted ? $m->escHtml($email) : $optUser->{email};
-	my $emailVEsc = $submitted ? $m->escHtml($emailV) : $optUser->{email};
 
 	# Print hints and form errors
 	$m->printHints(['emlChgT']) if !$user->{admin};
 	$m->printFormErrors();
 	
+	# Set submitted or database values
+	my $emailEsc = $submitted ? $m->escHtml($email) : $optUser->{email};
+	my $emailVEsc = $submitted ? $m->escHtml($emailV) : $optUser->{email};
+
+	# Prepare values
+	my $required = !$user->{admin} ? "required" : "";
+
 	# Print email options
-	my $required = !$user->{admin} ? "required='required'" : "";
 	print
 		"<form action='user_email$m->{ext}' method='post'>\n",
 		"<div class='frm'>\n",
 		"<div class='hcl'><span class='htt'>$lng->{emlChgTtl}</span></div>\n",
 		"<div class='ccl'>\n",
 		"<label class='lbw'>$lng->{emlChgAddr}\n",
-		"<input type='email' class='fcs hwi' name='email' maxlength='100'",
-		" autofocus='autofocus' $required value='$emailEsc'/></label>\n",
+		"<input type='email' class='hwi' name='email' maxlength='100' value='$emailEsc'",
+		" autofocus $required></label>\n",
 		"<label class='lbw'>$lng->{emlChgAddrV}\n",
-		"<input type='email' class='hwi' name='emailV' maxlength='100'",
-		" $required value='$emailVEsc'/></label>\n",
+		"<input type='email' class='hwi' name='emailV' maxlength='100' value='$emailVEsc'",
+		" $required></label>\n",
 		$m->submitButton('emlChgB', 'subscribe'),
-		"<input type='hidden' name='uid' value='$optUserId'/>\n",
+		"<input type='hidden' name='uid' value='$optUserId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

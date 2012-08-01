@@ -117,7 +117,7 @@ my $printPost = sub {
 				time => ($unreadMode ? $topic->{lowestUnreadTime} : ()));
 			$filterStr =
 				"<span class='nav'><a href='$url'><img class='sic sic_nav_prev' $emptyPixel" .
-				" title='$lng->{ovwFltTpcTT}' alt='$lng->{ovwFltTpc}'/></a></span>\n";
+				" title='$lng->{ovwFltTpcTT}' alt='$lng->{ovwFltTpc}'></a></span>\n";
 		}
 		my $url = $m->url('topic_show', tid => $topicId);
 		print
@@ -136,7 +136,7 @@ my $printPost = sub {
 		$m->dbToDisplay($board, $post);
 		my $postTimeStr = $m->formatTime($post->{postTime}, $user->{timezone});
 		my $invisImg = !$post->{approved} ? " <img class='sic sic_post_i' $emptyPixel"
-			. " title='$lng->{tpcInvisTT}' alt='$lng->{brdInvis}'/> " : "";
+			. " title='$lng->{tpcInvisTT}' alt='$lng->{brdInvis}'> " : "";
 
 		# Format username
 		my $userNameStr = $post->{userName} || $post->{userNameBak} || " - ";
@@ -174,7 +174,7 @@ my $printPost = sub {
 		print
 			"<div class='frm pst' id='pid$postId' style='margin-left: $indent%'>\n",
 			"<div class='hcl'>\n",
-			"<a href='$url'>\n<img $emptyPixel $imgAttr/></a>\n",
+			"<a href='$url'>\n<img $emptyPixel $imgAttr></a>\n",
 			$invisImg,
 			"<span class='usr'><span class='htt'>$lng->{tpcBy}</span> $userNameStr</span>\n",
 			"<span class='htt'>$lng->{tpcOn}</span> $postTimeStr\n",
@@ -360,7 +360,7 @@ push @userLinks, { url => $m->url('forum_overview', act => $action,
 	txt => 'ovwMore', ico => 'move' }
 	if $unfinished;
 push @userLinks, { url => $m->url('user_mark', act => 'old', time => $m->{now},
-	$userId ? (auth => 1) : (), ori => 1), 
+	auth => 1, ori => 1), 
 	txt => 'ovwMarkOld', ico => 'markold' }
 	if $newMode && %topicPrinted && !$onlyBoardId && !$onlyTopicId;
 $m->printPageBar(mainTitle => $title, navLinks => \@navLinks, userLinks => \@userLinks);
@@ -377,20 +377,21 @@ if ($userId && %topicPrinted) {
 			VALUES $valuesStr
 			ON DUPLICATE KEY UPDATE lastReadTime = VALUES(lastReadTime)");
 	}
-	elsif ($m->{sqlite}) {
-		my $updSth = $m->dbPrepare("
-			REPLACE INTO topicReadTimes (userId, topicId, lastReadTime)	VALUES (?, ?, ?)");
-		$m->dbExecute($updSth, $userId, $_, $now) for keys %topicPrinted;
-	}
-	else {
+	elsif ($m->{pgsql}) {
+		my $attr = { pg_server_prepare => 1 };
 		my $delSth = $m->dbPrepare("
-			DELETE FROM topicReadTimes WHERE userId = ? AND topicId = ?");
+			DELETE FROM topicReadTimes WHERE userId = ? AND topicId = ?", $attr);
 		my $insSth = $m->dbPrepare("
-			INSERT INTO topicReadTimes (userId, topicId, lastReadTime) VALUES (?, ?, ?)");
+			INSERT INTO topicReadTimes (userId, topicId, lastReadTime) VALUES (?, ?, ?)", $attr);
 		for (keys %topicPrinted) {
 			$m->dbExecute($delSth, $userId, $_);
 			$m->dbExecute($insSth, $userId, $_, $now);
 		}
+	}
+	elsif ($m->{sqlite}) {
+		my $updSth = $m->dbPrepare("
+			REPLACE INTO topicReadTimes (userId, topicId, lastReadTime)	VALUES (?, ?, ?)");
+		$m->dbExecute($updSth, $userId, $_, $now) for keys %topicPrinted;
 	}
 }
 

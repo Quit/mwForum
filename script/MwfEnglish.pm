@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2012 Markus Wichitill
+#    Copyright © 1999-2012 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 package MwfEnglish;
 use utf8;
 use strict;
-our $VERSION = "2.26.0";
+our $VERSION = "2.27.3";
 our $lng = {};
 
 #------------------------------------------------------------------------------
@@ -29,14 +29,10 @@ $lng->{author}       = "Markus Wichitill";
 # Common strings
 $lng->{comUp}        = "Up";
 $lng->{comUpTT}      = "Go up a level";
-$lng->{comPgTtl}     = "Page";
 $lng->{comPgPrev}    = "Previous";
 $lng->{comPgPrevTT}  = "Go to previous page";
 $lng->{comPgNext}    = "Next";
 $lng->{comPgNextTT}  = "Go to next page";
-$lng->{comEnabled}   = "enabled";
-$lng->{comDisabled}  = "disabled";
-$lng->{comHidden}    = "(hidden)";
 $lng->{comBoardList} = "Forum";
 $lng->{comNew}       = "N";
 $lng->{comNewTT}     = "New";
@@ -176,10 +172,6 @@ $lng->{brdInfo}      = "Info";
 $lng->{brdInfoTT}    = "Show board info";
 $lng->{brdMarkRd}    = "Mark Read";
 $lng->{brdMarkRdTT}  = "Mark all posts in board as read";
-$lng->{brdPrev}      = "Previous";
-$lng->{brdPrevTT}    = "Go to previous board";
-$lng->{brdNext}      = "Next";
-$lng->{brdNextTT}    = "Go to next board";
 $lng->{brdTopic}     = "Topic";
 $lng->{brdPoster}    = "User";
 $lng->{brdPosts}     = "Posts";
@@ -255,18 +247,14 @@ $lng->{tpcPolShwRes} = "Show results";
 $lng->{tpcHidTtl}    = "Hidden post";
 $lng->{tpcHidIgnore} = "(ignored) ";
 $lng->{tpcHidUnappr} = "(unapproved) ";
-$lng->{tpcPrev}      = "Previous";
-$lng->{tpcPrevTT}    = "Go to previous topic";
-$lng->{tpcNext}      = "Next";
-$lng->{tpcNextTT}    = "Go to next topic";
 $lng->{tpcApprv}     = "Approve";
 $lng->{tpcApprvTT}   = "Make post visible to users";
 $lng->{tpcLock}      = "Lock";
 $lng->{tpcLockTT}    = "Lock post to disable editing and replying";
 $lng->{tpcUnlock}    = "Unlock";
 $lng->{tpcUnlockTT}  = "Unlock post to enable editing and replying";
-$lng->{tpcReport}    = "Report";
-$lng->{tpcReportTT}  = "Report post to moderators";
+$lng->{tpcReport}    = "Notify";
+$lng->{tpcReportTT}  = "Notify users or moderators about this post";
 $lng->{tpcBranch}    = "Branch";
 $lng->{tpcBranchTT}  = "Promote/move/lock/delete branch";
 $lng->{tpcEdit}      = "Edit";
@@ -320,15 +308,21 @@ $lng->{aplPollAddB}  = "Add";
 
 # Add report page
 $lng->{arpTitle}     = "Post";
-$lng->{arpRepTtl}    = "Report Post to Administrators and Moderators";
-$lng->{arpRepT}      = "If you think that a post violates the law or the rules of this forum, you can add it to a list of posts that can be reviewed by administrators and moderators.";
-$lng->{arpRepOrly}   = "Are you sure that you want to report the post? This is not a reply form!";
-$lng->{arpRepYarly}  = "Yes, I want to report the post, not reply to it";
-$lng->{arpRepReason} = "Reason:";
+$lng->{arpPngTtl}    = "Notify User";
+$lng->{arpPngT}      = "Sends a notification about this post to someone's notification list and optionally by email.";
+$lng->{arpPngUser}   = "Recipient";
+$lng->{arpPngEmail}  = "Send by email, too";
+$lng->{arpPngB}      = "Notify";
+$lng->{arpPngMlSbPf} = "Notification from";
+$lng->{arpPngMlT}    = "This is a post notification from the forum software.\nPlease don't reply to this email.";
+$lng->{arpRepTtl}    = "Report to Moderators";
+$lng->{arpRepT}      = "If you think that a post violates the law or the rules of this forum, you can report it to moderators and administrators.";
+$lng->{arpRepYarly}  = "I want to report the post, not reply to it";
+$lng->{arpRepReason} = "Reason";
 $lng->{arpRepB}      = "Report";
-$lng->{arpThrTtl}    = "Notify User About Threaded Structure";
-$lng->{arpThrT}      = "If a user has posted a reply to the wrong post, you can send them a notification that asks them to reply to the correct posts to preserve the threaded structure of topics. This is generally preferable to public posts doing the same. Can only be used by admins/mods, within 24 hours and once per recipient to avoid notification flooding.";
-$lng->{arpThrB}      = "Notify";
+$lng->{arpThrTtl}    = "Advise about Threaded Structure";
+$lng->{arpThrT}      = "If a user has posted a reply to the wrong post, you can send them a notification that asks them to reply to the correct posts to preserve the threaded structure of topics. This is generally preferable to public posts doing the same. Can only be used by admins/mods, within 24 hours and once per recipient to avoid flooding.";
+$lng->{arpThrB}      = "Advise";
 
 # Report list page
 $lng->{repTitle}     = "Reported Posts";
@@ -361,12 +355,8 @@ $lng->{rplReplyResp} = "In Response to";
 $lng->{rplReplyB}    = "Post";
 $lng->{rplReplyPrvB} = "Preview";
 $lng->{rplPrvTtl}    = "Preview";
-$lng->{rplEmailFrm}  = "Forum: ";
-$lng->{rplEmailBrd}  = "Board: ";
-$lng->{rplEmailTpc}  = "Topic: ";
-$lng->{rplEmailUsr}  = "User: ";
-$lng->{rplEmailUrl}  = "Link: ";
-$lng->{rplEmailT2}   = "This is an automatic notification from the forum software.\nPlease do not reply to this email, reply in the forum.";
+$lng->{rplEmailSbPf} = "Reply from";
+$lng->{rplEmailT2}   = "This is a reply notification from the forum software.\nPlease don't reply to this email.";
 $lng->{rplAgeOrly}   = "The post you are replying to is already [[age]] days old. Are you sure that you want to reply to a post that old?";
 $lng->{rplAgeYarly}  = "Yes, I have a good reason for doing so";
 
@@ -398,6 +388,7 @@ $lng->{attTitle}     = "Post Attachments";
 $lng->{attDelAll}    = "Delete All";
 $lng->{attDelAllTT}  = "Delete all attachments";
 $lng->{attDropNote}  = "You can also upload files by dropping them onto the form.";
+$lng->{attGoPostT}   = "The up-arrow icon leads back to the post.";
 $lng->{attUplTtl}    = "Upload";
 $lng->{attUplFiles}  = "File(s) (max. file size [[size]])";
 $lng->{attUplCapt}   = "Caption";
@@ -429,13 +420,12 @@ $lng->{uifProfUName} = "Username";
 $lng->{uifProfOName} = "Old Names";
 $lng->{uifProfRName} = "Real Name";
 $lng->{uifProfBdate} = "Birthday";
-$lng->{uifProfEml}   = "Email";
 $lng->{uifProfPage}  = "Website";
 $lng->{uifProfOccup} = "Occupation";
 $lng->{uifProfHobby} = "Hobbies";
 $lng->{uifProfLocat} = "Location";
 $lng->{uifProfGeoIp} = "Location (IP-based)";
-$lng->{uifProfIcq}   = "Messengers";
+$lng->{uifProfIcq}   = "Email/Messengers";
 $lng->{uifProfSig}   = "Signature";
 $lng->{uifProfBlurb} = "Miscellaneous";
 $lng->{uifProfAvat}  = "Avatar";
@@ -445,6 +435,8 @@ $lng->{uifBrdSubTtl} = "Board Subscriptions";
 $lng->{uifStatTtl}   = "Statistics";
 $lng->{uifStatRank}  = "Rank";
 $lng->{uifStatPNum}  = "Posts";
+$lng->{uifStatPONum} = "posted";
+$lng->{uifStatPENum} = "existing";
 $lng->{uifStatRegTm} = "Registered";
 $lng->{uifStatLOTm}  = "Last Online";
 $lng->{uifStatLRTm}  = "Prev. Online";
@@ -477,8 +469,9 @@ $lng->{lgiLoginPwd}  = "Password";
 $lng->{lgiLoginRmbr} = "Remember me on this computer";
 $lng->{lgiLoginB}    = "Login";
 $lng->{lgiFpwTtl}    = "Forgot Password";
-$lng->{lgiFpwT}      = "If you have lost your password, you can use the form below to get a login ticket link sent to your account's email address.";
-$lng->{lgiFpwB}      = "Request";
+$lng->{lgiFpwT}      = "If you have lost your password, you can have a login ticket link sent to your registered email address.";
+$lng->{lgiFpwEmail}  = "Email address";
+$lng->{lgiFpwB}      = "Send";
 $lng->{lgiFpwMlSbj}  = "Forgot Password";
 $lng->{lgiFpwMlT}    = "Please visit the following ticket link to login without your password. You may then proceed to change your password to a new one.\n\nFor security reasons, the ticket link is only valid for one use and for a limited time. Also, only the last requested ticket link is valid, should you have requested more than one.";
 
@@ -498,6 +491,7 @@ $lng->{regRegName}   = "Username";
 $lng->{regRegEmail}  = "Email Address (login password will be sent to this address)";
 $lng->{regRegEmailV} = "Repeat Email Address";
 $lng->{regRegPwd}    = "Password";
+$lng->{regRegPwdFmt} = "min. 8 characters";
 $lng->{regRegPwdV}   = "Repeat Password";
 $lng->{regRegB}      = "Register";
 $lng->{regMailSubj}  = "Registration";
@@ -540,15 +534,14 @@ $lng->{uopProfOccup} = "Occupation";
 $lng->{uopProfHobby} = "Hobbies";
 $lng->{uopProfLocat} = "Geographic Location";
 $lng->{uopProfLocIn} = "[Insert]";
-$lng->{uopProfIcq}   = "Instant Messenger IDs";
+$lng->{uopProfIcq}   = "Email/Messengers";
 $lng->{uopProfSig}   = "Signature";
 $lng->{uopProfSigLt} = "(max. 100 characters, 2 lines)";
 $lng->{uopProfBlurb} = "Miscellaneous";
 $lng->{uopOptTtl}    = "Options";
-$lng->{uopPrefHdEml} = "Hide email address (from registered users, it's never shown to unreg. users)";
 $lng->{uopPrefPrivc} = "Privacy (hide online status and IP-based location, only show info page to reg. users)";
-$lng->{uopPrefNtMsg} = "Receive post reply and message notifications by email, too";
-$lng->{uopPrefNt}    = "Receive post reply notifications";
+$lng->{uopPrefNtMsg} = "Receive reply and message notifications by email, too";
+$lng->{uopPrefNt}    = "Receive reply notifications";
 $lng->{uopDispLang}  = "Language";
 $lng->{uopDispTimeZ} = "Timezone";
 $lng->{uopDispTimeS} = "Server";
@@ -571,6 +564,7 @@ $lng->{pwdTitle}     = "User";
 $lng->{pwdChgTtl}    = "Change Password";
 $lng->{pwdChgT}      = "Never use the same password for multiple accounts.";
 $lng->{pwdChgPwd}    = "Password";
+$lng->{pwdChgPwdFmt} = "min. 8 characters";
 $lng->{pwdChgPwdV}   = "Repeat Password";
 $lng->{pwdChgB}      = "Change";
 
@@ -793,10 +787,9 @@ $lng->{msaSendB}     = "Send";
 $lng->{msaSendPrvB}  = "Preview";
 $lng->{msaPrvTtl}    = "Preview";
 $lng->{msaRefTtl}    = "In Response to";
+$lng->{msaEmailSbPf} = "Message from";
 $lng->{msaEmailTSbj} = "Subject: ";
-$lng->{msaEmailUsr}  = "Sender: ";
-$lng->{msaEmailUrl}  = "Link: ";
-$lng->{msaEmailT2}   = "This is an automatic notification from the forum software.\nPlease do not reply to this email, reply in the forum.";
+$lng->{msaEmailT2}   = "This is a message notification from the forum software.\nPlease don't reply to this email.";
 
 # Message page
 $lng->{mssTitle}     = "Private Message";
@@ -848,17 +841,21 @@ $lng->{fedTitle}     = "Feeds";
 $lng->{fedAllBoards} = "All public boards";
 
 # Email subscriptions
-$lng->{subSubjBrdIn} = "board instant subscription";
-$lng->{subSubjTpcIn} = "topic instant subscription";
-$lng->{subSubjBrdDg} = "board digest subscription";
-$lng->{subSubjTpcDg} = "topic digest subscription";
-$lng->{subNoReply}   = "This is an automatic subscription email from the forum software.\nPlease do not reply to this email, reply in the forum.";
+$lng->{subSubjBrdIn} = "Board instant subscription";
+$lng->{subSubjTpcIn} = "Topic instant subscription";
+$lng->{subSubjBrdDg} = "Board digest subscription";
+$lng->{subSubjTpcDg} = "Topic digest subscription";
+$lng->{subNoReply}   = "This is a subscription email from the forum software.\nPlease don't reply to this email.";
+$lng->{subLink}      = "Link: ";
+$lng->{subBoard}     = "Board: ";
 $lng->{subTopic}     = "Topic: ";
-$lng->{subBy}        = "By: ";
+$lng->{subBy}        = "User: ";
 $lng->{subOn}        = "Date: ";
+$lng->{subUnsubBrd}  = "Unsubscribe from this board:";
+$lng->{subUnsubTpc}  = "Unsubscribe from this topic:";
 
 # Bounce detection
-$lng->{bncWarning}   = "Warning: your email account is bouncing/rejecting email from this forum. Please rectify this situation, or the forum may have to stop sending email to you.";
+$lng->{bncWarning}   = "Warning: either your email account doesn't exist anymore, rejects emails, or spams with automatic replies. Please rectify this situation, or the forum may have to stop sending email to you.";
 
 # Confirmation
 $lng->{cnfTitle}     = "Confirmation";
@@ -882,6 +879,7 @@ $lng->{notNotify}    = "Notify user (optionally specify reason)";
 $lng->{notReason}    = "Reason:";
 $lng->{notMsgAdd}    = "[[usrNam]] sent a private <a href='[[msgUrl]]'>message</a>.";
 $lng->{notPstAdd}    = "[[usrNam]] replied to a <a href='[[pstUrl]]'>post</a>.";
+$lng->{notPstPng}    = "[[usrNam]] has notified you about a <a href='[[pstUrl]]'>post</a>.";
 $lng->{notPstEdt}    = "A moderator edited a <a href='[[pstUrl]]'>post</a>.";
 $lng->{notPstDel}    = "A moderator deleted a <a href='[[tpcUrl]]'>post</a>.";
 $lng->{notTpcMov}    = "A moderator moved a <a href='[[tpcUrl]]'>topic</a>.";
@@ -900,8 +898,8 @@ $lng->{msgPstChange} = "Post changed";
 $lng->{msgPstDel}    = "Post deleted";
 $lng->{msgPstTpcDel} = "Post and topic deleted";
 $lng->{msgPstApprv}  = "Post approved";
-$lng->{msgPstAttach} = "Attachment added";
-$lng->{msgPstDetach} = "Attachment deleted";
+$lng->{msgPstAttach} = "Attachment(s) added";
+$lng->{msgPstDetach} = "Attachment(s) deleted";
 $lng->{msgPstAttChg} = "Attachment changed";
 $lng->{msgEmlChange} = "Verification email sent";
 $lng->{msgPrfChange} = "Profile changed";
@@ -914,7 +912,7 @@ $lng->{msgGrpChange} = "Group memberships changed";
 $lng->{msgBrdChange} = "Board options changed";
 $lng->{msgTpcChange} = "Topic options changed";
 $lng->{msgAccntReg}  = "Account registered";
-$lng->{msgAccntRegM} = "Account registered. Please wait for the email with your password to arrive before proceeding to login. Please be aware that the email may end up in your spam folder, and that certain anti-spam measures may also delay the email for some time.";
+$lng->{msgAccntRegM} = "Account registered. Please wait for the email with your password to arrive before proceeding to login. The email may end up in your spam folder, and anti-spam measures may delay it for some time.";
 $lng->{msgMemberAdd} = "Member(s) added";
 $lng->{msgMemberRem} = "Member(s) removed";
 $lng->{msgTpcDelete} = "Topic deleted";
@@ -945,23 +943,20 @@ $lng->{msgWatWrdAdd} = "Watched word added";
 $lng->{msgWatWrdRem} = "Watched word removed";
 $lng->{msgWatUsrAdd} = "Watched user added";
 $lng->{msgWatUsrRem} = "Watched user removed";
-$lng->{msgEolTpc}    = "No more topics in that direction";
 $lng->{msgTksFgtPwd} = "Email sent";
 $lng->{msgTkaFgtPwd} = "Logged in. You may now change your password.";
 $lng->{msgTkaEmlChg} = "Email address changed";
 $lng->{msgTpcTag}    = "Topic tagged";
 $lng->{msgTpcSub}    = "Topic subscribed";
 $lng->{msgTpcUnsub}  = "Topic unsubscribed";
-$lng->{msgTpcUnsAll} = "All topics unsubscribed";
+$lng->{msgBrdUnsub}  = "Board unsubscribed";
 $lng->{msgNotesDel}  = "Notifications deleted";
-$lng->{msgPstRate}   = "Post rated";
 $lng->{msgPstLock}   = "Post locked";
 $lng->{msgPstUnlock} = "Post unlocked";
+$lng->{msgPstPing}   = "Post notification sent";
 
 # Error messages
 $lng->{errDefault}   = "[error string missing]";
-$lng->{errGeneric}   = "Error";
-$lng->{errForm}      = "Form Error";
 $lng->{errParamMiss} = "Mandatory parameter is missing.";
 $lng->{errCatNotFnd} = "Category doesn't exist.";
 $lng->{errBrdNotFnd} = "Board doesn't exist.";
@@ -972,6 +967,7 @@ $lng->{errMsgNotFnd} = "Message doesn't exist.";
 $lng->{errUsrNotFnd} = "User doesn't exist.";
 $lng->{errGrpNotFnd} = "Group doesn't exist.";
 $lng->{errTktNotFnd} = "Ticket doesn't exist. Tickets only work once, expire after two days, and only the most recently requested ticket is valid.";
+$lng->{errUnsNotFnd} = "Subscription code doesn't exist.";
 $lng->{errUsrDel}    = "User account doesn't exist anymore.";
 $lng->{errUsrFake}   = "Not a real user account.";
 $lng->{errSubEmpty}  = "Subject is empty.";
@@ -980,9 +976,8 @@ $lng->{errNamEmpty}  = "Username is empty.";
 $lng->{errPwdEmpty}  = "Password is empty.";
 $lng->{errEmlEmpty}  = "Email address is empty.";
 $lng->{errEmlInval}  = "Email address is invalid.";
-$lng->{errWordEmpty} = "Keywords field is empty.";
 $lng->{errNamSize}   = "Username is too short or too long.";
-$lng->{errPwdSize}   = "Password is too short or too long.";
+$lng->{errPwdSize}   = "Password needs to have at least 8 characters.";
 $lng->{errEmlSize}   = "Email address is too short or too long.";
 $lng->{errNamChar}   = "Username contains illegal characters.";
 $lng->{errPwdChar}   = "Password contains illegal characters.";
@@ -1006,17 +1001,14 @@ $lng->{errPwdDiffer} = "Passwords differ.";
 $lng->{errEmlDiffer} = "Email addresses differ.";
 $lng->{errDupe}      = "This post has already been posted.";
 $lng->{errAttName}   = "No file or filename specified.";
-$lng->{errAttExt}    = "Filenames with this extension are not allowed.";
 $lng->{errAttSize}   = "Upload is missing, was truncated or exceeds maximum allowed size.";
 $lng->{errPromoTpc}  = "This post is the base post for the whole topic.";
 $lng->{errPstEdtTme} = "Posts may only be edited a limited time after their original submission. This time limit has expired.";
-$lng->{errNoEmail}   = "User account doesn't have an email address.";
-$lng->{errDontEmail} = "Sending of email for your account has been disabled by an administrator. Typical reasons are invalid email addresses, jammed mailboxes and activated autoresponders.";
+$lng->{errDontEmail} = "Sending of email for your account has been disabled. Typical reasons are invalid email addresses, jammed mailboxes and activated autoresponders.";
 $lng->{errEditAppr}  = "You can't edit posts in a moderated board anymore once they're approved.";
-$lng->{errRepOwn}    = "There is no point in reporting your own posts.";
 $lng->{errRepDupe}   = "You have already reported this post.";
 $lng->{errRepReason} = "Reason field is empty.";
-$lng->{errSrcAuth}   = "Request authentication failed. Either someone tried tricking you into doing something that you didn't want to do (if you came to this page from a different site), or you left a forum page open for too long.";
+$lng->{errSrcAuth}   = "Request source authentication failed. Either someone tried tricking you into doing something that you didn't want to do (if you came to this page from a different site), or you left a forum page open for too long.";
 $lng->{errPolExist}  = "Topic already has a poll.";
 $lng->{errPolOptNum} = "Poll has too few or too many options.";
 $lng->{errPolNoDel}  = "Only polls without votes can be deleted.";
@@ -1033,7 +1025,6 @@ $lng->{errRepostTim} = "Flood control enabled. You have to wait [[seconds]] seco
 $lng->{errCrnEmuBsy} = "The forum is currently busy with maintenance tasks. Please come back later.";
 $lng->{errForumLock} = "The forum is currently locked. Please come back later.";
 $lng->{errMinRegTim} = "You need to be registered for at least [[hours]] hour(s) before you can use this feature.";
-$lng->{errSsnTmeout} = "Login session timed out, is invalid or belongs to someone else. You can avoid this problem by allowing this website to set cookies.";
 $lng->{errDbHidden}  = "A database error has occurred and was logged.";
 $lng->{errCptTmeOut} = "Anti-spam image timed out, you have [[seconds]] seconds to submit the form.";
 $lng->{errCptWrong}  = "Characters from the anti-spam image are not correct. Please try again.";
@@ -1053,6 +1044,7 @@ $lng->{errRecvNum}   = "Too many recipients.";
 $lng->{errOldAgent}  = "Your browser is severely outdated and is not supported by this forum anymore. Please get a <a href='http://abetterbrowser.org/'>better browser</a>.";
 $lng->{errUAFeatSup} = "Your browser doesn't support this feature.";
 $lng->{errNoCookies} = "Login won't work because browser cookies are disabled.";
+$lng->{errSearchLnk} = "Linked search results are disabled.";
 
 
 #------------------------------------------------------------------------------
@@ -1141,9 +1133,9 @@ been any votes.</p>
 
 <table>
 <tr><td>
-<img class='sic sic_post_nu' src='[[dataPath]]/epx.png' alt='N/U'/>
-<img class='sic sic_topic_nu' src='[[dataPath]]/epx.png' alt='N/U'/>
-<img class='sic sic_board_nu' src='[[dataPath]]/epx.png' alt='N/U'/>
+<img class='sic sic_post_nu' src='[[dataPath]]/epx.png' alt='N/U'>
+<img class='sic sic_topic_nu' src='[[dataPath]]/epx.png' alt='N/U'>
+<img class='sic sic_board_nu' src='[[dataPath]]/epx.png' alt='N/U'>
 </td><td>
 Yellow icons indicate new posts or topics and boards with new posts.
 In this forum, \"new\" means a post has been added since your last visit. Even
@@ -1151,9 +1143,9 @@ if you have just read it, it is still a new post, and will only be counted as
 old on your next visit to the forum.
 </td></tr>
 <tr><td>
-<img class='sic sic_post_or' src='[[dataPath]]/epx.png' alt='O/R'/>
-<img class='sic sic_topic_or' src='[[dataPath]]/epx.png' alt='O/R'/>
-<img class='sic sic_board_or' src='[[dataPath]]/epx.png' alt='O/R'/>
+<img class='sic sic_post_or' src='[[dataPath]]/epx.png' alt='O/R'>
+<img class='sic sic_topic_or' src='[[dataPath]]/epx.png' alt='O/R'>
+<img class='sic sic_board_or' src='[[dataPath]]/epx.png' alt='O/R'>
 </td><td>
 Checkmarked icons indicate that the post or all posts in a topic or
 board have been read. Posts are counted as read once their topic had been on
@@ -1162,13 +1154,13 @@ unread/read are independent concepts in this forum, posts can be new and read
 as well as old and unread at the same time.
 </td></tr>
 <tr><td>
-<img class='sic sic_post_i' src='[[dataPath]]/epx.png' alt='I'/>
+<img class='sic sic_post_i' src='[[dataPath]]/epx.png' alt='I'>
 </td><td>
 Indicates posts or topics that are invisible to other users, because they 
 are waiting for approval by a moderator.
 </td></tr>
 <tr><td>
-<img class='sic sic_topic_l' src='[[dataPath]]/epx.png' alt='L'/>
+<img class='sic sic_topic_l' src='[[dataPath]]/epx.png' alt='L'>
 </td><td>
 Indicates posts or topics that have been locked. No replies or edits are 
 possible anymore.

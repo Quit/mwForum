@@ -57,6 +57,7 @@
 <li><a href='#limits'>Limitations</a></li>
 <li><a href='#dataver'>Browser Cache Refreshing</a></li>
 <li><a href='#mobile'>Mobile Browsing</a></li>
+<li><a href='#shortcuts'>Moderation Shortcuts</a></li>
 </ul>
 
 
@@ -356,7 +357,7 @@ sql&gt; ORDER BY log.logTime;
 
 <h3>MySQL</h3>
 
-<p>As of MySQL 5.5, Full-Text Search can only be used with MyISAM. Starting with 5.6, InnoDB may also be supported.</p>
+<p>As of MySQL 5.5, Full-Text Search can only be used with the MyISAM and Aria engines. Starting with 5.6, InnoDB may also be supported.</p>
 
 <p>Activate the indexed search mode with the <var>advSearch</var> forum option. The SQL commands for creating and removing full-text indexes for post bodies are:</p>
 
@@ -364,6 +365,8 @@ sql&gt; ORDER BY log.logTime;
 mysql&gt; CREATE FULLTEXT INDEX posts_body ON posts (body);
 mysql&gt; DROP INDEX posts_body ON posts;
 </kbd></pre>
+
+<p>More so than other indexes, the existence of a fulltext index slows down manipulative queries. You might have to remove the index before doing major changes like deleting a board, to prevent these operations from taking too long and getting interrupted by timeouts.</p>
 
 <p>There are two operators that people can use, the usual quotes to group a phrase, and the - prefix operator to skip any results that include the prefixed word or phrase.</p>
 
@@ -377,7 +380,7 @@ mysql&gt; DROP INDEX posts_body ON posts;
 
 <h3>PostgreSQL</h3>
 
-<p>PostgreSQL's Full Text Search (available since version 8.3) is more advanced than MySQL's. The main advantage worth mentioning here is the built-in support for word stemming in various languages. Some reading of the PostgreSQL documentation linked above is recommended. At a minimum, read about the available "configurations", and choose one ("english" is used below as an example).</p>
+<p>PostgreSQL's Full Text Search is more advanced than MySQL's. The main advantage worth mentioning here is the built-in support for word stemming in various languages. Some reading of the PostgreSQL documentation linked above is recommended. At a minimum, read about the available "configurations", and choose one ("english" is used below as an example).</p>
 
 <p>Activate the indexed search mode with the <var>advSearch</var> forum option. The SQL commands for creating and removing full-text indexes for post bodies are:</p>
 
@@ -388,7 +391,7 @@ psql&gt; DROP INDEX posts_body;
 
 <p>Put the name of the chosen configuration into <var>$cfg-&gt;{pgFtsConfig}</var> in MwfConfig.pm if it's different from "english". Make sure the configuration name is the same as during index creation, or the index won't be used.</p>
 
-<p>The are currently no operators like quotes supported, as the typed search is parsed with <code>plainto_tsquery()</code>. </p>
+<p>The typed search expression is parsed with <code>plainto_tsquery()</code>, which doesn't support any operators. If the whole expression is placed in quotes though, mwForum will make an additional filter pass which removes any results that don't contain the exact (but case-independent) expression.</p>
 
 <h3>Notes for both DBMS</h3>
 
@@ -441,14 +444,8 @@ push @$options, {
 <p>Some options are too unimportant, obscure or experimental to be added to the already long list on the forum options page. Some of these options are listed here. Due to its nature, this list will be incomplete and may contain obsolete entries. Any of these options can be added to MwfConfig.pm. Options documented in context elsewhere won't be repeated here.</p>
 
 <dl class='ids'>
-<dt>hostNames</dt>
-<dd>Bar-separated list (a regexp actually) of valid hostnames (domains) for the forum, e.g "<code>example\.org|www\.example\.org|example\.com|www\.example\.com</code>". This is currently only used to recognize internal forum links posted by users, and add session ids to them for the few users not allowing cookies. It's generally recommended to only allow a single canonical hostname, as that avoids problems with cookies, search engines, SSL and other stuff, but most admins don't have the knowledge or capability to enforce that, and once a website has been established for a while, changing it may cause too many problems.</dd>
-
 <dt>replHtmlEnt</dt>
 <dd>Set to <code>1</code> to replace all HTML entities (aka "character entity references" and "numeric character references") in input with proper Unicode characters. Otherwise, they get escaped like all HTML, and show up verbatim in posts. Requires HTML::Entities Perl module from the <a href='http://search.cpan.org/dist/HTML-Parser/'>HTML::Parser</a> distribution.</dd>
-
-<dt>pageIcons</dt>
-<dd>Set to <code>1</code> to print HTML for page icons, a design gimmick abandoned due to lack of fitting icons, but still used by some.</dd>
 
 <dt>nph</dt>
 <dd>Set to <code>1</code> to enable "no-parsed-headers" mode, for non-standard environments that require the CGI script to print the whole HTTP response verbatim. Experimental and not maintained.</dd>
@@ -477,14 +474,17 @@ push @$options, {
 <dt>attachGallPP</dt>
 <dd>Number of images per page on attachments list page in gallery mode.</dd>
 
+<dt>attachNameLen</dt>
+<dd>Max. allowed attachment input filename length and extension length. Longer filename components will be truncated. Names may get a little longer afterwards through numbering for uniqueness etc.</dd>
+
 <dt>attachImgThbW, attachImgThbH, attachImgThbS</dt>
 <dd>Max. allowed width, height and file size for embedded attached images before they get thumbnailed if the <var>attachImgThb</var> forum option is enabled. Defaults are <code>150</code> pixels respectively and <code>15360</code> bytes.</dd>
 
 <dt>attachImgThbQ</dt>
-<dd>JPEG quality of thumbnails for attached images. <code>1</code> = min. quality, <code>100</code> = max. quality. Default is <code>90</code>, was <code>70</code> in earlier releases.</dd>
+<dd>JPEG quality of thumbnails for attached images. <code>1</code> = min. quality, <code>100</code> = max. quality. Default is <code>90</code>.</dd>
 
 <dt>attachImgRszW, attachImgRszH, attachImgRszS</dt>
-<dd>Max. allowed width, height and file size for attached images before they get resized if the <var>attachImgRsz</var> option is enabled. Defaults are <code>1280</code> pixels, <code>1024</code> pixels and <code>153600</code> bytes.</dd>
+<dd>Max. allowed width, height and file size for attached images before they get resized if the <var>attachImgRsz</var> option is enabled. Defaults are <code>1280</code> pixels, <code>1024</code> pixels and <code>204800</code> bytes.</dd>
 
 <dt>attachImgRszQ</dt>
 <dd>JPEG quality of thumbnails for resized images. <code>1</code> = min. quality, <code>100</code> = max. quality. Default is <code>80</code>.</dd>
@@ -507,9 +507,6 @@ push @$options, {
 <dt>postEditStTime</dt>
 <dd>Number of seconds that users can edit a post after posting without an edit timestamp showing up. Default is <code>120</code> seconds.</dd>
 
-<dt>oldSpawnMethod</dt>
-<dd>Set to <code>1</code> to enable pre-2.19.3 way of spawning processes for manual cronjob starting and cron emulation (i.e. use system() call and wait for child process instead of using fork() and exec() with background execution). Only use if the new method doesn't work even if <var>$cfg-&gt;{perlBinary}</var> and <var>$cfg-&gt;{scriptFsPath}</var> are configured correctly.</dd>
-
 <dt>dbSync</dt>
 <dd>Value for SQLite's "<a href='http://www.sqlite.org/pragma.html#pragma_synchronous'>synchronous</a>" pragma (default is "<code>OFF</code>"), or value of PostgreSQL's "<a href='http://www.postgresql.org/docs/current/static/runtime-config-wal.html#GUC-SYNCHRONOUS-COMMIT'>synchronous_commit</a>" parameter (default determined by cluster configuration).</dd>
 
@@ -524,6 +521,12 @@ push @$options, {
 
 <dt>noArchive, noSnippet</dt>
 <dd>Set to <code>1</code> to add these to the robots meta tag to keep some search engines from archiving full pages resp. snippets. Also see <var>noIndex</var> forum option.</dd>
+
+<dt>relRedir</dt>
+<dd>Use relative Location header in redirections. Violates HTTP spec, but might help in some specific situations.</dd>
+
+<dt>mysqlUtf</dt>
+<dd>Overrides the default MySQL client encoding of "<code>utf8</code>". Only use for UTF variations like "<code>utf8mb4</code>", when that's used for the database tables themselves.</dd>
 </dl>
 
 
@@ -533,7 +536,7 @@ push @$options, {
 
 <p>Only forum admins can set these titles on the user admin options pages (user_admopt.pl), so they can be used for example to authenticate employees in a corporate forum. Since the title isn't part of the clickable username link, no user can choose his name to look like a real user title.</p>
 
-<p>On the user admin options page, a user's title can be selected from a listbox filled with predefined user titles, or an individual title can be typed into the text field below the list. The list selection takes precedence if anything except "(individual title below)" is selected. The list of predefined titles can be configured with the <var>userTitles</var> forum option.</p>
+<p>On the user admin options page, an individual title can be typed in, or a predefined title can be selected from the autocompletion list (requires browser HTML5 support). The predefined titles can be configured with the <var>userTitles</var> forum option.</p>
 
 <p>Plaintext titles are put into parentheses automatically when displayed, unless the string already contains parentheses. Certain characters that are special in HTML (apostrophes, ampersands, angled brackets) must be manually HTML-escaped. Example:</p>
 
@@ -728,23 +731,27 @@ shell&gt; perl util_replace.pl -x -f /forum2 replacethis withthis
 
 <h2 id='avatars'>Avatars</h2>
 
-<p>Avatar images are supported as uploads and/or as a selection from a local gallery. Users can choose their avatar by following the Avatar link on their user profile page.</p>
+<p>Avatar images are supported as uploads and/or as a selection from a local gallery. Users can choose their avatar by following the Avatar link on their user profile page. Since avatars can waste a good deal of bandwidth, users can switch them off in their user options. They're also off by default.</p>
 
 <p>mwForum only allows local avatars, as remote images couldn't be limited to a sane size and they would also allow their respective owners to monitor topic access. Last not least they'd cause issues with SSL.</p>
 
-<p>Since avatars can waste a good deal of bandwidth, users can switch them off in their user options. They're also off by default.</p>
+<h3>Avatar Upload</h3>
 
-<p>Uploaded avatar images have a configurable maximum file size and configurable width/height. Unless auto-reformatting is enabled (see below), the avatar images must match these width/height values exactly, they're not maximum values like in many other forum applications. This is required because differently sized avatars would cause a more ragged layout the way they're embedded in the text. There isn't enough space in threaded topics for user info/avatars cells on the left side of the posts as in most non-threaded forum applications.</p>
+<p>Uploaded avatar images have a configurable maximum file size and width/height. Unless auto-reformatting is enabled (see below), the avatar images must match these width/height values exactly, they're not maximum values like in many other forum applications. This is required because differently sized avatars would cause a more ragged layout the way they're embedded in the text. There isn't enough space in threaded topics for user info/avatars cells on the left side of the posts as in most non-threaded forum applications.</p>
 
 <p>Animated uploaded avatars are not allowed, since animated avatars are every bit as annoying and distracting as animated ads. The <a href='http://search.cpan.org/dist/Image-Info/'>Image::Info</a> Perl module is used to check these parameters, and is required if avatar uploading is enabled.</p>
 
-<p>If you want to enable avatar uploading, set the related forum options in the Avatar section, install the Image::Info Perl module and make sure there's an <a href='#attach'>attachment</a> directory.</p>
+<p>If you want to enable avatar uploading, set the related forum options in the Avatar section, install the Image::Info Perl module and make sure the <a href='#attach'>attachment</a> directory is set up.</p>
 
 <p>Security warning: letting untrusted users upload files to a webserver is always a serious risk. Unless you know a good deal about web security, and are also willing to commit some time to a secure webserver configuration, I strongly recommend that you don't enable uploadable avatars.</p>
 
-<p>If you want to enable gallery avatars, create a directory named "avatars" inside the attachment directory (unless that already exists) and a directory named "gallery" inside the "avatars" directory. The images inside won't be checked for type and size, but the displayed avatars will be zoomed to the same dimensions as the uploaded avatars, so you'd better stick to those dimensions, since images zoomed by the browser don't look all that great.</p>
+<p>If you want to enable the auto-reformatting feature for avatars that don't conform to the specified restrictions (file size, dimensions, no animation), you either need the <a href='http://search.cpan.org/dist/GD/'>GD</a>, <a href='http://search.cpan.org/dist/Imager/'>Imager</a>, <a href='http://www.graphicsmagick.org/'>Graphics::Magick</a> or <a href='http://www.imagemagick.org/'>Image::Magick</a> Perl modules installed, and they (or rather the underlying libraries) must include support for the web image formats JPG, PNG and GIF.</p>
 
-<p>If you want to enable the auto-reformatting feature for avatars that don't conform to the specified restrictions (filesize, dimensions, no animation), you either need the GD, Imager, Graphics::Magick or Image::Magick Perl modules installed, and they (or rather the underlying libraries) must include support for the web image formats JPG, PNG and GIF.</p>
+<h3>Avatar Gallery</h3>
+
+<p>If you want to enable gallery avatars, create a directory named "avatars" inside the attachment directory (unless that already exists) and a directory named "gallery" inside the "avatars" directory. Upload some fitting JPG, PNG and GIF images into that directory.</p>
+
+<p>The images won't be checked for type and size, but the displayed avatars will be zoomed to the same configured dimensions as the uploaded avatars, so you'd better stick to those dimensions, since images zoomed by the browser don't look all that great. There is also a script named util_resizeavatars.pl that scales all images in the gallery directory to the configured dimensions. It also requires the GD, Imager, Graphics::Magick or Image::Magick Perl modules.</p>
 
 
 <h2 id='smtpauth'>SMTP Authentication</h2>
@@ -762,7 +769,7 @@ smtp.example.com supports: PLAIN, LOGIN, CRAM-MD5
 </samp></pre>
 
 
-<p>To enable authentication if the requirements are fulfilled, set the <var>mailer</var> option to the correct value and also configure the additional <var>estmp...</var> forum options.</p>
+<p>To enable authentication if the requirements are fulfilled, set the <var>mailer</var> option to the correct value and also configure the additional <var>estmp…</var> forum options.</p>
 
 
 <h2 id='bounces'>Bounced Emails</h2>
@@ -877,7 +884,7 @@ REPLACE INTO boardSubscriptions (userId, boardId) (SELECT id, 42 FROM users);
 
 <h2 id='styles'>CSS Styling</h2>
 
-<p>mwForum's HTML is valid HTML5 (or optionally XHTML5), rendered in standards compliance mode where available. All styling is done with CSS.</p>
+<p>mwForum's HTML is valid HTML5, rendered in standards compliance mode where available. All styling is done with CSS.</p>
 
 <p>Admins can install multiple styles (consisting of a CSS file and images), from which users can select one. Users can also independently select their font face and size (with correctly done styles at least).</p>
 
@@ -1026,8 +1033,6 @@ PHP [c=strike]rules[/c]sucks
 
 <p>If Google finds multiple matches for the location info, the first match will be centered and shown in the title, but other locations will also be highlighted with markers, which may be outside of the current viewport. The markers have tooltips with the address of the matched location. Users wanting one exact match can simply test their address specifications with the search field on the normal <a href='http://maps.google.com/'>Google Maps</a> site.</p>
 
-<p>Even though Google recommends the use of XHTML on pages that embed Maps, what they really mean is "fake" XHTML, because the maps don't actually work on pages with real XHTML (sent with MIME type application/xhtml+xml) as optionally provided my mwForum.</p>
-
 <p>Please observe the Google Maps API <a href='http://www.google.com/apis/maps/terms.html'>Terms of Service</a> (summed up in the <a href='http://code.google.com/apis/maps/faq.html'>FAQ</a>). The feature uses the v3 API which doesn't require an "API key" like earlier versions.</p>
 
 
@@ -1065,7 +1070,7 @@ labore et
 
 <p>I'm no FastCGI expert and have never used it before. But here's how I got mwForum to work with FastCGI and <a href='http://www.lighttpd.net/'>lighttpd</a>, a nice lightweight webserver. I haven't tested that installation all that much, though.</p>
 
-<p>Since mwForum has no FastCGI accept loop built-in, it needs a dispatcher script. An <a href='http://redmine.lighttpd.net/wiki/lighttpd/ApplicationsUsingLighttpd'>example</a> on the lighttpd site served as a starter, but didn't work out of the box for mwForum, as CGI.pm was somehow screwing up package names or whatever, at least creating MwfMain objects didn't work anymore. But I don't like that bloated piece of code anyway, so I've changed the script to use FCGI directly. I also did a few other small changes, like removing that pointless (?) top level block and wrapping another line in <code>eval{}</code>. The resulting script looks like this:</p>
+<p>Since mwForum has no FastCGI accept loop built-in, it needs a dispatcher script. An <a href='http://redmine.lighttpd.net/projects/lighttpd/wiki/ApplicationsUsingLighttpd'>example</a> on the lighttpd site served as a starter, but didn't work out of the box for mwForum, as CGI.pm was somehow screwing up package names or whatever. But I don't like that bloated piece of code anyway, so I've changed the script to use the FCGI Perl module directly. I also did a few other small changes, and the resulting script looks like this:</p>
 
 <pre><code>
 #!/usr/bin/perl
@@ -1094,7 +1099,7 @@ while ($fcgi-&gt;Accept() &gt;= 0) {
 
 <p>You need to adjust the "<code>use lib</code>" line to point to your script directory. Put the dispatch.pl script either into your forum script directory or somewhere else in your webserver's directories. I have no idea whether the script will work with other Perl FastCGI apps.</p>
 
-<p>Then you need to install the <a href='http://search.cpan.org/dist/FCGI/'>FCGI</a> module. It's old, probably not maintained anymore, and not easily found using the CPAN search, so use the provided link if necessary. It also requires compilation, but if you're using FastCGI, you probably already have it installed or at least know what you're doing.</p>
+<p>Then you need to install the <a href='http://search.cpan.org/dist/FCGI/'>FCGI</a> Perl module. It requires compilation, but if you're using FastCGI, you hopefully already have it installed or at least know what you're doing.</p>
 
 <p>Also required is the <a href='http://search.cpan.org/src/DOUGM/ExtUtils-Embed-1.14/lib/Embed/Persistent.pm'>Embed::Persistent</a> module. Now that one is positively ancient and its Makefile didn't work for me at all. But you can manually install the pure-Perl Persistent.pm file the usual way, e.g. by downloading it directly without the rest of the ExtUtils-Embed distribution from the link provided and by copying it into a subdirectory of your script directory called "Embed".</p>
 
@@ -1148,7 +1153,7 @@ fastcgi.server = (
 
 <ol class='ext'>
 <li>Install the Net::LDAP Perl module and its dependencies.</li>
-<li>Edit the <var>$cfg-&gt;{ldap...}</var> options in the MwfPlgAuthen::authenLoginLdap() function (optionally move them to your MwfConfig.pm). Their meaning is hopefully obvious to people familiar with LDAP.</li>
+<li>Edit the <var>$cfg-&gt;{ldap…}</var> options in the MwfPlgAuthen::authenLoginLdap() function (optionally move them to your MwfConfig.pm). Their meaning is hopefully obvious to people familiar with LDAP.</li>
 <li>Put MwfPlgAuthen.pm into your script directory, after editing it to your needs and removing unrelated example functions.</li>
 <li>Put "login=MwfPlgAuthen::authenLoginLdap" into the <var>authenPlg</var> forum option.</li>
 </ol>
@@ -1210,8 +1215,6 @@ $cfg-&gt;{reCapPubKey} = '01234567890abcdef';
 $cfg-&gt;{reCapPrvKey} = '01234567890abcdef';
 </code></pre>
 
-<p>reCAPTCHA.net doesn't work in XHTML mode, and adds a few harmless syntax errors in HTML mode, at least in the version tested.</p>
-
 <h3>Akismet Service</h3>
 
 <p><a href='http://akismet.com/'>Akismet</a> by Automattic isn't actually a captcha, it's a web service that does spam classification based on post text and metadata. Check their site for details and terms of service. In mwForum, Akismet is used for posts and private messages, but not registrations. It's currently experimental, and it's not yet known how reliable their classification is (which will no doubt change over time anyway).</p>
@@ -1242,13 +1245,9 @@ $cfg-&gt;{reCapPrvKey} = '01234567890abcdef';
 
 <p>This topic is about improving the index coverage and resource consumption by external search engines like Google, not about the built-in forum search.</p>
 
-<p>mwForum's URLs are by default not very search engine friendly. Forums may still get indexed more or less completely, but spiders request a lot more pages than necessary, and the search results contain all sorts of useless or suboptimal links, like variations of the same page with different parameters in the URL, or "prevnext.pl" URLs instead of "topic_show.pl" URLs. Spiders may also punish you for having duplicate content under different URL variations.</p>
+<p>mwForum's URLs are by default not very search engine friendly. Forums may still get indexed more or less completely, but spiders request a lot more pages than necessary, and the search results contain all sorts of useless or suboptimal links, like variations of the same page with different parameters in the URL.</p>
 
-<p>It's not an option for mwForum to use a completely different URL style by default, with most admins being limited to ancient CGI setups and having limited control over their servers, and with the current scheme being established for many years. Instead, there are two alternative approaches to improve the situation.</p>
-
-<h3>robots.txt</h3>
-
-<p>The first approach simply uses a few extended entries in the site's <a href='http://www.robotstxt.org/'>robots.txt</a> file. It can be used by just about anybody with some basic webmastering knowledge, and prevents most useless page requests and bad search result links. The extended syntax used is not supported by all search engines, so far I know about support by Google, Bing and Yahoo. But that covers most of the search market. Don't forget to adjust the script path as necessary:</p>
+<p>It's not an option for mwForum to use a completely different URL style by default, with most admins being limited to ancient CGI setups and having limited control over their servers, and with the current scheme being established for many years. You can however improve the indexing behaviour a lot by using a few extended entries in the site's <a href='http://www.robotstxt.org/'>robots.txt</a> file. This can be done by just about anybody with some basic webmastering knowledge, and prevents most useless page requests and bad search result links. The extended syntax used is not supported by all search engines, so far I know about support by Google, Bing and Yahoo. But that covers almost all of the search market. Don't forget to adjust the script path as necessary:</p>
 
 <pre><code>
 User-agent: Googlebot
@@ -1257,40 +1256,6 @@ Allow: /cgi-bin/mwf/forum_show.pl$
 Allow: /cgi-bin/mwf/board_show.pl?bid=
 Allow: /cgi-bin/mwf/topic_show.pl?tid=
 </code></pre>
-
-<h3>URL Rewriting</h3>
-
-<p>This method is <strong>deprecated</strong>, as it's not required to get Google to crawl full-speed, and the previous simple approach is good enough to avoid pointless crawling. The following is only listed for reference for existing users.</p>
-
-<p>The URL Rewriting approach requires some more webmastering experience and access to <a href='http://httpd.apache.org/docs/2.0/mod/mod_rewrite.html'>mod_rewrite</a> (or an equivalent). If the "<code>seoRewriting</code>" forum option is enabled (and the user agent is not logged in), mwForum rewrites certain links to the forum, board and topic pages to URLs that look like static HTML pages, e.g.:</p>
-
-<pre><samp>
-forum.pl                 -&gt; start.html
-forum_show.pl            -&gt; forum.html
-board_show.pl?bid=x;pg=y -&gt; board_x_y.html
-topic_show.pl?tid=x;pg=y -&gt; topic_x_y.html
-</samp></pre>
-
-<p>When these "fake" URLs are requested, they need to be rewritten back to the real URLs internally by the webserver. The following example uses mod_rewrite and assumes that your forum script path is not in a "cgi-bin" directory this time, as that might prevent spiders from handling the URLs as static files.</p>
-
-<pre><code>
-RewriteRule ^/mwf/topic_(\d+)_(\d+)\.html  /mwf/topic_show.pl?tid=$1;pg=$2
-RewriteRule ^/mwf/board_(\d+)_(\d+)\.html  /mwf/board_show.pl?bid=$1;pg=$2
-RewriteRule ^/mwf/forum\.html              /mwf/forum_show.pl
-RewriteRule ^/mwf/start\.html              /mwf/forum.pl
-</code></pre>
-
-<p>Last not least we want to prevent spiders from crawling and indexing any other pages than those using the .html URLs, again using robots.txt extended syntax:</p>
-
-<pre><code>
-User-agent: Googlebot
-User-agent: Slurp
-User-agent: msnbot
-Disallow: /mwf/
-Allow: /mwf/*.html$
-</code></pre>
-
-<p>How you handle search engines that don't understand the extended syntax for either approach is up to you.</p>
 
 
 <h2 id='archive'>Archiving</h2>
@@ -1388,12 +1353,27 @@ RewriteRule ^/mwf/v\d+/(.+)  /mwf/$1
 
 <p>A few tips to make a forum more accessible via mobile browsers on small screens:</p>
 
-<ul>
-<li>Include a "<code>&lt;meta name='viewport' content='width=device-width'/&gt;</code>" header with the <var>htmlHeader</var> forum option to have mobile browsers flow the page content to their native page widths instead of having users zoom around.</li>
+<ul class='ext'>
+<li>Include a "<code>&lt;meta name='viewport' content='width=device-width'&gt;</code>" header with the <var>htmlHeader</var> forum option to have mobile browsers flow the page content to their native page widths instead of having users zoom around.</li>
 <li>Don't garnish the forum with any title images, navigation sidebars etc., or use an intelligent include plugin that skips them for mobile browsers.</li>
 <li>Use compact board titles, don't enable overly long topic subjects or usernames, etc.</li>
-<li>Point out the existence of the various "Show ..." user options to your users. Disabling them can make pages a good deal more compact and load time shorter.</li>
+<li>Point out the existence of the various "Show …" user options to your users. Disabling them can make pages a good deal more compact and load time shorter.</li>
 </ul>
+
+
+<h2 id='shortcuts'>Moderation Shortcuts</h2>
+
+<h3>Branch Moving</h3>
+
+<p>Admins and board moderators can Ctrl-Click a topic branch's base post and Alt-Click the new parent post to move a branch within a topic. This is much faster than the numeric post ID input on the branch_admin page.</p>
+
+<h3>Image Transfer to Attachment</h3>
+
+<p>Admins and board moderators can transfer remote images embedded with the <code>[img]</code> tag to a post attachment by Ctrl-Clicking the image. The "<code>[img]http://example.org/example.png[/img]</code>" markup will be changed to "<code>[img thb]example.png[/img]</code>", so the image will be shown in the same place in the post, and as a thumbnail if possible. Users of this feature need to keep legal issues in mind.</p>
+
+<p>Post attachments need to be set up of course. The <var>$cfg-&gt{maxAttachLen}</var> forum option is enforced, but can be overriden with <var>$cfg-&gt{maxAttXferLen}</var>. The feature requires either the LWP (libwww-perl) set of Perl modules, or the Wget application installed. If an installed LWP should not be used (e.g. to save memory under mod_perl), <var>$cfg-&gt;{noLWP}</var> can be set to <code>1</code>. If Wget isn't located in /usr/bin/wget, its path can be set with <var>$cfg-&gt;{wgetBinary}</var>.</p>
+
+<p>The transfer only works for unlinked images (i.e. not for "<code>[url=http://foo][img]http://bar[/img][/url]</code>"), as linked images will usually be just thumbnails, and because linked attached images don't work in mwForum for technical reasons.</p>
 
 
 </body>

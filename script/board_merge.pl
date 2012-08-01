@@ -50,15 +50,12 @@ if ($submitted) {
 
 	# If there's no error, finish action
 	if (!@{$m->{formErrors}}) {
-		# Update posts and topics
+		# Update posts, topics and board
 		$m->dbDo("
 			UPDATE posts SET boardId = ? WHERE boardId = ?", $newBoardId, $oldBoardId);
 		$m->dbDo("
 			UPDATE topics SET boardId = ? WHERE boardId = ?", $newBoardId, $oldBoardId);
-
-		# Update statistics
-		$m->recalcStats($newBoardId);
-		$m->recalcStats($oldBoardId);
+		$m->recalcStats([ $oldBoardId, $newBoardId ]);
 
 		# Log action and finish
 		$m->logAction(1, 'board', 'merge', $userId, $oldBoardId, 0, 0, $newBoardId);
@@ -76,6 +73,9 @@ if (!$submitted || @{$m->{formErrors}}) {
 		txt => 'comUp', ico => 'up' });
 	$m->printPageBar(mainTitle => "Board", subTitle => $boardTitle, navLinks => \@navLinks);
 
+	# Print hints and form errors
+	$m->printFormErrors();
+
 	# Get boards
 	my $boards = $m->fetchAllHash("
 		SELECT boards.id, boards.title,
@@ -85,9 +85,6 @@ if (!$submitted || @{$m->{formErrors}}) {
 				ON categories.id = boards.categoryId
 		ORDER BY categories.pos, boards.pos");
 
-	# Print hints and form errors
-	$m->printFormErrors();
-
 	# Print destination board form
 	print
 		"<form action='board_merge$m->{ext}' method='post'>\n",
@@ -95,11 +92,11 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='hcl'><span class='htt'>Merge Boards</span></div>\n",
 		"<div class='ccl'>\n",
 		"<label class='lbw'>Destination Board\n",
-		"<select class='fcs' name='newBoardId' size='10' autofocus='autofocus'>\n",
+		"<select name='newBoardId' size='10' autofocus>\n",
 		map("<option value='$_->{id}'>$_->{categTitle} / $_->{title}</option>\n", @$boards),
 		"</select></label>\n",
 		$m->submitButton("Merge", 'merge'),
-		"<input type='hidden' name='bid' value='$oldBoardId'/>\n",
+		"<input type='hidden' name='bid' value='$oldBoardId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

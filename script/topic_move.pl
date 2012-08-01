@@ -44,10 +44,10 @@ my $topic = $m->fetchHash("
 			ON posts.id = topics.basePostId
 	WHERE topics.id = ?", $topicId);
 $topic or $m->error('errTpcNotFnd');
-my $boardId = $topic->{boardId};
+my $oldBoardId = $topic->{boardId};
 
 # Check if user is admin or moderator in source board
-$user->{admin} || $m->boardAdmin($userId, $boardId) or $m->error('errNoAccess');
+$user->{admin} || $m->boardAdmin($userId, $oldBoardId) or $m->error('errNoAccess');
 
 # Process form
 if ($submitted) {
@@ -70,23 +70,18 @@ if ($submitted) {
 		my $prevTopicId = $m->fetchArray("
 			SELECT id 
 			FROM topics 
-			WHERE boardId = :boardId
+			WHERE boardId = :oldBoardId
 				AND lastPostTime > :lastPostTime
 			ORDER BY lastPostTime
 			LIMIT 1",
-			{ boardId => $boardId, lastPostTime => $topic->{lastPostTime} });
+			{ oldBoardId => $oldBoardId, lastPostTime => $topic->{lastPostTime} });
 
-		# Update posts
+		# Update posts, topic and board
 		$m->dbDo("
 			UPDATE posts SET boardId = ? WHERE topicId = ?", $newBoardId, $topicId);
-		
-		# Update topic
 		$m->dbDo("
 			UPDATE topics SET boardId = ? WHERE id = ?", $newBoardId, $topicId);
-			
-		# Update statistics
-		$m->recalcStats($boardId);
-		$m->recalcStats($newBoardId);
+		$m->recalcStats([ $oldBoardId, $newBoardId ]);
 
 		# Add notification message
 		if ($notify && $topic->{userId} && $topic->{userId} != $userId) {
@@ -95,9 +90,9 @@ if ($submitted) {
 		}
 
 		# Log action and finish
-		$m->logAction(1, 'topic', 'move', $userId, $boardId, $topicId, 0, $newBoardId);
+		$m->logAction(1, 'topic', 'move', $userId, $oldBoardId, $topicId, 0, $newBoardId);
 		$m->redirect('board_show', $prevTopicId ? (tid => $prevTopicId, tgt => "tid$prevTopicId") 
-			: (bid => $boardId), msg => 'TpcMove');
+			: (bid => $oldBoardId), msg => 'TpcMove');
 	}
 }
 
@@ -114,6 +109,9 @@ if (!$submitted || @{$m->{formErrors}}) {
 	# Print page bar
 	my @navLinks = ({ url => $m->url('topic_show', tid => $topicId), txt => 'comUp', ico => 'up' });
 	$m->printPageBar(mainTitle => $lng->{mvtTitle}, subTitle => $subject, navLinks => \@navLinks);
+
+	# Print hints and form errors
+	$m->printFormErrors();
 	
 	# Get boards
 	my $boards = $m->fetchAllHash("
@@ -123,11 +121,9 @@ if (!$submitted || @{$m->{formErrors}}) {
 			INNER JOIN categories AS categories
 				ON categories.id = boards.categoryId
 		ORDER BY categories.pos, boards.pos");
-	@$boards = grep($_->{id} != $boardId && $m->boardVisible($_) && $m->boardWritable($_), @$boards);
+	@$boards = grep($_->{id} != $oldBoardId && $m->boardVisible($_) && $m->boardWritable($_), 
+		@$boards);
 
-	# Print hints and form errors
-	$m->printFormErrors();
-	
 	# Print destination board form
 	print
 		"<form action='topic_move$m->{ext}' method='post'>\n",
@@ -136,23 +132,27 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='ccl'>\n",
 		"<fieldset>\n",
 		"<label class='lbw'>$lng->{mvtMovDest}\n",
-		"<select class='fcs' name='bid' size='10' autofocus='autofocus'>\n",
+		"<select name='bid' size='10' autofocus>\n",
 		map("<option value='$_->{id}'>$_->{categTitle} / $_->{title}</option>\n", @$boards),
 		"</select></label>\n",
 		"</fieldset>\n";
 
-	# Print notification checkbox
-	my $checked = $cfg->{noteDefMod} ? "checked='checked'" : "";
+	# Print notification section
+	my $noteChk = $cfg->{noteDefMod} ? 'checked' : "";
 	print		
 		"<fieldset>\n",
-		"<div><label><input type='checkbox' name='notify' $checked/>$lng->{notNotify}</label></div>\n",
-		"<input type='text' class='fwi' name='reason'/>\n",
+		"<div><label><input type='checkbox' name='notify' $noteChk>$lng->{notNotify}</label></div>\n",
+		"<datalist id='reasons'>\n",
+		map("<option value='$_'>\n", @{$cfg->{modReasons}}),
+		"</datalist>\n",
+		"<input type='text' class='fwi' name='reason' list='reasons'>\n",
 		"</fieldset>\n",
 		if $topic->{userId} > 0 && $topic->{userId} != $userId;
 	
+	# Print submit section
 	print	
 		$m->submitButton('mvtMovB', 'move'),
-		"<input type='hidden' name='tid' value='$topicId'/>\n",
+		"<input type='hidden' name='tid' value='$topicId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

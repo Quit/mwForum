@@ -24,7 +24,7 @@ use MwfMain;
 #------------------------------------------------------------------------------
 
 # Init
-my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
+my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_, autocomplete => 1);
 
 # Check if access should be denied
 $userId or $m->error('errNoAccess');
@@ -93,52 +93,31 @@ if (!$submitted || @{$m->{formErrors}}) {
 	# Print header
 	$m->printHeader();
 
-	# Print bar
+	# Print page bar
 	my @navLinks = ({ url => $m->url('user_options', uid => $optUserId),
 		txt => 'comUp', ico => 'up' });
 	$m->printPageBar(mainTitle => $lng->{uigTitle}, subTitle => $optUser->{userName}, 
 		navLinks => \@navLinks);
 
-	# Escape submitted values
-	my $userNameEsc = $m->escHtml($userName);
-
 	# Print hints and form errors
 	$m->printHints(['uigAddT']);
 	$m->printFormErrors();
-	
+
+	# Prepare values
+	my $userNameEsc = $m->escHtml($userName);
+
 	# Print add form
 	print
 		"<form action='user_ignore$m->{ext}' method='post'>\n",
 		"<div class='frm'>\n",
 		"<div class='hcl'><span class='htt'>$lng->{uigAddTtl}</span></div>\n",
 		"<div class='ccl'>\n",
-		"<label class='lbw'>$lng->{uigAddUser}\n";
-
-	my $userNum = $m->fetchArray("
-		SELECT COUNT(*) FROM users");
-	if ($userNum > $cfg->{maxListUsers}) {
-		print 
-			"<input type='text' class='fcs qwi' name='userName'",
-			" autofocus='autofocus' required='required' value='$userNameEsc'/></label>\n";
-	}
-	else {
-		my $users = $m->fetchAllArray("
-			SELECT id, userName 
-			FROM users
-			WHERE id NOT IN (SELECT ignoredId FROM userIgnores WHERE userId = :userId)
-			ORDER BY userName",
-			{ userId => $userId });
-		my %sel = ( $ignUserId => "selected='selected'" );
-		print 
-			"<select class='fcs' name='userId' size='10' autofocus='autofocus'>\n",
-			map("<option value='$_->[0]' $sel{$_->[0]}>$_->[1]</option>\n", @$users),
-			"</select></label>\n";
-	}
-
-	print
+		"<label class='lbw'>$lng->{uigAddUser}\n",
+		"<input type='text' class='qwi acu acs' name='userName' value='$userNameEsc'",
+		" autofocus required></label>\n",
 		$m->submitButton('uigAddB', 'ignore'),
-		"<input type='hidden' name='act' value='add'/>\n",
-		"<input type='hidden' name='uid' value='$optUserId'/>\n",
+		"<input type='hidden' name='act' value='add'>\n",
+		"<input type='hidden' name='uid' value='$optUserId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",
@@ -156,7 +135,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 	
 	if (@$users) {
 		# Print remove form
-		my %sel = ( $ignUserId => "selected='selected'" );
+		my %state = ( $ignUserId => 'selected' );
 		print
 			"<form action='user_ignore$m->{ext}' method='post'>\n",
 			"<div class='frm'>\n",
@@ -164,11 +143,11 @@ if (!$submitted || @{$m->{formErrors}}) {
 			"<div class='ccl'>\n",
 			"<label class='lbw'>$lng->{uigRemUser}\n",
 			"<select name='userId' size='10'>\n",
-			map("<option value='$_->[0]' $sel{$_->[0]}>$_->[1]</option>\n", @$users),
+			map("<option value='$_->[0]' $state{$_->[0]}>$_->[1]</option>\n", @$users),
 			"</select></label>\n",
 			$m->submitButton('uigRemB', 'remove'),
-			"<input type='hidden' name='act' value='remove'/>\n",
-			"<input type='hidden' name='uid' value='$optUserId'/>\n",
+			"<input type='hidden' name='act' value='remove'>\n",
+			"<input type='hidden' name='uid' value='$optUserId'>\n",
 			$m->stdFormFields(),
 			"</div>\n",
 			"</div>\n",

@@ -55,7 +55,7 @@ my @ua = (
 
 # Order of OS printed
 my @os = (
-	'Windows', 'Windows 7', 'Windows Vista', 'Windows XP',
+	'Windows', 'Windows 8', 'Windows 7', 'Windows Vista', 'Windows XP',
 	'Mac', 'Linux', 'Android', 'iOS', 'Symbian', 'Windows Phone', 'Other',
 );
 
@@ -155,7 +155,7 @@ if ($users && $cfg->{uaChartType} ne 'none') {
 			my $size = length($bin);
 			print 
 				"<img src='data:image/png;base64,", MIME::Base64::encode_base64($bin, ''), 
-				"' style='margin: 10px' title='$size' alt='$lng->{errUAFeatSup}'/>\n";
+				"' style='margin: 10px' title='$size' alt='$lng->{errUAFeatSup}'>\n";
 		};
 	}
 	elsif ($cfg->{uaChartType} eq 'Imager::Graph') {
@@ -175,7 +175,7 @@ if ($users && $cfg->{uaChartType} ne 'none') {
 			my $size = length($bin);
 			print 
 				"<img src='data:image/png;base64,", MIME::Base64::encode_base64($bin, ''), 
-				"' title='$size' alt='$lng->{errUAFeatSup}'/>\n";
+				"' title='$size' alt='$lng->{errUAFeatSup}'>\n";
 		};
 	}
 	elsif ($cfg->{uaChartType} eq 'GoogleChart' || !$cfg->{uaChartType}) {
@@ -184,15 +184,15 @@ if ($users && $cfg->{uaChartType} ne 'none') {
 			my ($labels, $values) = @_;
 			$labels = join("|", @$labels);
 			$values = "t:" . join(",", map(int($_ + .5), @$values));
-			my $url = "$m->{http}://chart.googleapis.com/chart?";
+			my $url = "//chart.googleapis.com/chart?";
 			my %params = (chs => "350x150", cht => "p3", chf => "bg,s,00000000", 
 				chl => $labels, chd => $values);
 			for my $key (keys %params) {
 				my $value = $params{$key};
-				$value =~ s/([^A-Za-z_0-9.!~()-|,])/'%'.unpack("H2",$1)/eg;
+				$value =~ s/([^A-Za-z_0-9.!~()|,-])/'%'.unpack("H2",$1)/eg;
 				$url .= "$key=$value&amp;";
 			}
-			print "<img src='$url' width='350' height='150' alt=''/>\n";
+			print "<img src='$url' width='350' height='150' alt=''>\n";
 		};
 	}
 	elsif ($cfg->{uaChartType} eq 'GoogleVis') {
@@ -206,7 +206,7 @@ if ($users && $cfg->{uaChartType} ne 'none') {
 		print <<"EOHTML";
 			<span id='uaPie' style='display: inline-block; margin-top: 10px'></span>
 			<span id='osPie' style='display: inline-block; margin-top: 10px'></span>
-			<script src='$m->{http}://www.google.com/jsapi'></script>
+			<script src='//www.google.com/jsapi'></script>
 			<script>
 			google.load('visualization', '1', { packages: ['piechart'] });
 			\$(window).load(function () {

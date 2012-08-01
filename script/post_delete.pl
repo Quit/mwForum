@@ -77,8 +77,6 @@ $m->checkAuthz($user, 'deletePost');
 # Delete post
 my $trash = $cfg->{trashBoardId} && $cfg->{trashBoardId} != $boardId;
 my $topicDeleted = $m->deletePost($postId, $trash);
-
-# Update board/topic stats
 $m->recalcStats($boardId, $topicId);
 
 # Add notification message

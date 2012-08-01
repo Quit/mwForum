@@ -32,14 +32,6 @@ if ($userId) {
 	
 	# Remove id/pwd cookies
 	$m->deleteCookie('login');
-	
-	# Delete session
-	$m->dbDo("
-		DELETE FROM sessions WHERE id = ?", $m->{sessionId}) 
-		if $m->{sessionId};
-	
-	# Remove session id
-	$m->{sessionId} = undef;
 }
 
 # Log action and finish

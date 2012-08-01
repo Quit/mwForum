@@ -16,7 +16,7 @@
 
 use strict;
 use warnings;
-no warnings qw(uninitialized redefine);
+no warnings qw(uninitialized);
 
 # Imports
 use Getopt::Std ();
@@ -36,6 +36,9 @@ my ($m, $cfg, $lng) = MwfMain->newShell(forumId => $forumId, spawned => $spawned
 exit if !$cfg->{subsInstant};
 $m->dbBegin();
 
+# Shortcuts
+my $baseUrl = $cfg->{baseUrl} . $cfg->{scriptUrlPath};
+
 # Get post
 my $post = $m->fetchHash("
 	SELECT posts.*, topics.subject
@@ -47,29 +50,16 @@ my $post = $m->fetchHash("
 $post or $m->error('errPstNotFnd');
 my $topicId = $post->{topicId};
 my $boardId = $post->{boardId};
+$m->dbToEmail({}, $post);
 
 # Get board
 my $board = $m->fetchHash("
 	SELECT * FROM boards WHERE id = ?", $boardId);
 $board or $m->error('errBrdNotFnd');
 
-# Compose email
-$m->dbToEmail($board, $post);
-my $timeStr = $m->formatTime($post->{postTime});
-my $subjectBoard = "$cfg->{forumName} - \"$board->{title}\" $lng->{subSubjBrdIn}";
-my $subjectTopic = "$cfg->{forumName} - \"$post->{subject}\" $lng->{subSubjTpcIn}";
-my $body = $lng->{subNoReply} . "\n\n" 
-	. "-" x 70 . "\n\n"
-	. $lng->{subTopic} . $post->{subject} . "\n"
-	. $lng->{subBy} . $post->{userNameBak} . "\n"
-	. $lng->{subOn} . $timeStr . "\n\n"
-	. $post->{body} . "\n\n"
-	. ($post->{rawBody} ? $post->{rawBody} . "\n\n" : "")
-	. "-" x 70 . "\n\n";
-
 # Get board subscribers
 my $boardSubscribers = $m->fetchAllHash("
-	SELECT users.*
+	SELECT boardSubscriptions.unsubAuth, users.*
 	FROM boardSubscriptions AS boardSubscriptions
 		INNER JOIN users AS users 
 			ON users.id = boardSubscriptions.userId
@@ -82,12 +72,25 @@ my $boardSubscribers = $m->fetchAllHash("
 # Send to subscribers if they still have board access	
 for my $subscriber (@$boardSubscribers) { 
 	next if !$m->boardVisible($board, $subscriber);
-	$m->sendEmail(user => $subscriber, subject => $subjectBoard, body => $body);
+	$lng = $m->setLanguage($subscriber->{language});
+	my $subject = "$lng->{subSubjBrdIn}: $board->{title}";
+	my $body = $lng->{subNoReply} . "\n\n" . "-" x 70 . "\n\n"
+		. $lng->{subLink} . "$baseUrl/topic_show$m->{ext}?pid=$post->{id}\n"
+		. $lng->{subBoard} . $board->{title} . "\n"
+		. $lng->{subTopic} . $post->{subject} . "\n"
+		. $lng->{subBy} . $post->{userNameBak} . "\n"
+		. $lng->{subOn} . $m->formatTime($post->{postTime}, $subscriber->{timezone}) . "\n\n"
+		. $post->{body} . "\n\n"
+		. ($post->{rawBody} ? $post->{rawBody} . "\n\n" : "")
+		. "-" x 70 . "\n\n"
+		. $lng->{subUnsubBrd} . "\n"
+		. "$baseUrl/user_unsubscribe$m->{ext}?t=$subscriber->{unsubAuth}\n\n";
+	$m->sendEmail(user => $subscriber, subject => $subject, body => $body);
 }
 
 # Get topic subscribers
 my $topicSubscribers = $m->fetchAllHash("
-	SELECT users.*
+	SELECT topicSubscriptions.unsubAuth, users.*
 	FROM topicSubscriptions AS topicSubscriptions
 		INNER JOIN users AS users 
 			ON users.id = topicSubscriptions.userId
@@ -100,7 +103,20 @@ my $topicSubscribers = $m->fetchAllHash("
 # Send to topic subscribers if they still have board access	
 for my $subscriber (@$topicSubscribers) { 
 	next if !$m->boardVisible($board, $subscriber);
-	$m->sendEmail(user => $subscriber, subject => $subjectTopic, body => $body);
+	$lng = $m->setLanguage($subscriber->{language});
+	my $subject = "$lng->{subSubjTpcIn}: $post->{subject}";
+	my $body = $lng->{subNoReply} . "\n\n" . "-" x 70 . "\n\n"
+		. $lng->{subLink} . "$baseUrl/topic_show$m->{ext}?pid=$post->{id}\n"
+		. $lng->{subBoard} . $board->{title} . "\n"
+		. $lng->{subTopic} . $post->{subject} . "\n"
+		. $lng->{subBy} . $post->{userNameBak} . "\n"
+		. $lng->{subOn} . $m->formatTime($post->{postTime}, $subscriber->{timezone}) . "\n\n"
+		. $post->{body} . "\n\n"
+		. ($post->{rawBody} ? $post->{rawBody} . "\n\n" : "")
+		. "-" x 70 . "\n\n"
+		. $lng->{subUnsubTpc} . "\n"
+		. "$baseUrl/user_unsubscribe$m->{ext}?t=$subscriber->{unsubAuth}\n\n";
+	$m->sendEmail(user => $subscriber, subject => $subject, body => $body);
 }
 
 # Log action and commit

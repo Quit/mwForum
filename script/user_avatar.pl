@@ -61,27 +61,14 @@ if ($submitted) {
 
 	# Process upload form upload action
 	if ($avatarUpload && $cfg->{avatarUpload}) {
-		my $fileSize = 0;
-		my $upload = undef;
-	
-		# Get upload object and size
-		if ($MwfMain::MP) {
-			require Apache2::Upload if $MwfMain::MP2;
-			$upload = $m->{apr}->upload('file');
-			$fileSize = $upload->size();
-		}
-		else {
-			$fileSize = length($m->{cgi}->param('file'));
-		}
+		my ($upload, undef, $fileSize) = $m->getUpload('file');
 		my $validFileSize = $fileSize <= $cfg->{avatarMaxSize};
 		$validFileSize || $cfg->{avatarResize} or $m->formError('errAvaSizeEx');
-		
-		# Get image info		
+
+		# Check image info
 		my $info = $MwfMain::MP 
 			? Image::Info::image_info($upload->fh())
 			: Image::Info::image_info(\$m->{cgi}->param('file'));
-
-		# Check image info
 		$info && !$info->{error} or $m->formError('errAvaFmtUns');
 		my $imgW = int($info->{width});
 		my $imgH = int($info->{height});
@@ -103,33 +90,11 @@ if ($submitted) {
 		
 			# Write avatar file
 			my $rnd = sprintf("%04u", int(rand(9999)));
-			my $fileName = "$optUserId-$rnd.$ext";
-			my $file = "$avaFsPath/$fileName";
-			if (!-d $avaFsPath) {
-				mkdir $avaFsPath or $m->error("Avatar directory creation failed. ($!)");
-				$m->setMode($avaFsPath, 'dir');
-			}
-			if ($MwfMain::MP1) {
-				# Create new hardlink for tempfile or copy tempfile
-				my $success = $upload->link($file);
-				if (!$success) {
-					require File::Copy;
-					File::Copy::copy($upload->tempname(), $file) 
-						or $m->error("Avatar storing failed. ($!)");
-				}
-			}
-			elsif ($MwfMain::MP2) {
-				# Create new hardlink for tempfile or copy tempfile
-				# or write data from memory to file for small uploads
-				eval { $upload->link($file) } or $m->error("Avatar storing failed. ($@)");
-			}
-			else {
-				# Write data from memory to file
-				open my $fh, ">:raw", $file or $m->error("Avatar storing failed. ($!)");
-				print $fh $m->{cgi}->param('file') or $m->error("Avatar storing failed. ($!)");
-				close $fh;
-			}
-			$m->setMode($file, 'file');
+			my $oldFileName = "$optUserId-$rnd.$ext";
+			my $oldFile = "$avaFsPath/$oldFileName";
+			my $updateFileName = $oldFileName;
+			$m->createDirectories($avaFsPath);
+			$m->saveUpload('file', $upload, $oldFile);
 
 			# Resize image if enabled and necessary
 			if (!$validFileSize || !$validSize || $animated) {
@@ -156,30 +121,24 @@ if ($submitted) {
 				# Resize image
 				if ($module eq 'GD') {
 					GD::Image->trueColor(1);
-					my $oldImg = GD::Image->new($file)
-						or unlink($file), $m->error('errAvaFmtUns');
-					my $newImg = GD::Image->new($avaW, $avaH, 1)
-						or $m->error("Avatar creating failed.");
+					my $oldImg = GD::Image->new($oldFile) or unlink($oldFile), $m->error('errAvaFmtUns');
+					my $newImg = GD::Image->new($avaW, $avaH, 1) or $m->error("Avatar creation failed.");
 					$newImg->alphaBlending(0);
 					$newImg->saveAlpha(1);
 					$newImg->fill(0, 0, $newImg->colorAllocateAlpha(255,255,255, 127));
 					$newImg->copyResampled($oldImg, $dstX, $dstY, 0, 0, $dstW, $dstH, $imgW, $imgH);
-					open my $fh, ">:raw", $newFile 
-						or $m->error("Avatar opening failed. $!");
-					print $fh $newImg->png() 
-						or $m->error("Avatar storing failed. $!");
+					open my $fh, ">:raw", $newFile or $m->error("Avatar opening failed. $!");
+					print $fh $newImg->png() or $m->error("Avatar storing failed. $!");
 					close $fh;
 				}
 				elsif ($module eq 'Imager') {
-					my $oldImg = Imager->new() 
-						or $m->error("Image creating failed. " . Imager->errstr());
-					$oldImg->read(file => $file)
-						or unlink($file), $m->error('errAvaFmtUns');
-					$oldImg = $oldImg->scale(xpixels => $dstW, ypixels => $dstH, 
-						type => 'nonprop', qtype => 'mixing')
-						or $m->error('Image scaling failed. ' . $oldImg->errstr());
+					my $oldImg = Imager->new(file => $oldFile) 
+						or unlink($oldFile), $m->error('errAvaFmtUns');
+					$oldImg = $oldImg->scale(xpixels => $dstW, ypixels => $dstH,
+						qtype => 'mixing', type => 'nonprop')
+						or $m->error("Avatar scaling failed. " . Imager->errstr());
 					my $newImg = Imager->new(xsize => $avaW, ysize => $avaH, channels => 4)
-						or $m->error("Avatar creating failed. " . Imager->errstr());
+						or $m->error("Avatar creation failed. " . Imager->errstr());
 					$newImg->paste(img => $oldImg, left => $dstX, top => $dstY)
 						or $m->error("Avatar pasting failed. " . $newImg->errstr());
 					$newImg->write(file => $newFile) 
@@ -187,13 +146,13 @@ if ($submitted) {
 				}
 				elsif ($module eq 'Graphics::Magick' || $module eq 'Image::Magick') {
 					my $oldImg = $module->new()
-						or $m->error("Image creating failed.");
-					my $err = $oldImg->Read($file . "[0]")
-						and unlink($file), $m->error('errAvaFmtUns');
+						or $m->error("Image creation failed.");
+					my $err = $oldImg->Read($oldFile . "[0]")
+						and unlink($oldFile), $m->error('errAvaFmtUns');
 					$err = $oldImg->Scale(width => $dstW, height => $dstH)
-						and $m->error("Image scaling failed. $err");
+						and $m->error("Avatar scaling failed. $err");
 					my $newImg = $module->new(size => "${avaW}x${avaH}")
-						or $m->error("Avatar creating failed.");
+						or $m->error("Avatar creation failed.");
 					$err = $newImg->Read("xc:transparent")
 						and $m->error("Avatar filling failed. $err");
 					$err = $newImg->Composite(image => $oldImg, x => $dstX, y => $dstY)
@@ -201,14 +160,14 @@ if ($submitted) {
 					$err = $newImg->Write(filename => $newFile)
 						and $m->error("Avatar storing failed. $err");
 				}
-				unlink($file);
+				unlink($oldFile);
 				$m->setMode($newFile, 'file');
-				$fileName = $newFileName;
+				$updateFileName = $newFileName;
 			}
 			
 			# Update user
 			$m->dbDo("
-				UPDATE users SET showAvatars = 1, avatar = ? WHERE id = ?", $fileName, $optUserId);
+				UPDATE users SET showAvatars = 1, avatar = ? WHERE id = ?", $updateFileName, $optUserId);
 
 			# Log action and finish
 			$m->logAction(1, 'user', 'avaupl', $userId, 0, 0, 0, $optUserId);
@@ -243,7 +202,8 @@ if ($submitted) {
 		# If there's no error, finish action
 		if (!@{$m->{formErrors}}) {
 			# Update user
-			my $gravatarEmail = "gravatar:$gravatarEmail";
+			$gravatarEmail = lc($gravatarEmail);
+			$gravatarEmail = "gravatar:$gravatarEmail";
 			$m->dbDo("
 				UPDATE users SET showAvatars = 1, avatar = ? WHERE id = ?", $gravatarEmail, $optUserId);
 	
@@ -298,23 +258,22 @@ if (!$submitted || @{$m->{formErrors}}) {
 
 		if (!$avatar || $avatar =~ /[\/:]/) {
 			my $label = $cfg->{avatarResize}
-				? $m->formatStr($lng->{avaUplImgRsz}, { size => sprintf("%.0fk", $cfg->{maxAttachLen}/1024) })
-				: $m->formatStr($lng->{avaUplImgExc}, { size => sprintf("%.0fk", $cfg->{avatarMaxSize}/1024), 
+				? $m->formatStr($lng->{avaUplImgRsz}, { size => $m->formatSize($cfg->{maxAttachLen}) })
+				: $m->formatStr($lng->{avaUplImgExc}, { size => $m->formatSize($cfg->{avatarMaxSize}), 
 					width => $cfg->{avatarWidth}, height => $cfg->{avatarHeight} });
 			print
 				"<label class='lbw'>$label\n",
-				"<input type='file' class='fcs' name='file'",
-				" autofocus='autofocus' accept='image/*'/></label>\n",
+				"<input type='file' name='file' accept='image/*' autofocus></label>\n",
 				$m->submitButton('avaUplUplB', 'attach', 'avatarUpload');
 		}
 		else {
 			print
-				"<div><img class='ava' src='$avaUrlPath/$avatar' alt=''/></div>\n",
+				"<div><img class='ava' src='$avaUrlPath/$avatar' alt=''></div>\n",
 				$m->submitButton('avaUplDelB', 'delete', 'remove');
 		}
 	
 		print	
-			"<input type='hidden' name='uid' value='$optUserId'/>\n",
+			"<input type='hidden' name='uid' value='$optUserId'>\n",
 			$m->stdFormFields(),
 			"</div>\n",
 			"</div>\n",
@@ -337,23 +296,26 @@ if (!$submitted || @{$m->{formErrors}}) {
 			"<div class='hcl'><span class='htt'>$lng->{avaGalTtl}</span></div>\n",
 			"<div class='ccl'>\n",
 			"<fieldset>\n";
-
-		for my $file (<$avaFsPath/gallery/*>) {
-			my $status = $file eq "$avaFsPath/$avatar" ? "checked='checked'" : "";
+    
+    require File::Glob;
+		for my $file (File::Glob::bsd_glob("$avaFsPath/gallery/*.{jpg,png,gif}", 
+			File::Glob::GLOB_NOCASE() | File::Glob::GLOB_BRACE())) {
+			$file = $m->decFsPath($file);
+			my $chk = $file eq "$avaFsPath/$avatar" ? 'checked' : "";
 			$file =~ s!.*[\\/:]!!;
 			my ($name) = $file =~ /(.*)\.\w+\z/;
 			my $usedNum = $used{"gallery/$file"};
 			my $title = $usedNum ? "$name ($usedNum users)" : $name;
 			print
-				"<label><input type='radio' class='fcs' name='galleryFile' value='$file' $status/>",
-				"<img class='ava' src='$avaUrlPath/gallery/$file' alt='$name' title='$title'/></label>\n";
+				"<label><input type='radio' name='galleryFile' value='$file' $chk>",
+				"<img class='ava' src='$avaUrlPath/gallery/$file' title='$title' alt='$name'></label>\n";
 		}
 	
 		print
 			"</fieldset>\n",
 			$m->submitButton('avaGalSelB', 'avatar', 'gallerySelect'),
 			$avatar =~ /\// ? $m->submitButton('avaGalDelB', 'remove', 'remove') : "",
-			"<input type='hidden' name='uid' value='$optUserId'/>\n",
+			"<input type='hidden' name='uid' value='$optUserId'>\n",
 			$m->stdFormFields(),
 			"</div>\n",
 			"</div>\n",
@@ -368,11 +330,13 @@ if (!$submitted || @{$m->{formErrors}}) {
 			"<div class='frm'>\n",
 			"<div class='hcl'><span class='htt'>$lng->{avaGrvTtl}</span></div>\n",
 			"<div class='ccl'>\n",
+			"<datalist id='email'><option value='$optUser->{email}'></datalist>\n",
 			"<label class='lbw'>$lng->{avaGrvEmail}\n",
-			"<input type='email' class='fcs hwi' name='gravatarEmail' value='$gravatarEmail'/></label>",
+			"<input type='email' class='hwi' name='gravatarEmail' list='email'",
+			" value='$gravatarEmail'></label>\n",
 			$m->submitButton('avaGrvSelB', 'avatar', 'gravatarSelect'),
 			$avatar =~ /:/ ? $m->submitButton('avaGrvDelB', 'remove', 'remove') : "",
-			"<input type='hidden' name='uid' value='$optUserId'/>\n",
+			"<input type='hidden' name='uid' value='$optUserId'>\n",
 			$m->stdFormFields(),
 			"</div>\n",
 			"</div>\n",

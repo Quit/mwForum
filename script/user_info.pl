@@ -105,7 +105,7 @@ $m->callPlugin($_, links => \@userLinks, user => $infUser)
 # Admin button links
 my @adminLinks = ();
 if ($user->{admin}) {
-	push @adminLinks, { url => $m->url('user_admopt', uid => $infUserId, ori => 1), 
+	push @adminLinks, { url => $m->url('user_admopt', uid => $infUserId), 
 		txt => "Admin", ico => 'admopt' }
 		if $user->{admin};
 	push @adminLinks, { url => $m->url('user_profile', uid => $infUserId, ori => 1), 
@@ -128,7 +128,7 @@ if ($user->{admin}) {
 		for @{$cfg->{includePlg}{userAdminLink}};
 }
 
-# Print bar
+# Print page bar
 my @navLinks = ({ url => $m->url('forum_show'), txt => 'comUp', ico => 'up' });
 $m->printPageBar(mainTitle => $lng->{uifTitle}, subTitle => "$infUser->{userName} $userTitle", 
 	navLinks => \@navLinks, userLinks => \@userLinks, adminLinks => \@adminLinks);
@@ -169,16 +169,24 @@ if ($cfg->{avatars} && $infUser->{avatar}) {
 	my $avatarUrl = "";
 	if (index($infUser->{avatar}, "gravatar:") == 0) {
 		my $md5 = $m->md5(substr($infUser->{avatar}, 9));
-		$avatarUrl = "$m->{http}://gravatar.com/avatar/$md5?s=$cfg->{avatarWidth}";
+		$avatarUrl = "//gravatar.com/avatar/$md5?s=$cfg->{avatarWidth}";
 	}
 	else {
 		$avatarUrl = "$cfg->{attachUrlPath}/avatars/$infUser->{avatar}";
 	}
 	print
 		"<tr class='crw'>\n",
-		"<td class='hco'>$lng->{uifProfAvat}</td><td><img src='$avatarUrl' alt=''/></td>\n",
+		"<td class='hco'>$lng->{uifProfAvat}</td><td><img src='$avatarUrl' alt=''></td>\n",
 		"</tr>\n"
 		if $avatarUrl;
+}
+
+# Email address
+if ($infUser->{email} && $user->{admin}) {
+	print
+		"<tr class='crw'>\n",
+		"<td class='hco'>Email</td><td>$infUser->{email}</td>\n",
+		"</tr>\n";
 }
 
 # Real name
@@ -188,25 +196,11 @@ print
 	"</tr>\n"
 	if $infUser->{realName};
 
-# Email address
-my $email;
-if (!$userId || ($infUser->{hideEmail} && !$user->{admin})) {
-	$email = $lng->{comHidden};
-} 
-else {
-	$email = $infUser->{email} ? "<a href='mailto:$infUser->{email}'>$infUser->{email}</a>" : " - ";
-	$email .= " $lng->{comHidden}" if $infUser->{hideEmail};
-}
-print
-	"<tr class='crw'>\n",
-	"<td class='hco'>$lng->{uifProfEml}</td><td>$email</td>\n",
-	"</tr>\n";
-
 # OpenID
 print
 	"<tr class='crw'>\n",
 	"<td class='hco'>OpenID</td>\n",
-	"<td><img class='bic bic_openid' src='$cfg->{dataPath}/epx.png' title='OpenID' alt=''/>",
+	"<td><img class='bic bic_openid' src='$cfg->{dataPath}/epx.png' title='OpenID' alt=''>",
 	" <a href='$infUser->{openId}'>$infUser->{openId}</a></td>\n",
 	"</tr>\n"
 	if $infUser->{openId};
@@ -256,7 +250,7 @@ print
 	"<tr class='crw'>\n",
 	"<td class='hco'>$lng->{uifProfGeoIp}</td>\n",
 	$cfg->{userFlags}
-		? "<td>$geoLocation <img class='flg' src='$cfg->{dataPath}/flags/$countryCode.png' alt=''/></td>"
+		? "<td>$geoLocation <img class='flg' src='$cfg->{dataPath}/flags/$countryCode.png' alt=''></td>"
 		: "<td>$geoLocation</td>\n",
 	"</tr>\n"
 	if $countryCode;
@@ -266,7 +260,7 @@ print
 	"<tr class='crw'>\n",
 	"<td class='hco'>$lng->{uifProfIcq}</td><td>$infUser->{icq}</td>\n",
 	"</tr>\n"
-	if $infUser->{icq};
+	if $infUser->{icq} && $userId;
 
 # Former usernames
 print	
@@ -331,7 +325,7 @@ if ($cfg->{userInfoMap} && ($infUser->{location} || $geoLocation)) {
 		"<div id='map' style='width: 98%; height: 350px; max-width: 600px'></div>\n",
 		"</div>\n",
 		"</div>\n\n",
-		"<script src='$m->{http}://maps.googleapis.com/maps/api/js?v=3.6&amp;sensor=false'>",
+		"<script src='//maps.googleapis.com/maps/api/js?v=3.9&amp;sensor=false'>",
 		"</script>\n\n";
 }
 
@@ -341,10 +335,12 @@ print
 	"<tr class='hrw'><th colspan='2'>$lng->{uifStatTtl}</th></tr>\n";
 
 # Number of posts
+my $postExistNum = $m->fetchArray("
+	SELECT COUNT(*) FROM posts WHERE userId = ?", $infUserId);
 print	
 	"<tr class='crw'>\n",
 	"<td class='hco'>$lng->{uifStatPNum}</td>\n",
-	"<td>$infUser->{postNum} ", 
+	"<td>$infUser->{postNum} $lng->{uifStatPONum}, $postExistNum $lng->{uifStatPENum}", 
 	@{$cfg->{userRanks}} ? $m->formatUserRank($infUser->{postNum}) : "", "</td>\n",
 	"</tr>\n";
 
@@ -427,7 +423,7 @@ if (@{$cfg->{badges}}) {
 					my $url = "$cfg->{dataPath}/$badge->[2]";
 					print
 						"<tr class='crw'>\n",
-						"<td class='hco'><img class='uba' src='$url' alt=''/> $badge->[1]</td>\n",
+						"<td class='hco'><img class='uba' src='$url' alt=''> $badge->[1]</td>\n",
 						"<td>$badge->[3]</td>\n",
 						"</tr>\n";
 				}

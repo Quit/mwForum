@@ -47,18 +47,18 @@ my @adminLinks = ();
 if ($boardAdmin && !$m->{archive}) {
 	if ($user->{admin}) {
 		push @adminLinks, { url => $m->url('board_options', bid => $boardId, ori => 1), 
-			txt => 'Options', ico => 'admopt' };
+			txt => "Options", ico => 'admopt' };
 		push @adminLinks, { url => $m->url('board_groups', bid => $boardId, ori => 1), 
-			txt => 'Groups', ico => 'group' };
+			txt => "Groups", ico => 'group' };
 		push @adminLinks, { url => $m->url('board_merge', bid => $boardId), 
-			txt => 'Merge', ico => 'merge' };
+			txt => "Merge", ico => 'merge' };
 		push @adminLinks, { url => $m->url('board_split', bid => $boardId), 
-			txt => 'Split', ico => 'split' };
+			txt => "Split", ico => 'split' };
 		push @adminLinks, { url => $m->url('board_archive', bid => $boardId), 
-			txt => 'Archive', ico => 'archive' }
+			txt => "Archive", ico => 'archive' }
 			if !$m->{sqlite};
 		push @adminLinks, { url => $m->url('user_confirm', bid => $boardId, script => 'board_delete', 
-			name => $board->{title}), txt => 'Delete', ico => 'delete' };
+			name => $board->{title}), txt => "Delete", ico => 'delete' };
 		$m->callPlugin($_, links => \@adminLinks, board => $board) 
 			for @{$cfg->{includePlg}{boardAdminLink}};
 	}

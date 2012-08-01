@@ -24,7 +24,7 @@ use MwfMain;
 #------------------------------------------------------------------------------
 
 # Init
-my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
+my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_, autocomplete => 1);
 
 # Check if user is admin
 $user->{admin} or $m->error('errNoAccess');
@@ -102,27 +102,10 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='frm'>\n",
 		"<div class='hcl'><span class='htt'>Migrate User</span></div>\n",
 		"<div class='ccl'>\n",
-		"<label class='lbw'>Username\n";
-
-	my $userNum = $m->fetchArray("
-		SELECT COUNT(*) FROM users");
-	if ($userNum > $cfg->{maxListUsers}) {
-		print 
-			"<input type='text' class='fcs qwi' name='userName'",
-			" autofocus='autofocus' required='required' value=''/></label>\n";
-	}
-	else {
-		my $users = $m->fetchAllArray("
-			SELECT id, userName FROM users ORDER BY userName");
-		print 
-			"<select name='newUserId' size='10'>\n",
-			map("<option value='$_->[0]'>$_->[1]</option>\n", @$users),
-			"</select></label>\n";
-	}
-
-	print
+		"<label class='lbw'>Username\n",
+		"<input type='text' class='qwi acu acs' name='userName' autofocus required></label>\n",
 		$m->submitButton("Migrate", 'merge'),
-		"<input type='hidden' name='uid' value='$oldUserId'/>\n",
+		"<input type='hidden' name='uid' value='$oldUserId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

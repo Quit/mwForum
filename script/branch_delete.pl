@@ -75,8 +75,6 @@ my $deleteBranch = sub {
 	$m->deletePost($pid, 0, 0, 0);
 };
 $deleteBranch->($deleteBranch, $postId);
-
-# Update board and topic stats
 $m->recalcStats($boardId, $topicId);
 
 # Log action and finish

@@ -24,7 +24,7 @@ use MwfMain;
 #------------------------------------------------------------------------------
 
 # Init
-my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
+my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_, autocomplete => 1);
 
 # Check if user is admin
 $user->{admin} or $m->error('errNoAccess');
@@ -99,13 +99,13 @@ if ($submitted) {
 				# Delete posts
 				$m->deletePost($_->[0]) for @$posts;
 
-				# Update all board and affected topic stats
-				my $boards = $m->fetchAllArray("
-					SELECT id FROM boards");
-				$m->recalcStats($_->[0]) for @$boards;
+				# Update statistics
 				my %topics = ();
 				$topics{$_->[1]} = 1 for @$posts;
-				$m->recalcStats(undef, $_) for keys(%topics);
+				$m->recalcStats(undef, [ keys(%topics) ]) if %topics;
+				my $boards = $m->fetchAllArray("
+					SELECT id FROM boards");
+				$m->recalcStats([ map($_->[0], @$boards) ]) if @$boards;
 				
 				# Delete users
 				$m->deleteUser($_) for @userIds;
@@ -123,8 +123,8 @@ if ($submitted) {
 		# If there's no error, finish action
 		if (!@{$m->{formErrors}}) {
 			# Search posts
-			my $postIpEsc = $m->dbEscLike($postIp) . "%";
-			my $postBodyEsc = "%" . $m->dbEscLike($postBody) . "%";
+			my $postIpLike = $m->dbEscLike($postIp) . "%";
+			my $postBodyLike = "%" . $m->dbEscLike($postBody) . "%";
 			my $postIpStr = $postIp ? "ip LIKE :postIp" : "";
 			my $postNameStr = $postName ? "userNameBak = :postName" : "";
 			my $postBodyStr = $postBody ? "body $like :postBody" : "";
@@ -135,8 +135,8 @@ if ($submitted) {
 				WHERE postTime > :now - :maxAge * 86400
 					AND ($searchStr)
 				ORDER BY id DESC",
-				{ now => $m->{now}, maxAge => $postMaxAge, postIp => $postIpEsc, 
-					postName => $postName, postBody => $postBodyEsc });
+				{ now => $m->{now}, maxAge => $postMaxAge, postIp => $postIpLike, 
+					postName => $postName, postBody => $postBodyLike });
 
 			if (!$preview) {
 				# Delete topics started by spam posts
@@ -155,13 +155,13 @@ if ($submitted) {
 				# Delete posts
 				$m->deletePost($_->[0]) for @$posts;
 
-				# Update all board and affected topic stats
-				my $boards = $m->fetchAllArray("
-					SELECT id FROM boards");
-				$m->recalcStats($_->[0]) for @$boards;
+				# Update statistics
 				my %topics = ();
 				$topics{$_->[1]} = 1 for @$posts;
-				$m->recalcStats(undef, $_) for keys(%topics);
+				$m->recalcStats(undef, [ keys(%topics) ]) if %topics;
+				my $boards = $m->fetchAllArray("
+					SELECT id FROM boards");
+				$m->recalcStats([ map($_->[0], @$boards) ]) if @$boards;
 			}
 	
 			# Log action
@@ -177,6 +177,13 @@ $m->printHeader();
 my @navLinks = ({ url => $m->url('forum_show'), txt => 'comUp', ico => 'up' });
 $m->printPageBar(mainTitle => "Forum Purge", navLinks => \@navLinks);
 
+# Print hints and form errors
+$m->printHints([
+	"This feature is meant to be used for mass-deleting spam accounts and posts.".
+	" Since it's easy to accidentally delete too much, it should only be used by experienced admins.".
+	" Use the preview feature before deleting."]);
+$m->printFormErrors();
+
 # Escape submitted values
 my $userIpEsc = $m->escHtml($userIp);
 my $userNameEsc = $m->escHtml($userName);
@@ -184,14 +191,9 @@ my $userAgentEsc = $m->escHtml($userAgent);
 my $postIpEsc = $m->escHtml($postIp);
 my $postNameEsc = $m->escHtml($postName);
 my $postBodyEsc = $m->escHtml($postBody);
-my $deleteTopicsSel = $deleteTopics ? "checked='checked'" : "";
 
-# Print hints and form errors
-$m->printHints([
-	"This feature is meant to be used for mass-deleting spam accounts and posts.".
-	" Since it's easy to accidentally delete too much, it should only be used by experienced admins.".
-	" Use the preview feature before deleting."]);
-$m->printFormErrors();
+# Prepare values
+my $deleteTopicsChk = $deleteTopics ? 'checked' : "";
 
 # Print user/post purge form
 print
@@ -202,23 +204,23 @@ print
 	"<p>Delete all user accounts matching all of the following criteria along with their posts:</p>",
 	"<fieldset>\n",
 	"<label class='lbw'>Last user IP starting with\n",
-	"<input class='fcs qwi' type='text' name='userIp' autofocus='autofocus' value='$userIpEsc'/>",
+	"<input class='qwi' type='text' name='userIp' value='$userIpEsc' autofocus>",
 	"</label>\n",
 	"<label class='lbw'>Username matching\n",
-	"<input type='text' class='qwi' name='userName' value='$userNameEsc'/></label>\n",
+	"<input type='text' class='qwi acu acs' name='userName' value='$userNameEsc'></label>\n",
 	"<label class='lbw'>User agent string containing\n",
-	"<input type='text' class='hwi' name='userAgent' value='$userAgentEsc'/></label>\n",
+	"<input type='text' class='hwi' name='userAgent' value='$userAgentEsc'></label>\n",
 	"<label class='lbw'>Registered during the last x days\n",
-	"<input type='number' name='userMaxAge' min='1' max='24855' value='$userMaxAge'/>",
+	"<input type='number' name='userMaxAge' min='1' max='24855' value='$userMaxAge'>",
 	"</label>\n",
 	"</fieldset>\n",
 	"<fieldset>\n",
-	"<label><input type='checkbox' name='deleteTopics' $deleteTopicsSel/>",
+	"<label><input type='checkbox' name='deleteTopics' $deleteTopicsChk>",
 	"Delete whole topics started by matching users</label>\n",
 	"</fieldset>\n",
 	$m->submitButton("Delete", 'delete', 'delete'),
 	$m->submitButton("Preview", 'preview', 'preview'),
-	"<input type='hidden' name='act' value='users'/>\n",
+	"<input type='hidden' name='act' value='users'>\n",
 	$m->stdFormFields(),
 	"</div>\n",
 	"</div>\n",
@@ -251,22 +253,22 @@ print
 	"<p>Delete posts matching all of the following criteria:</p>",
 	"<fieldset>\n",
 	"<label class='lbw'>Post IP starting with\n",
-	"<input type='text' class='qwi' name='postIp' value='$postIpEsc'/></label>\n",
+	"<input type='text' class='qwi' name='postIp' value='$postIpEsc'></label>\n",
 	"<label class='lbw'>Post username matching\n",
-	"<input type='text' class='qwi' name='postName' value='$postNameEsc'/></label>\n",
+	"<input type='text' class='qwi' name='postName' value='$postNameEsc'></label>\n",
 	"<label class='lbw'>Post body containing\n",
-	"<input type='text' class='hwi' name='postBody' value='$postBodyEsc'/></label>\n",
+	"<input type='text' class='hwi' name='postBody' value='$postBodyEsc'></label>\n",
 	"<label class='lbw'>Posted during the last x days\n",
-	"<input type='number' name='postMaxAge' min='1' max='24855' value='$postMaxAge'/>",
+	"<input type='number' name='postMaxAge' min='1' max='24855' value='$postMaxAge'>",
 	"</label>\n",
 	"</fieldset>\n",
 	"<fieldset>\n",
-	"<label><input type='checkbox' name='deleteTopics' $deleteTopicsSel/>",
+	"<label><input type='checkbox' name='deleteTopics' $deleteTopicsChk>",
 	"Delete whole topics started by matching posts</label>\n",
 	"</fieldset>\n",
 	$m->submitButton("Delete", 'delete', 'delete'),
 	$m->submitButton("Preview", 'preview', 'preview'),
-	"<input type='hidden' name='act' value='posts'/>\n",
+	"<input type='hidden' name='act' value='posts'>\n",
 	$m->stdFormFields(),
 	"</div>\n",
 	"</div>\n",

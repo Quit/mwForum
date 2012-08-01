@@ -26,17 +26,20 @@ require MwfMain;
 
 # Get arguments
 my %opts = ();
-Getopt::Std::getopts('if:o:', \%opts);
+Getopt::Std::getopts('isf:o:', \%opts);
+my $spawned = $opts{s};
 my $forumId = $opts{f};
+my $citext = $opts{i};
 my $oldVersionParam = $opts{o};
 
 # Init
-my ($m, $cfg, $lng) = MwfMain->newShell(forumId => $forumId, allowCgi => 1, upgrade => 1);
-my $citext = $opts{i} || $cfg->{dbCitext};
+my ($m, $cfg, $lng) = MwfMain->newShell(forumId => $forumId, spawned => $spawned, upgrade => 1);
 my $dbh = $m->{dbh};
 my $pfx = $cfg->{dbPrefix};
+my $output = "";
+$citext ||= $cfg->{dbCitext};
 $| = 1;
-print "mwForum upgrade running...\n";
+output("mwForum upgrade running...\n");
 
 # Don't try to wrap whole script in transaction for PgSQL/SQLite,
 # as some DROP stuff will normally fail, and would rollback everything.
@@ -47,18 +50,33 @@ my $oldVersionDb = $m->fetchArray("
 	SELECT value FROM variables WHERE name = ?", 'version');
 my $oldVersion = $oldVersionParam || $oldVersionDb;
 if (!$oldVersion) {
-	print 
+	output( 
 		"\nError: no database entry containing previous version number found.\n",
 		"This is normal if you are upgrading from before 2.3.2.\n",
 		"It can also be the result of a bug in 2.17.3 to 2.20.0.\n",
 		"Please specify your previous version manually by starting this script\n",
 		"again with an additional parameter of \"-o x.y.z\" (e.g.\n",
 		"\"perl upgrade.pl -o 2.18.0\" if your old version was 2.18.0).\n\n",
-		"mwForum upgrade cancelled.\n";
+		"mwForum upgrade cancelled.\n");
 	exit 1;
 }
 my $oldVersionDec = tripletToDecimal($oldVersion);
-print "Previous database schema version: $oldVersion\n";
+output("Previous database schema version: $oldVersion\n");
+
+#------------------------------------------------------------------------------
+# Print and collect output
+
+sub output
+{
+	my $text = shift();
+
+	print $text;
+	$output .= $text;
+	$m->dbDo("
+		DELETE FROM variables WHERE name = ?", 'upgOutput');
+	$m->dbDo("
+		INSERT INTO variables (name, value) VALUES (?, ?)", 'upgOutput', $output);
+}
 
 #------------------------------------------------------------------------------
 # Convert "1.2.3" string into number
@@ -103,7 +121,7 @@ sub upgradeSchema
 		if ($m->{pgsql}) {
 			$sql =~ s! INT PRIMARY KEY AUTO_INCREMENT! SERIAL PRIMARY KEY!g;
 			$sql =~ s! TINYINT! SMALLINT!g;
-			$sql =~ s! VARCHAR\(\d+\)| TEXT! citext!g if $citext;
+			$sql =~ s! VARCHAR\((\d+)\)| TEXT! citext!g if $citext && $1 != 22;
 		}
 		elsif ($m->{sqlite}) {
 			$sql =~ s! AUTO_INCREMENT! AUTOINCREMENT!g;
@@ -115,7 +133,7 @@ sub upgradeSchema
 	# Execute separate queries
 	for (grep(/\w/, split(";", $sql))) {
 		my $rv = $dbh->do($_);
-		print "Error: $DBI::errstr\n" if !$rv && !$ignoreError;
+		output("Error: $DBI::errstr\n") if !$rv && !$ignoreError;
 	}
 }
 
@@ -125,7 +143,7 @@ sub upgradeSchema
 $newVersion = "2.3.2";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		ALTER TABLE boards ADD attach TINYINT NOT NULL DEFAULT 0 AFTER flat;
 		ALTER TABLE messages ADD inbox TINYINT NOT NULL DEFAULT 0 AFTER box;
@@ -134,7 +152,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 		UPDATE messages SET sentbox = 1 WHERE box = 1;
 		ALTER TABLE messages DROP box;
 	");
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -142,7 +160,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.5.0";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		ALTER TABLE posts DROP signature;
 		ALTER TABLE boards DROP markup;
@@ -161,10 +179,10 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 			ip           CHAR(15) NOT NULL DEFAULT ''
 		);
 	");
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 
 	# Statically markup/highlight quotes
-	print "$newVersion: statically highlighting quotes...\n";
+	output("$newVersion: statically highlighting quotes...\n");
 	my $changeSum = 0;
 	$m->dbBegin();
 	my $selSth = $m->fetchSth("
@@ -183,7 +201,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 		}
 	}
 	$m->dbCommit();
-	print "$newVersion: done ($changeSum).\n";
+	output("$newVersion: done ($changeSum).\n");
 }
 
 #------------------------------------------------------------------------------
@@ -191,7 +209,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.5.1";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		CREATE TABLE groups (
 			id           INT PRIMARY KEY AUTO_INCREMENT,
@@ -215,7 +233,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 		ALTER TABLE users ADD showImages TINYINT NOT NULL DEFAULT 0 AFTER showAvatars;
 		UPDATE users SET showImages = 1;
 	");
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -223,15 +241,15 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.7.0";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		UPDATE users SET timezone = '0';
 		UPDATE config SET value = '0' WHERE name = 'userTimezone';
 	");
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 
 	# Fix blockquotes to conform to standard, they need a block inside
-	print "$newVersion: fixing blockquotes...\n";
+	output("$newVersion: fixing blockquotes...\n");
 	my $changeSum = 0;
 	$m->dbBegin();
 	my $selSth = $m->fetchSth("
@@ -249,7 +267,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 		}
 	}
 	$m->dbCommit();
-	print "$newVersion: done ($changeSum).\n";
+	output("$newVersion: done ($changeSum).\n");
 }
 
 #------------------------------------------------------------------------------
@@ -257,13 +275,13 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.7.2";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		ALTER TABLE topics ADD tag      VARCHAR(20) NOT NULL DEFAULT '' AFTER subject;
 		ALTER TABLE users  ADD showDeco TINYINT NOT NULL DEFAULT 0 AFTER boardDescs;
 		UPDATE users SET showDeco = 1;
 	");
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -271,7 +289,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.9.0";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		CREATE TABLE topicSubscriptions (
 			userId       INT NOT NULL DEFAULT 0,
@@ -292,7 +310,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 		UPDATE config SET value = '1' WHERE name = 'notify';
 		UPDATE config SET value = '0' WHERE name = 'msgNotify';
 	");
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -300,7 +318,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.9.2";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		CREATE TABLE attachments (
 			id           INT PRIMARY KEY AUTO_INCREMENT,
@@ -310,10 +328,10 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 		);
 		DELETE FROM tickets WHERE type = 'cptcha';
 	");
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 	
 	# Move attachments to their own table
-	print "$newVersion: moving attachment entries to their own table...\n";
+	output("$newVersion: moving attachment entries to their own table...\n");
 	my $changeSum = 0;
 	$m->dbBegin();
 	my $selSth = $m->fetchSth("
@@ -329,15 +347,15 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 		$changeSum++;
 	}
 	$m->dbCommit();
-	print "$newVersion: done ($changeSum).\n";
+	output("$newVersion: done ($changeSum).\n");
 
-	print "$newVersion: upgrading database schema, part 2...\n";
+	output("$newVersion: upgrading database schema, part 2...\n");
 	upgradeSchema("
 		ALTER TABLE posts DROP attach;
 		ALTER TABLE posts DROP attachEmbed;
 		CREATE INDEX attachments_postId ON attachments (postId);
 	");
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -345,12 +363,12 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.11.0";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		ALTER TABLE boards ADD list TINYINT NOT NULL DEFAULT 0 AFTER private;
 		CREATE INDEX messages_senderId ON messages (senderId);
 	");
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -358,12 +376,12 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.11.1";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		DROP INDEX email ON users;
 		DROP INDEX users_email ON users;
 	", 1);
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -371,11 +389,11 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.13.0";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		ALTER TABLE users ADD openId VARCHAR(255) NOT NULL DEFAULT '' AFTER email;
 	");
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -383,7 +401,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.13.1";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		ALTER TABLE users DROP manOldMark;
 		DROP TABLE postTodos;
@@ -397,7 +415,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 			PRIMARY KEY (postId, userId)
 		);
 	");
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -405,7 +423,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.13.2";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	# Get rid of useless indices that have only been removed from
 	# install.pl (.sql) before, but not existing installations (I think).
 	# Also parentId is mostly useless, even misleading, since mostly 0 is looked up.
@@ -429,7 +447,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 		CREATE INDEX watchUsers_watchedId ON watchUsers (watchedId);
 		ALTER TABLE groups ADD public TINYINT NOT NULL DEFAULT 0;
 	");
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -437,7 +455,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.15.0";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	if ($m->{mysql}) {
 		my $stat = $m->fetchHash("
 			SHOW TABLE STATUS LIKE '${pfx}posts'");
@@ -452,7 +470,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 				$m->dbDo("
 					UPDATE users SET userName = CONCAT(userName, ?) WHERE id = ?",
 					" ($dupe->[0])", $dupe->[0]);
-				print "WARNING: renamed user '$dupe->[1]' to '$dupe->[1] ($dupe->[0])'\n";
+				output("WARNING: renamed user '$dupe->[1]' to '$dupe->[1] ($dupe->[0])'\n");
 			}
 			upgradeSchema("
 				ALTER TABLE log CONVERT TO CHARSET ascii;
@@ -492,7 +510,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 			");
 		}
 	}
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -500,7 +518,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.15.1";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	if ($m->{mysql}) {
 		upgradeSchema("
 			CREATE TABLE arc_boards LIKE ${pfx}boards;
@@ -509,13 +527,15 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 		");
 	}
 	elsif ($m->{pgsql}) {
+		my ($version) = $m->fetchArray("SELECT VERSION()") =~ /PostgreSQL (\d+\.\d+)/;
+		my $indexes = $version >= 8.3 ? "INCLUDING INDEXES" : "";
 		upgradeSchema("
-			CREATE TABLE arc_boards (LIKE ${pfx}boards INCLUDING INDEXES INCLUDING DEFAULTS);
-			CREATE TABLE arc_topics (LIKE ${pfx}topics INCLUDING INDEXES INCLUDING DEFAULTS);
-			CREATE TABLE arc_posts  (LIKE ${pfx}posts  INCLUDING INDEXES INCLUDING DEFAULTS);
+			CREATE TABLE arc_boards (LIKE ${pfx}boards $indexes INCLUDING DEFAULTS);
+			CREATE TABLE arc_topics (LIKE ${pfx}topics $indexes INCLUDING DEFAULTS);
+			CREATE TABLE arc_posts  (LIKE ${pfx}posts  $indexes INCLUDING DEFAULTS);
 		");
 	}
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -523,7 +543,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.16.0";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		ALTER TABLE users ADD renamesLeft TINYINT NOT NULL DEFAULT 0;
 		ALTER TABLE users ADD oldNames TEXT NOT NULL DEFAULT '';
@@ -535,7 +555,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 			ALTER TABLE arc_boards DROP anonymous;
 		");
 	}
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -543,7 +563,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.17.0";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		ALTER TABLE users ADD comment TEXT NOT NULL DEFAULT '';
 		ALTER TABLE groups ADD badge VARCHAR(20) NOT NULL DEFAULT '' AFTER title;
@@ -553,7 +573,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 			PRIMARY KEY (userId, badge)
 		) CHARSET utf8;
 	");
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -561,7 +581,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.17.1";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		DROP TABLE boardAdmins;
 		DROP TABLE boardMembers;
@@ -572,7 +592,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 			PRIMARY KEY (userId, groupId)
 		) CHARSET utf8;
 	");
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -580,7 +600,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.17.2";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		ALTER TABLE posts ADD locked TINYINT NOT NULL DEFAULT 0 AFTER approved;
 		ALTER TABLE boards ADD topicAdmins TINYINT NOT NULL DEFAULT 0 AFTER locking;
@@ -597,7 +617,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 		SELECT 1 FROM topics WHERE boardId < 0 LIMIT 1");
 	if ($blogsExist) {
 		$m->dbBegin();
-		print "$newVersion: moving former blog topics to new board...\n";
+		output("$newVersion: moving former blog topics to new board...\n");
 		my $firstCatId = $m->fetchArray("
 			SELECT MIN(id) FROM categories");
 		my $pos = $m->fetchArray("
@@ -616,7 +636,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 		$m->recalcStats($boardId);
 		$m->dbCommit();
 	}
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -624,13 +644,13 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.19.0";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		ALTER TABLE users DROP gpgCompat;
 		ALTER TABLE users ADD blurb TEXT NOT NULL DEFAULT '' AFTER signature;
 		ALTER TABLE attachments ADD caption VARCHAR(255) NOT NULL DEFAULT '';
 	");
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -638,7 +658,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.19.2";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		ALTER TABLE users DROP postRating;
 		ALTER TABLE boards DROP rate;
@@ -651,7 +671,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 			ALTER TABLE arc_posts DROP rating;
 		");
 	}
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -659,15 +679,15 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.19.3";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		ALTER TABLE boardSubscriptions ADD instant TINYINT NOT NULL DEFAULT 0;
 		ALTER TABLE topicSubscriptions ADD instant TINYINT NOT NULL DEFAULT 0;
 	");
-	print "$newVersion: updating includePlg forum option...\n";
+	output("$newVersion: updating includePlg forum option...\n");
 	$m->dbDo("
 		UPDATE config SET parse = 'arrayhash' WHERE name = 'includePlg'");
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -675,7 +695,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.21.0";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		ALTER TABLE users DROP secureLogin;
 		CREATE TABLE userVariables (
@@ -693,7 +713,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 		INSERT INTO variables SELECT name, value FROM variables_old WHERE userId = 0;
 		DROP TABLE variables_old;
 	");
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -701,12 +721,12 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.21.1";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: updating msgDisplayPlg forum option...\n";
+	output("$newVersion: updating msgDisplayPlg forum option...\n");
 	$m->dbDo("
 		UPDATE config SET parse = 'array' WHERE name = 'msgDisplayPlg'");
 
 	# Replace <tt> with <code> for HTML5
-	print "$newVersion: replacing <tt> with <code> for HTML5-compat...\n";
+	output("$newVersion: replacing <tt> with <code> for HTML5-compat...\n");
 	my $changeSum = 0;
 	my @fields = (
 		['posts', 'body'], ['messages', 'body'], ['users', 'signature'], ['users', 'blurb']);
@@ -730,7 +750,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 		}
 		$m->dbCommit();
 	}
-	print "$newVersion: done ($changeSum).\n";
+	output("$newVersion: done ($changeSum).\n");
 }
 
 #------------------------------------------------------------------------------
@@ -738,7 +758,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.21.2";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		ALTER TABLE posts ADD rawBody TEXT NOT NULL DEFAULT '';
 	");
@@ -747,7 +767,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 			ALTER TABLE arc_posts ADD rawBody TEXT NOT NULL DEFAULT '';
 		");
 	}
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -755,12 +775,12 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.21.3";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
 		ALTER TABLE boardHiddenFlags ADD manual TINYINT NOT NULL DEFAULT 0;
 		UPDATE boardHiddenFlags SET manual = 1;
 	");
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -768,7 +788,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.23.0";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
 	if ($m->{pgsql}) {
 		upgradeSchema("
 			ALTER TABLE users ALTER lastIp TYPE VARCHAR(39);
@@ -790,10 +810,10 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 	upgradeSchema("
 		ALTER TABLE users ADD sourceAuth2 INT NOT NULL DEFAULT 0 AFTER sourceAuth;
 	");
-	print "$newVersion: duplicating source auth values...\n";
+	output("$newVersion: duplicating source auth values...\n");
 	$m->dbDo("
 		UPDATE users SET sourceAuth2 = sourceAuth");
-	print "$newVersion: done.\n";
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
@@ -801,7 +821,11 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 $newVersion = "2.25.1";
 
 if ($oldVersionDec < tripletToDecimal($newVersion)) {
-	print "$newVersion: upgrading database schema...\n";
+	output("$newVersion: upgrading database schema...\n");
+	upgradeSchema("
+		ALTER TABLE topics DROP hitNum;
+		DROP TABLE logStrings;
+	");
 	if ($m->{mysql}) {
 		upgradeSchema("
 			ALTER TABLE log CONVERT TO CHARSET utf8;
@@ -832,37 +856,132 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 			);
 		");
 	}
-	print "$newVersion: merging logStrings table into log table...\n";
-	$m->dbDo("
-		UPDATE log SET string = COALESCE((
-			SELECT string
-			FROM logStrings 
-			WHERE log.extraId = logStrings.id
-				AND log.entity = 'forum'
-				AND log.action = 'search'
-		), '')");
-	$m->dbDo("
-		UPDATE log SET extraId = 0 WHERE entity = 'forum' AND action = 'search'");
+	output("$newVersion: done.\n");
+}
+
+#------------------------------------------------------------------------------
+
+$newVersion = "2.27.1";
+
+if ($oldVersionDec < tripletToDecimal($newVersion)) {
+	output("$newVersion: upgrading database schema...\n");
 	upgradeSchema("
-		DROP TABLE logStrings;
-		ALTER TABLE topics DROP hitNum;
+		DROP TABLE sessions;
+		ALTER TABLE users DROP hideEmail;
 	");
-	print "$newVersion: done.\n";
+	if ($m->{mysql} || $m->{pgsql}) {
+		upgradeSchema("
+			ALTER TABLE arc_topics DROP hitNum;
+		");
+	}
+	output("$newVersion: done.\n");
+}
+
+#------------------------------------------------------------------------------
+
+$newVersion = "2.27.2";
+
+if ($oldVersionDec < tripletToDecimal($newVersion)) {
+	output("$newVersion: upgrading database schema...\n");
+	$m->dbDo("
+		DELETE FROM tickets");
+	if ($m->{mysql}) {
+		upgradeSchema("
+			ALTER TABLE users
+				DROP   sourceAuth,
+				DROP   sourceAuth2,
+				MODIFY bounceAuth  VARCHAR(22) NOT NULL DEFAULT '',
+				MODIFY salt        VARCHAR(22) NOT NULL DEFAULT '' AFTER bounceAuth,
+				ADD    loginAuth   VARCHAR(22) NOT NULL DEFAULT '' AFTER salt,
+				ADD    sourceAuth  VARCHAR(22) NOT NULL DEFAULT '' AFTER loginAuth,
+				ADD    sourceAuth2 VARCHAR(22) NOT NULL DEFAULT '' AFTER sourceAuth;
+			ALTER TABLE tickets MODIFY id VARCHAR(22) NOT NULL DEFAULT '';
+		");
+	}
+	elsif ($m->{pgsql}) {
+		upgradeSchema("
+			ALTER TABLE users
+				DROP   sourceAuth,
+				DROP   sourceAuth2,
+				ALTER  bounceAuth  TYPE VARCHAR(22),
+				ALTER  salt        TYPE VARCHAR(22),
+				ALTER  bounceAuth  SET DEFAULT '',
+				ALTER  salt        SET DEFAULT '',
+				ADD    loginAuth   VARCHAR(22) NOT NULL DEFAULT '',
+				ADD    sourceAuth  VARCHAR(22) NOT NULL DEFAULT '',
+				ADD    sourceAuth2 VARCHAR(22) NOT NULL DEFAULT '';
+			ALTER TABLE tickets ALTER id VARCHAR(22);
+		");
+	}
+	elsif ($m->{sqlite}) {
+		upgradeSchema("
+			ALTER TABLE users ADD loginAuth VARCHAR(22) NOT NULL DEFAULT '';
+		");
+	}
+	upgradeSchema("
+		ALTER TABLE boardSubscriptions ADD unsubAuth VARCHAR(22) NOT NULL DEFAULT '';
+		ALTER TABLE topicSubscriptions ADD unsubAuth VARCHAR(22) NOT NULL DEFAULT '';
+	");
+	output("$newVersion: setting auth values...\n");
+	$m->dbBegin();
+	my $users = $m->fetchAllArray("
+		SELECT id, password FROM users");
+	for my $user (@$users) {
+		my $password = $user->[1];
+		$password =~ s/([a-fA-F0-9]{2})/pack("C", hex($1))/eg;
+		$password = $m->md5($password, 99999, 1);
+		my $sourceAuth = $m->randomId();
+		$m->dbDo("
+			UPDATE users SET 
+				bounceAuth = ?, password = ?, loginAuth = ?, sourceAuth = ?, sourceAuth2 = ? 
+			WHERE id = ?", 
+			$m->randomId(), $password, $m->randomId(), $sourceAuth, $sourceAuth, $user->[0]);
+	}
+	my $boardSubscriptions = $m->fetchAllArray("
+		SELECT userId, boardId FROM boardSubscriptions");
+	for my $subscription (@$boardSubscriptions) {
+		$m->dbDo("
+			UPDATE boardSubscriptions SET unsubAuth = ? WHERE userId = ? AND boardId = ?",
+			$m->randomId(), $subscription->[0], $subscription->[1]);
+	}
+	my $topicSubscriptions = $m->fetchAllArray("
+		SELECT userId, topicId FROM topicSubscriptions");
+	for my $subscription (@$topicSubscriptions) {
+		$m->dbDo("
+			UPDATE topicSubscriptions SET unsubAuth = ? WHERE userId = ? AND topicId = ?",
+			$m->randomId(), $subscription->[0], $subscription->[1]);
+	}
+	$m->dbCommit();
+	output("$newVersion: upgrading database schema some more...\n");
+	if ($m->{mysql}) {
+		upgradeSchema("
+			ALTER TABLE users MODIFY password VARCHAR(22) NOT NULL DEFAULT '' AFTER bounceAuth;
+		");
+	}
+	elsif ($m->{pgsql}) {
+		upgradeSchema("
+			ALTER TABLE users ALTER password TYPE VARCHAR(22);
+		");
+	}
+	output("$newVersion: done.\n");
 }
 
 #------------------------------------------------------------------------------
 
 # Update dataVersion serial
-if ($cfg->{dataVersion}) {
+my $dataVersion = $m->fetchArray("
+	SELECT value FROM config WHERE name = ?", 'dataVersion');
+if ($dataVersion) {
 	$m->dbDo("
-		UPDATE config SET value = ? WHERE name = 'dataVersion'", $cfg->{dataVersion} + 1);
+		UPDATE config SET value = ? WHERE name = ?", $dataVersion + 1, 'dataVersion');
 	$m->dbDo("
-		UPDATE config SET value = ? WHERE name = 'lastUpdate'", $m->{now});
+		UPDATE config SET value = ? WHERE name = ?", $m->{now}, 'lastUpdate');
 }
 
 # Insert new version variable
 $m->dbDo("
-	DELETE FROM variables WHERE name = 'version'");
+	DELETE FROM variables WHERE name = ?", 'version');
 $m->dbDo("
 	INSERT INTO variables (name, value) VALUES ('version', ?)", $newVersion);
-print "mwForum upgrade done.\n";
+output("Current database schema version: $newVersion\n");
+output("mwForum upgrade done.\n");

@@ -16,7 +16,7 @@
 
 use strict;
 use warnings;
-no warnings qw(uninitialized redefine once);
+no warnings qw(uninitialized once);
 
 # Imports
 use Getopt::Std ();
@@ -88,14 +88,10 @@ for my $board (@$boards) {
 		# Update stats in archive
 		$m->dbDo("
 			UPDATE arc_boards SET
-				postNum = (
-					SELECT SUM(postNum) 
-					FROM arc_topics
-					WHERE boardId = ${pfx}arc_boards.id),
-				lastPostTime = (
-					SELECT MAX(lastPostTime) 
-					FROM arc_topics 
-					WHERE boardId = ${pfx}arc_boards.id)");
+				postNum = COALESCE((
+					SELECT SUM(postNum) FROM arc_topics WHERE boardId = ${pfx}arc_boards.id), 0),
+				lastPostTime = COALESCE((
+					SELECT MAX(lastPostTime) FROM arc_topics WHERE boardId = ${pfx}arc_boards.id), 0)");
 	}
 
 	$m->dbDo("
@@ -205,21 +201,16 @@ if ($cfg->{polls} && $cfg->{pollLockTime}) {
 #------------------------------------------------------------------------------
 # Recalc cached statistics
 
-# Recalculate boards stats
-$m->dbDo("
-	UPDATE boards SET
-		postNum = (
-			SELECT COUNT(*) FROM posts WHERE boardId = ${pfx}boards.id),
-		lastPostTime = COALESCE((
-			SELECT MAX(postTime) FROM posts WHERE boardId = ${pfx}boards.id), 0)");
-
-# Recalculate topics stats
 $m->dbDo("
 	UPDATE topics SET
-		postNum = (
-			SELECT COUNT(*) FROM posts WHERE topicId = ${pfx}topics.id),
+		postNum = (SELECT COUNT(*) FROM posts WHERE topicId = ${pfx}topics.id),
+		lastPostTime = (SELECT MAX(postTime) FROM posts WHERE topicId = ${pfx}topics.id)");
+$m->dbDo("
+	UPDATE boards SET
+		postNum = COALESCE((
+			SELECT SUM(postNum) FROM topics WHERE boardId = ${pfx}boards.id), 0),
 		lastPostTime = COALESCE((
-			SELECT MAX(postTime) FROM posts WHERE topicId = ${pfx}topics.id), 0)");
+			SELECT MAX(lastPostTime) FROM topics WHERE boardId = ${pfx}boards.id), 0)");
 
 #------------------------------------------------------------------------------
 # Expire users that haven't logged in for a while
@@ -339,16 +330,17 @@ $m->dbDo("
 	DELETE FROM tickets WHERE issueTime < ? - 3 * 86400", $m->{now});
 
 #------------------------------------------------------------------------------
-# Change request source authentication values
+# Change source auth values of active users (draining random pool...)
 
-my $rndStr = undef;
-if ($m->{mysql}) { $rndStr = "FLOOR(RAND() * 2147483647)" }
-elsif ($m->{pgsql}) { $rndStr = "FLOOR(RANDOM() * 2147483647)" }
-elsif ($m->{sqlite}) { $rndStr = "RANDOM() & 2147483647" }
 $m->dbDo("
-	UPDATE users SET sourceAuth2 = sourceAuth");
-$m->dbDo("
-	UPDATE users SET sourceAuth = $rndStr");
+	UPDATE users SET sourceAuth2 = sourceAuth WHERE sourceAuth2 <> sourceAuth");
+my $users = $m->fetchAllArray("
+	SELECT id FROM users WHERE lastOnTime > ? - 21 * 86400", $m->{now});
+for my $user (@$users) {
+	my $sourceAuth = $m->randomId();
+	$m->dbDo("
+		UPDATE users SET sourceAuth = ? WHERE id = ?", $sourceAuth, $user->[0]);
+}
 
 #------------------------------------------------------------------------------
 # Decrease users.bounceNum and reset countermeasures

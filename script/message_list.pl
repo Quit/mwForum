@@ -118,7 +118,7 @@ for my $msg (@$msgsIn) {
 	# Print message
 	print
 		"<tr class='crw'>\n",
-		"<td><a href='$shwUrl'><img $emptyPixel $imgAttr/> $msg->{subject}</a></td>\n",
+		"<td><a href='$shwUrl'><img $emptyPixel $imgAttr> $msg->{subject}</a></td>\n",
 		"<td class='shr'>$userNameStr</td>\n",
 		"<td class='shr'>$timeStr</td>\n",
 		"<td class='shr'><a class='btl' href='$delUrl'>$lng->{mslDelete}</a></td>\n",
@@ -164,7 +164,7 @@ for my $msg (@$msgsSent) {
 	# Print message
 	print
 		"<tr class='crw'>\n",
-		"<td><a href='$shwUrl'><img $emptyPixel $imgAttr/> $msg->{subject}</a></td>\n",
+		"<td><a href='$shwUrl'><img $emptyPixel $imgAttr> $msg->{subject}</a></td>\n",
 		"<td class='shr'>$userNameStr</td>\n",
 		"<td class='shr'>$timeStr</td>\n",
 		"<td class='shr'><a class='btl' href='$delUrl'>$lng->{mslDelete}</a></td>\n",

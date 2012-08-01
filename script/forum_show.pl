@@ -35,7 +35,7 @@ my $categs = $m->fetchAllHash("
 	SELECT id, title FROM categories ORDER BY pos");
 
 # Get boards
-my $arcPfx = $m->{archive} ? 'arc_' : '';
+my $arcPfx = $m->{archive} ? 'arc_' : "";
 my $boardHiddenStr = $userId ? ",
 	boardHiddenFlags.boardId IS NOT NULL AS hidden, 
 	boardHiddenFlags.manual AS manualHidden" : "";
@@ -122,8 +122,8 @@ if (!$m->{archive}) {
 		|| $cfg->{attachList} == 3 && $user->{admin};
 	push @userLinks, { url => $m->url('forum_feeds'), txt => 'comFeeds', ico => 'feed' } 
 		if $cfg->{rssLink};
-	push @userLinks, { url => $m->url('user_mark', act => 'old', time => $m->{now}, 
-		$userId ? (auth => 1) : ()), txt => 'frmMarkOld', ico => 'markold' }
+	push @userLinks, { url => $m->url('user_mark', act => 'old', time => $m->{now}, auth => 1),
+		txt => 'frmMarkOld', ico => 'markold' }
 		if $newPostsExist || !$userId && $user->{prevOnTime} == 2147483647;
 	push @userLinks, { url => $m->url('user_mark', act => 'read', time => $m->{now}, auth => 1), 
 		txt => 'frmMarkRd', ico => 'markread' }
@@ -151,10 +151,10 @@ if ($user->{admin} && !$m->{archive}) {
 	push @adminLinks, { url => $m->url('categ_admin'), txt => "Categories", ico => 'category' };
 	push @adminLinks, { url => $m->url('cron_admin'), txt => "Cron", ico => 'cron' };
 	push @adminLinks, { url => $m->url('log_admin'), txt => "Log", ico => 'log' };
+	push @adminLinks, { url => $m->url('forum_purge'), txt => "Purge", ico => 'delete' };
 	push @adminLinks, { url => $m->url('report_list'), 
 		txt => "<em class='eln'>Reports ($reportNum)</em>", ico => 'report' } 
 		if $reportNum;
-	push @adminLinks, { url => $m->url('forum_purge'), txt => "Purge", ico => 'delete' };
 	$m->callPlugin($_, links => \@adminLinks) for @{$cfg->{includePlg}{forumAdminLink}};
 }
 elsif (@adminBoardIds && !$m->{archive}) {
@@ -191,7 +191,6 @@ if ($userId && !$m->{archive}) {
 			"<table class='tiv'>\n";
 		for my $note (@$notes) {
 			my $body = $note->{body};
-			$body =~ s!$m->{ext}\?!$m->{ext}?sid=$m->{sessionId};! if $m->{sessionId};
 			$body =~ s!$m->{ext}\?!$m->{ext}?dln=$note->{id};!;
 			my $timeStr = $m->formatTime($note->{sendTime}, $user->{timezone});
 			print "<tr><td class='shr'>$timeStr: </td><td>$body</td></tr>\n";
@@ -221,15 +220,15 @@ for my $categ (@$categs) {
 	# Print category
 	my $allHidden = !grep(!$_->{hidden}, @{$boardsByCateg{$categId}});
 	my $action = $allHidden ? 'show' : 'hide';
-	my $url = $m->url('categ_toggle', act => $action, cid => $categId, auth => 1);
+	my $toggleUrl = $m->url('categ_toggle', act => $action, cid => $categId, auth => 1);
 	my $toggle = "";
 	if ($userId && $allHidden) { 
-		$toggle = "<a href='$url'><img class='sic sic_nav_plus'"
-			. " $emptyPixel title='$lng->{frmCtgExpand}' alt='+'/></a>";
+		$toggle = "<a href='$toggleUrl'><img class='sic sic_nav_plus'"
+			. " $emptyPixel title='$lng->{frmCtgExpand}' alt='+'></a>";
 	}
 	elsif ($userId) { 
-		$toggle = "<a href='$url'><img class='sic sic_nav_minus'"
-			. " $emptyPixel title='$lng->{frmCtgCollap}' alt='-'/></a>";
+		$toggle = "<a href='$toggleUrl'><img class='sic sic_nav_minus'"
+			. " $emptyPixel title='$lng->{frmCtgCollap}' alt='-'></a>";
 	}
 	print
 		"<tr class='hrw' id='cid$categId'>\n",
@@ -246,8 +245,9 @@ for my $categ (@$categs) {
 		# Format output
 		my $lastPostTimeStr = $board->{lastPostTime} > 0 
 			? $m->formatTime($board->{lastPostTime}, $user->{timezone}) : " - ";
-		$url = $m->url('forum_overview', act => 'new', bid => $boardId);
-		my $newNumStr = $board->{newNum} ? " <a href='$url'>($board->{newNum} $lng->{frmNew})</a>" : "";
+		my $ovwUrl = $m->url('forum_overview', act => 'new', bid => $boardId);
+		my $newNumStr = $board->{newNum} 
+			? " <a href='$ovwUrl'>($board->{newNum} $lng->{frmNew})</a>" : "";
 
 		# Determine variable board icon attributes
 		my ($imgName, $imgTitle, $imgAlt);
@@ -278,12 +278,11 @@ for my $categ (@$categs) {
 		# Print board
 		if ($board->{visible} == 1) {
 			# Normally accessible board
-			$url = $cfg->{seoRewrite} && !$userId 
-				? "board_${boardId}_1.html" : $m->url('board_show', bid => $boardId);
+			my $boardUrl = $m->url('board_show', bid => $boardId);
 			print 
 				"<tr class='crw'>\n",
-				"<td class='icl'><img $emptyPixel $imgAttr/></td>\n",
-				"<td><a id='bid$boardId' href='$url'>$board->{title}</a>",
+				"<td class='icl'><img $emptyPixel $imgAttr></td>\n",
+				"<td><a id='bid$boardId' href='$boardUrl'>$board->{title}</a>",
 				$user->{boardDescs} && $board->{shortDesc} 
 					? "<div class='bds'>$board->{shortDesc}</div>" : "",
 				"</td>\n",
@@ -296,7 +295,7 @@ for my $categ (@$categs) {
 			my $reason = $board->{private} == 1 ? $lng->{frmMbrOnly} : $lng->{frmRegOnly};
 			print
 				"<tr class='crw'>\n",
-				"<td class='icl'><img class='sic sic_board_ou' $emptyPixel alt=''/></td>\n",
+				"<td class='icl'><img class='sic sic_board_ou' $emptyPixel alt=''></td>\n",
 				"<td><span class='nxs' title='$reason'>$board->{title}</span>\n",
 				$user->{boardDescs} && $board->{shortDesc} 
 					? "<div class='bds'>$board->{shortDesc}</div>" : "",

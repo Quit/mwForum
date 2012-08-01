@@ -43,7 +43,7 @@ my $dbh = $m->{dbh};
 # Put CSS file into path
 
 if (!-f "$path/minimal.css") {
-	open my $fh, ">", "$path/minimal.css" or $m->error("Opening CSS file failed.");
+	open my $fh, ">:utf8", "$path/minimal.css" or $m->error("Opening CSS file failed.");
 
 	print $fh <<'EOCSS';
 body {
@@ -74,7 +74,7 @@ EOCSS
 
 {
 	# Open file
-	open my $fh, ">", "$path/forum.html" or $m->error("Opening index HTML file failed.");
+	open my $fh, ">:utf8", "$path/forum.html" or $m->error("Opening index HTML file failed.");
 
 	# Get boards
 	my $boardSth = $m->fetchSth("
@@ -126,7 +126,7 @@ EOCSS
 
 		if ($updateTime > $fileTime) {
 			# Open file
-			open my $fh, ">", $file or $m->error("Opening board HTML file failed.");
+			open my $fh, ">:utf8", $file or $m->error("Opening board HTML file failed.");
 
 			# Get topics
 			my $topicSth = $m->fetchSth("
@@ -179,7 +179,7 @@ EOCSS
 
 		if ($updateTime > $fileTime) {
 			# Open file
-			open my $fh, ">", $file or $m->error("Opening topic HTML file failed.");
+			open my $fh, ">:utf8", $file or $m->error("Opening topic HTML file failed.");
 
 			# Get posts
 			my $postSth = $m->fetchSth("

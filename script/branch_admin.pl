@@ -71,7 +71,7 @@ my $boards = $m->fetchAllHash("
 
 # Print promotion form
 if ($boardAdmin) {
-	my %sel = ( $boardId => "selected='selected'" );
+	my %state = ( $boardId => 'selected' );
 	print
 		"<form action='branch_promote$m->{ext}' method='post'>\n",
 		"<div class='frm'>\n",
@@ -79,23 +79,23 @@ if ($boardAdmin) {
 		"<div class='ccl'>\n",
 		"<fieldset>\n",
 		"<label class='lbw'>$lng->{brnPromoSbj}\n",
-		"<input type='text' class='fcs fwi' name='subject' maxlength='$cfg->{maxSubjectLen}'",
-		" autofocus='autofocus' required='required'/></label>\n",
+		"<input type='text' class='fwi' name='subject' maxlength='$cfg->{maxSubjectLen}'",
+		" autofocus required></label>\n",
 		"<label class='lbw'>$lng->{brnPromoBrd}\n",
 		"<select name='bid' size='1'>\n",
-		map("<option value='$_->{id}' $sel{$_->{id}}>$_->{categTitle} / $_->{title}</option>\n", @$boards),
+		map("<option value='$_->{id}' $state{$_->{id}}>$_->{categTitle} / $_->{title}</option>\n", @$boards),
 		"</select></label>\n",
 		"</fieldset>\n";
 		
 	print
 		"<fieldset>\n",
-		"<label><input type='checkbox' name='link' checked='checked'/>$lng->{brnPromoLink}</label>\n",
+		"<label><input type='checkbox' name='link' checked>$lng->{brnPromoLink}</label>\n",
 		"</fieldset>\n"
 		if !$board->{flat};
 			
 	print
 		$m->submitButton('brnPromoB', 'topic'),
-		"<input type='hidden' name='pid' value='$postId'/>\n",
+		"<input type='hidden' name='pid' value='$postId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",
@@ -109,9 +109,9 @@ print
 	"<div class='hcl'><span class='htt'>$lng->{brnMoveTtl}</span></div>\n",
 	"<div class='ccl'>\n",
 	"<label class='lbw'>$lng->{brnMovePrnt}\n",
-	"<input type='number' name='parent' maxlength='8' value='$newParentId'/></label>",
+	"<input type='number' name='parent' value='$newParentId'></label>",
 	$m->submitButton('brnMoveB', 'move'),
-	"<input type='hidden' name='pid' value='$postId'/>\n",
+	"<input type='hidden' name='pid' value='$postId'>\n",
 	$m->stdFormFields(),
 	"</div>\n",
 	"</div>\n",
@@ -128,7 +128,7 @@ print
 	$m->submitButton('brnLockLckB', 'lock', 'lock'),
 	$m->submitButton('brnLockUnlB', 'lock', 'unlock'),
 	"</div>\n",
-	"<input type='hidden' name='pid' value='$postId'/>\n",
+	"<input type='hidden' name='pid' value='$postId'>\n",
 	$m->stdFormFields(),
 	"</div>\n",
 	"</div>\n",
@@ -142,7 +142,7 @@ print
 	"<div class='hcl'><span class='htt'>$lng->{brnDeleteTtl}</span></div>\n",
 	"<div class='ccl'>\n",
 	$m->submitButton('brnDeleteB', 'delete'),
-	"<input type='hidden' name='pid' value='$postId'/>\n",
+	"<input type='hidden' name='pid' value='$postId'>\n",
 	$m->stdFormFields(),
 	"</div>\n",
 	"</div>\n",

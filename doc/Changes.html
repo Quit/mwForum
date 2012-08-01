@@ -9,19 +9,89 @@
 
 <h1>mwForum Changes</h1>
 
-<p>Releases with <strong>even</strong> minor version numbers (e.g. 2.<strong>2</strong>.0) are stable releases, releases with <strong>odd</strong> minor version numbers (e.g. 2.<strong>3</strong>.0) are development releases.</p>
-
 <p>Please don't forget to follow the instructions in <a href='Upgrade.html'>Upgrade.html</a> when upgrading.</p>
 
 <p>Credits for bug reports are in [brackets].</p>
 
 
-<h2>2.26.1 (2012-03-18)</h2>
+<h2>2.27.3 (2012-07-31)</h2>
 
 <ul>
+<li>Added: Safer upgrade.pl execution with fork() for shell-less admins.</li>
+<li>Added: install.pl accepts MySQL engine parameter, e.g. "-e aria".</li>
+<li>Changed: Improved read time handling when moving topic branches.</li>
+<li>Changed: Show and search usernames by default on user list page.</li>
+<li>Changed: Only accept email addresses for forgot-password requests.</li>
+<li>Changed: Allow password lengths from 8 to ∞ and all Unicode chars.</li>
+<li>Changed: Restored previous md5() function behaviour.</li>
+<li>Fixed: Escaping of topic subjects in email notifications. [Tobias Jaeggi]</li>
+<li>Fixed: Data version increment with upgrade.pl.</li>
+<li>Fixed: Category toggling.</li>
+<li>Fixed: Gravatar display.</li>
+</ul>
+
+
+<h2>2.27.2 (2012-06-30)</h2>
+
+<ul>
+<li>Added: Show existing number of posts on user info pages.</li>
+<li>Added: Subscription emails include unsubscribe and post links.</li>
+<li>Changed: Unified subscription and notification email layout.</li>
+<li>Changed: Subscription emails use users' language and timezone.</li>
+<li>Changed: Security enhancements for password hashing and auth tokens.</li>
+<li>Changed: Limit forum info details page to <var>$cfg-&gt;{cfgAdmins}</var>.</li>
+<li>Changed: Remove msg params from URLs with history.replaceState.</li>
+<li>Changed: Support MySQL utf8mb4 charset with <var>$cfg-&gt;{mysqlUtf}</var> option.</li>
+<li>Changed: Improved board/topic statistics update performance.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Bounced email always gets user deleted when using cron_bounce.</li>
+<li>Fixed: Negotiated language was used wrongly for new users.</li>
+<li>Fixed: Syntax error in small screen @media rule.</li>
+</ul>
+
+
+<h2>2.27.1 (2012-05-31)</h2>
+
+<ul>
+<li>Added: Username autocompletion (AJAX).</li>
+<li>Added: Font, mod/ban reason, user title etc. autocompletion (HTML5).</li>
+<li>Changed: Misc. small changes.</li>
+<li>Changed: Improved read time handling when merging topics.</li>
+<li>Changed: Only show messenger field to registered users.</li>
+<li>Fixed: Archiving with MySQL.</li>
+<li>Fixed: Unresized uploaded avatars. [Tobias Zwick]</li>
+<li>Removed: Email address display to non-admins.</li>
+<li>Removed: User selection via listbox.</li>
+<li>Removed: Deprecated SEO rewriting.</li>
+<li>Removed: URL-based sessions.</li>
+</ul>
+
+
+<h2>2.27.0 (2012-04-08)</h2>
+
+<ul>
+<li>Added: Notifying users about posts.</li>
+<li>Added: Mods can turn image embeds into attachments with Ctrl-Click.</li>
+<li>Added: Output of uname, uptime, free and df on forum info details page.</li>
+<li>Added: Support fully quoted expression with PgSQL fulltext search.</li>
+<li>Added: Script that scales all gallery avatars to configured size.</li>
+<li>Changed: Gallery avatars can have non-ASCII filenames. </li>
+<li>Changed: Allow reporting of one's own posts.</li>
+<li>Changed: Prefix msg/reply/ping notification email subjects with type.</li>
+<li>Changed: Show name/caption/size tooltip for embedded attachments.</li>
+<li>Changed: Unified image resizing and thumbnailing code.</li>
+<li>Changed: Reset subscriptions when admin is removing user's address.</li>
+<li>Changed: Don't copy OpenID to old usernames when setting name.</li>
+<li>Changed: Don't use unreliable env vars for spawned scripts.</li>
+<li>Changed: Updated jQuery to version 1.7.2.</li>
+<li>Changed: Only sign encrypted emails.</li>
+<li>Changed: Misc. small changes.</li>
 <li>Fixed: Process spawning for emu/manual-cronjobs under CGI.</li>
 <li>Fixed: Topic merging left behind poll and subscription entries.</li>
-<li>Fixed: XHTML syntax on user info page.</li>
+<li>Fixed: Filename encoding issues.</li>
+<li>Removed: Prev/next board/topic navigation.</li>
+<li>Removed: JS-based autofocus.</li>
+<li>Removed: XHTML mode.</li>
 </ul>
 
 
@@ -576,7 +646,7 @@
 <li>Fixed: Ratings of deleted branches didn't get deleted.</li>
 <li>Fixed: Pagination bug with 9 pages.</li>
 <li>Fixed: Don't allow PMs addressed to nobody. [Daði Jónsson]</li>
-<li>Fixed: PgSQL &lt; 8.3 and SQLite can't use UPDATE x AS. [Michael Stevens]</li>
+<li>Fixed: PgSQL &lt; 8.2 and SQLite can't use UPDATE x AS. [Michael Stevens]</li>
 <li>Fixed: PgSQL 8.3 won't auto-convert types anymore in some cases.</li>
 <li>Fixed: PgSQL syntax fix when deleting all private messages.</li>
 <li>Fixed: Subscriptions cronjob was missing multi-forum code.</li>

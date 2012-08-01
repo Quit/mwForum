@@ -18,7 +18,7 @@ use 5.008001;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine once);
-our $VERSION = "2.26.1";
+our $VERSION = "2.27.3";
 
 #------------------------------------------------------------------------------
 
@@ -55,7 +55,6 @@ sub new
 	my $m = { 
 		cfg => undef,       # Forum options
 		gcfg => $gcfg,      # Global forum options for multi-forum setup
-		http => 'http',     # Protocol, set to https later when SSL detected
 		ext => $ext,        # Script file extension
 		ap => $ap,          # Apache/Apache::RequestRec object
 		apr => undef,       # Apache(2)::Request object
@@ -72,7 +71,6 @@ sub new
 		mysql => 0,         # Using MySQL
 		pgsql => 0,         # Using PostgreSQL
 		sqlite => 0,        # Using SQLite
-		sessionId => undef, # Session id for cookieless login
 		user => undef,      # Current user
 		userUpdates => {},  # User fields to be updated at end of request
 		robotMetas => {},   # Names of robot meta tag flags to set
@@ -83,14 +81,15 @@ sub new
 		warnings => [],     # Warnings shown in page footer
 		formErrors => [],   # Errors from form validation
 		cookies => [],      # Cookies to be printed in CGI mode
-		contentType => "",  # HTML, XHTML or JSON
-		cdataEnd => "",     # CDATA end marker in XHTML mode
-		cdataStart => "",   # CDATA start marker in XHTML mode
+		contentType => '',  # HTML or JSON
+		lngModule => '',    # Name of negotiated language module (e.g. "MwfGerman")
+		lngName => '',      # Name of negotiated language (e.g. "Deutsch")
 		style => 'default2', # Current style subpath/filename
 		styleOptions => {}, # Current style's options
 		buttonIcons => 0,   # Show button icons to user?
-		ajax => $params{ajax}, # AJAX output mode
+		ajax => $params{ajax}, # AJAX output mode?
 		allowBanned => $params{allowBanned}, # Can banned user use feature?
+		autocomplete => $params{autocomplete}, # Include autocomplete plugin?
 	};
 	bless $m, $class;
 
@@ -141,10 +140,6 @@ sub new
 	# Copy global parameters
 	$m->{archive} = $m->paramBool('arc');
 	
-	# Determine whether SSL/TLS is used (possibly on a frontend server)
-	$m->{http} = $cfg->{sslOnly} || $m->{env}{https} || $m->paramStr('https') eq 'on' 
-		? 'https' : 'http';
-
 	return ($m, $cfg, $m->{lng}, $m->{user}, $m->{user}{id}) if wantarray;
 	return $m;
 }
@@ -175,6 +170,10 @@ sub newShell
 	# Don't run this over CGI unless explicitly allowed
 	!$CGI && !$MP || $allowCgi || $spawned
 		or die "This script must not be executed via CGI or mod_perl.";
+
+	# Set unbuffered UTF-8 output
+	$| = 1;
+	binmode STDOUT, ':utf8';
 
 	# Print HTTP header under CGI (e.g. for install.pl and upgrade.pl)
 	print "Content-Type: text/plain\n\n" if ($CGI || $MP) && !$spawned;
@@ -234,24 +233,23 @@ sub initEnvironment
 	my $env = $m->{env};
 	
 	if ($MP) {
-		my $hi = $ap->headers_in;
-		$env->{port} = $ap->get_server_port;
-		$env->{method} = $ap->method;
-		$env->{protocol} = $ap->protocol;
-		$env->{host} = $ap->hostname;
+		my $hi = $ap->headers_in();
+		$env->{port} = $ap->get_server_port();
+		$env->{method} = $ap->method();
+		$env->{protocol} = $ap->protocol();
+		$env->{host} = $ap->hostname();
 		$env->{realHost} = $hi->{'X-Forwarded-Host'} || $hi->{'X-Host'} || $env->{host};
-		($env->{script}) = $ap->uri =~ m!.*/(.*)\.!;
-		($env->{scriptUrlPath}) = $ap->uri =~ m!(.*)/!;
+		($env->{script}) = $ap->uri() =~ m!.*/(.*)\.!;
+		($env->{scriptUrlPath}) = $ap->uri() =~ m!(.*)/!;
 		$env->{cookie} = $hi->{'Cookie'};
 		$env->{referrer} = $hi->{'Referer'};
 		$env->{accept} = lc($hi->{'Accept'});
 		$env->{acceptLang} = lc($hi->{'Accept-Language'});
 		$env->{userAgent} = $hi->{'User-Agent'};
-		$env->{userIp} = lc($ap->connection->remote_ip);
-		$env->{userAuth} = $ap->user;
-		$env->{params} = $ap->args;
-		$env->{https} = $ap->subprocess_env->{HTTPS} eq 'on'
-			|| $hi->{'X-Forwarded-Proto'} eq 'https' || $env->{port} == 443;
+		$env->{userIp} = lc($ap->connection->remote_ip());
+		$env->{userAuth} = $ap->user();
+		$env->{params} = $ap->args();
+		$env->{https} = $ap->subprocess_env()->{HTTPS} eq 'on' || $env->{port} == 443;
 	}
 	else {
 		$env->{port} = $ENV{SERVER_PORT};
@@ -270,8 +268,7 @@ sub initEnvironment
 		$env->{userIp} = lc($ENV{REMOTE_ADDR});
 		$env->{userAuth} = $ENV{REMOTE_USER};
 		$env->{params} = $ENV{QUERY_STRING};
-		$env->{https} = $ENV{HTTPS} eq 'on' 
-			|| $ENV{HTTP_X_FORWARDED_PROTO} eq 'https' || $env->{port} == 443;
+		$env->{https} = $ENV{HTTPS} eq 'on' || $env->{port} == 443;
 	}
 
 	$env->{host} = "[$env->{host}]" if index($env->{host}, ":") > -1;
@@ -287,36 +284,23 @@ sub initRequestObject
 
 	my $ap = $m->{ap};
 	my $cfg = $m->{cfg};
+	my $errParse = "Input exceeds maximum allowed size or is corrupted.";
 
 	# Set STDOUT encoding
 	binmode STDOUT, ':utf8';
 
 	if ($MP1) {
-		# Use Apache::Request object under mod_perl 1
+		# Use Apache::Request object
 		$m->{apr} = Apache::Request->new($ap,
-			POST_MAX => $cfg->{maxAttachLen},
-			TEMP_DIR => $cfg->{attachFsPath},
-		);
-
-		# Parse POST request and check for errors
-		$m->{apr}->parse() == 0 
-			or $m->error("Input exceeds maximum allowed size or is corrupted.")
-			if $ap->method() eq 'POST';
+			POST_MAX => $cfg->{maxAttachLen}, TEMP_DIR => $cfg->{attachFsPath});
+		$m->{apr}->parse() == 0 or $m->error($errParse) if $ap->method() eq 'POST';
 	}
 	elsif ($MP2) {
-		# Use Apache2::Request object under mod_perl 2
+		# Use Apache2::Request object
 		$m->{apr} = Apache2::Request->new($ap,
-			POST_MAX => $cfg->{maxAttachLen},
-			TEMP_DIR => $cfg->{attachFsPath},
-		);
-
-		# Discard raw request body 	 
+			POST_MAX => $cfg->{maxAttachLen}, TEMP_DIR => $cfg->{attachFsPath} );
 		$m->{apr}->discard_request_body() == 0 or $m->error("Input is corrupted.");
-
-		# Parse POST request and check for errors
-		$m->{apr}->parse() == 0 
-			or $m->error("Input exceeds maximum allowed size or is corrupted.")
-			if $ap->method() eq 'POST';
+		$m->{apr}->parse() == 0 or $m->error($errParse) if $ap->method() eq 'POST';
 	}
 	else {
 		# Use MwfCGI object
@@ -324,8 +308,7 @@ sub initRequestObject
 		MwfCGI::_reset_globals() if $FCGI;
 		MwfCGI::max_read_size($cfg->{maxAttachLen});
 		$m->{cgi} = MwfCGI->new();
-		!$m->{cgi}->truncated()
-			or $m->error("Input exceeds maximum allowed size or is corrupted.");
+		!$m->{cgi}->truncated() or $m->error($errParse);
 	}
 }	
 
@@ -366,9 +349,8 @@ sub loadConfiguration
 {
 	my $m = shift();
 
-	my $cfg = $m->{cfg};
-
 	# Return if database config hasn't changed
+	my $cfg = $m->{cfg};
 	if ($MP || $FCGI) {
 		my $lastUpdate = $m->fetchArray("
 			SELECT value FROM config WHERE name = ?", 'lastUpdate');
@@ -399,9 +381,7 @@ sub loadConfiguration
 		if ($cfg->{dataPath} !~ /\/v\d+\z/) { $cfg->{dataPath} .= "/v" . $cfg->{dataVersion} }
 		else { $cfg->{dataPath} =~ s!/v\d+\z!/v$cfg->{dataVersion}! }
 	}
-	if ($cfg->{fScriptUrlPath}) {
-		$m->{env}{scriptUrlPath} = $cfg->{scriptUrlPath};
-	}
+	$m->{env}{scriptUrlPath} = $cfg->{scriptUrlPath} if $cfg->{fScriptUrlPath};
 }
 
 #------------------------------------------------------------------------------
@@ -412,11 +392,10 @@ sub setLanguage
 	my $m = shift();
 	my $forceLang = shift() || undef;
 
-	my $cfg = $m->{cfg};
-
 	# Try to load specified or user-selected language
-	return if $forceLang && $m->loadLanguage($forceLang);
-	return if $m->{user}{language} && $m->loadLanguage($m->{user}{language});
+	my $cfg = $m->{cfg};
+	return $m->{lng} if $forceLang && $m->loadLanguage($forceLang);
+	return $m->{lng} if $m->{user}{language} && $m->loadLanguage($m->{user}{language});
 
 	# Try to load user agent-accepted language (ignores countries, goes by order not q value)
 	my (@langCodes, %seen);
@@ -425,12 +404,13 @@ sub setLanguage
 		push @langCodes, $lc if !$seen{$lc}++;
 	}
 	for my $lc (@langCodes) {	
-		return if $cfg->{languageCodes}{$lc} && $m->loadLanguage($cfg->{languageCodes}{$lc});
+		return $m->{lng} if $cfg->{languageCodes}{$lc} && $m->loadLanguage($cfg->{languageCodes}{$lc});
 	}
 
 	# Try to load default language, fall back to English if necessary
-	return if $m->loadLanguage($cfg->{language});
-	$m->loadLanguage("English");
+	return $m->{lng} if $m->loadLanguage($cfg->{language});
+	return $m->{lng} if $m->loadLanguage("English");
+	return {};
 }
 
 #------------------------------------------------------------------------------
@@ -446,6 +426,7 @@ sub loadLanguage
 	eval { require "$module.pm" } or return 0;
 	eval "\$m->{lng} = \$${module}::lng" or return 0;
 	$m->{lngModule} = $module;
+	$m->{lngName} = $lang;
 	return 1;
 }
 
@@ -530,7 +511,7 @@ sub formatTime
 			? Apache::Util::ht_time($epoch, $format, 0)
 			: Apache::Util::ht_time($epoch + $tz * 3600, $format);
 	}
-	elsif ($MP2) { 
+	elsif ($MP2 && $m->{ap}) { 
 		return $tz eq 'SVR' 
 			? Apache2::Util::ht_time($m->{ap}->pool(), $epoch, $format, 0)
 			: Apache2::Util::ht_time($m->{ap}->pool(), $epoch + $tz * 3600, $format);
@@ -541,6 +522,17 @@ sub formatTime
 			? POSIX::strftime($format, localtime($epoch))
 			: POSIX::strftime($format, gmtime($epoch + $tz * 3600));
 	}
+}
+
+#------------------------------------------------------------------------------
+# Format file size
+
+sub formatSize
+{
+	my $m = shift();
+	my $size = shift() || 0;
+
+	return $size >= 1024 ? int($size / 1024 + .5) . "k" : "${size}B";
 }
 
 #------------------------------------------------------------------------------
@@ -556,7 +548,7 @@ sub formatTopicTag
 	if ($tag =~ /\.(?:jpg|png|gif)/i && $tag !~ /[<]/) {
 		# Create image tag from image file name
 		my ($src, $alt) = $tag =~ /(\S+)\s*(.*)?/;
-		return "<img class='ttg' src='$m->{cfg}{dataPath}/$src' title='$alt' alt='[$alt]'/>";
+		return "<img class='ttg' src='$m->{cfg}{dataPath}/$src' title='$alt' alt='[$alt]'>";
 	}
 	else {
 		# Use tag as is
@@ -579,7 +571,7 @@ sub formatUserTitle
 	elsif ($title =~ /\.(?:jpg|png|gif)/i) {
 		# Create image tag from image file name
 		my ($src, $alt) = $title =~ /(\S+)\s*(.*)?/;
-		return "<img class='utt' src='$m->{cfg}{dataPath}/$src' title='$alt' alt='($alt)'/>";
+		return "<img class='utt' src='$m->{cfg}{dataPath}/$src' title='$alt' alt='($alt)'>";
 	}
 	else {
 		# Put title in parens
@@ -605,7 +597,7 @@ sub formatUserRank
 			elsif ($rank =~ /\.(?:jpg|png|gif)/i) {
 				# Create image tag from image file name
 				my ($src, $alt) = $rank =~ /(\S+)\s*(.*)?/;
-				return "<img class='rnk' src='$m->{cfg}{dataPath}/$src' title='$alt' alt='($alt)'/>";
+				return "<img class='rnk' src='$m->{cfg}{dataPath}/$src' title='$alt' alt='($alt)'>";
 			}
 			else {
 				# Put rank in parens
@@ -736,188 +728,14 @@ sub ipcRun
 
 	my $inCopy = $$in;
 	eval { require IPC::Run } or $m->error("IPC::Run module not available.");
-	my $rv = eval { 
-		my $h = IPC::Run::start($cmd, $in, $out, $err);
-		$h->finish();
-		$h->result(0);
-	};
-
+	eval { IPC::Run::run($cmd, $in, $out, $err) };
+	my $rv = $? >> 8;
+	$rv == 0 && !$@ or $m->logError("IPC::Run possibly failed. (rv: $rv, \$\@: $@)");
 	my $sep = "\n" . "#" x 70 . "\n";
 	$m->logToFile($m->{cfg}{runLog}, $sep . join(" ", @$cmd) 
-		. "$sep$inCopy$sep$$out$sep$$err$sep$rv$sep\n") 
+		. "$sep$inCopy$sep$$out$sep$$err$sep\$\@: $@${sep}rv: $rv$sep\n") 
 		if $m->{cfg}{runLog};
-
-	$rv == 0 && !$@ or $m->logError("ipcRun possibly failed. (rv: $rv, \$\@: $@)");
 	return $rv == 0;
-}
-
-#------------------------------------------------------------------------------
-# Get MD5 hash of string
-
-sub md5
-{
-	my $m = shift();
-	my $str = shift();
-
-	utf8::encode($str);
-	require Digest::MD5;
-	return Digest::MD5::md5_hex($str);
-}
-
-#------------------------------------------------------------------------------
-# Get 128-bit 32 hex-digit random id for auth tickets etc.
-
-sub randomId
-{
-	my $m = shift();
-
-	my $rnd = "";
-	eval { 
-		open my $fh, "/dev/urandom" or die;
-		read $fh, $rnd, 16;
-		close $fh;
-	};
-	require Time::HiRes;
-	my $time = Time::HiRes::gettimeofday();
-	return $m->md5(unpack("H*", $rnd . rand() . $time . $m . $$ . $< . $]));
-}
-
-#------------------------------------------------------------------------------
-# Convert filename/path to filesystem encoding
-
-sub encFsPath
-{
-	my $m = shift();
-	my $path = shift();
-
-	if (lc($m->{cfg}{fsEncoding}) ne 'ascii' && utf8::is_utf8($path)) {	
-		require Encode;
-		return Encode::encode($m->{cfg}{fsEncoding}, $path);
-	}
-	else {
-		return $path;
-	}
-}
-
-#------------------------------------------------------------------------------
-# Create thumbnail image
-
-sub addThumbnail
-{
-	my $m = shift();
-	my $imgFsPath = shift();
-	
-	my $cfg = $m->{cfg};
-	my $thbQ = $cfg->{attachImgThbQ} || 90;
-
-	# Load modules
-	my $module;
-	if (!$cfg->{noGd} && eval { require GD }) { $module = 'GD' }
-	elsif (!$cfg->{noImager} && eval { require Imager }) { $module = 'Imager' }
-	elsif (!$cfg->{noGMagick} && eval { require Graphics::Magick }) { $module = 'Graphics::Magick' }
-	elsif (!$cfg->{noIMagick} && eval { require Image::Magick }) { $module = 'Image::Magick' }
-	else { $m->error("GD, Imager or Magick modules not available.") }
-
-	# Get image info
-	my $thbFsPath = $imgFsPath;
-	$thbFsPath =~ s!\.(?:jpg|png|gif)\z!.thb.jpg!i;
-	my $imgFsPathEnc = $m->encFsPath($imgFsPath);
-	my $thbFsPathEnc = $m->encFsPath($thbFsPath);
-	my ($imgW, $imgH, $img, $err);
-	if ($module eq 'GD') {
-		GD::Image->trueColor(1);
-		$img = GD::Image->new($imgFsPathEnc) 
-			or $m->logError("Image loading failed. ($!)"), return -1;
-		$imgW = $img->width();
-		$imgH = $img->height();
-		$imgW && $imgH or $m->logError("Image size check failed."), return -1;
-	}
-	elsif ($module eq 'Imager') {
-		$img = Imager->new() 
-			or $m->logError("Image creating failed."), return -1;
-		$img->read(file => $imgFsPathEnc) 
-			or $m->logError("Image loading failed. " . $img->errstr()), return -1;
-		$imgW = $img->getwidth();
-		$imgH = $img->getheight();
-		$imgW && $imgH or $m->logError("Image size check failed."), return -1;
-	}
-	elsif ($module eq 'Graphics::Magick' || $module eq 'Image::Magick') {
-		my $magick = $module->new() 
-			or $m->logError("Magick creation failed."), return -1;
-		($imgW, $imgH) = $magick->Ping($imgFsPathEnc);
-		$imgW && $imgH or $m->logError("Image size check failed."), return -1;
-	}
-	
-	# Check whether thumbnail is required
-	my $maxW = $cfg->{attachImgThbW} || 150;
-	my $maxH = $cfg->{attachImgThbH} || 150;
-	my $maxS = $cfg->{attachImgThbS} || 15360;
-	my $fact = $m->min($maxW / $imgW, $maxH / $imgH, 1);
-	my $imgS = -s $imgFsPathEnc;
-	return 0 if !($fact < 1 || $imgS > $maxS);
-	
-	# Create thumbnail image
-	my $thbW = int($imgW * $fact + .5);
-	my $thbH = int($imgH * $fact + .5);
-	if ($module eq 'GD') {
-		my $thb = GD::Image->new($thbW, $thbH, 1) 
-			or $m->logError("Thumbnail creating failed."), return -1;
-		$thb->fill(0, 0, $thb->colorAllocate(255,255,255));
-		$thb->copyResampled($img, 0, 0, 0, 0, $thbW, $thbH, $imgW, $imgH);
-		open my $fh, ">:raw", $thbFsPathEnc 	
-			or $m->logError("Thumbnail opening failed. $!"), return -1;
-		print $fh $thb->jpeg($thbQ) 
-			or $m->logError("Thumbnail storing failed. $!"), return -1;
-		close $fh;
-	}
-	elsif ($module eq 'Imager') {
-		$img = $img->scale(xpixels => $thbW, ypixels => $thbH, type => 'nonprop', qtype => 'mixing') 
-			or $m->logError("Image scaling failed."), return -1;
-		my $thb = Imager->new(xsize => $thbW, ysize => $thbH, channels => 4)
-			or $m->logError("Thumbnail creating failed."), return -1;
-		$thb->paste(img => $img)
-			or $m->error("Thumbnail pasting failed. " . $thb->errstr()), return -1;
-		$thb->write(file => $thbFsPathEnc, i_background => 'white', jpegquality => $thbQ)
-			or $m->logError("Thumbnail storing loading failed. " . $thb->errstr()), return -1;
-	}
-	elsif ($module eq 'Graphics::Magick' || $module eq 'Image::Magick') {
-		$img = $module->new() 
-			or $m->logError("Image creating failed."), return -1;
-		$err = $img->Read($imgFsPathEnc . "[0]")
-			and $m->logError("Image loading failed. $err"), return -1;
-		$err = $img->Scale(width => $thbW, height => $thbH)
-			and $m->logError("Image scaling failed. $err"), return -1;
-		my $thb = $module->new(size => "${thbW}x$thbH") 
-			or $m->logError("Thumbnail creating failed."), return -1;
-		$err = $thb->Read('xc:#ffffff')
-			and $m->logError("Thumbnail filling failed. $err"), return -1;
-		$err = $thb->Composite(image => $img)
-			and $m->logError("Thumbnail compositing failed. $err"), return -1;
-		$err = $thb->Write(filename => $thbFsPathEnc, compression => 'JPEG', quality => $thbQ)
-			and $m->logError("Thumbnail storing failed. $err"), return -1;
-	}
-	$m->setMode($thbFsPathEnc, 'file');
-	
-	return 1;
-}
-
-#------------------------------------------------------------------------------
-# Set file permissions
-
-sub setMode
-{
-	my $m = shift();
-	my $path = shift();
-	my $type = shift();
-
-	my $cfg = $m->{cfg};
-
-	if ($type eq 'dir') {
-		chmod $cfg->{dirMode} ? oct($cfg->{dirMode}) : 0777 & ~umask(), $path;
-	}
-	elsif ($type eq 'file') {
-		chmod $cfg->{fileMode} ? oct($cfg->{fileMode}) : 0666 & ~umask(), $path;
-	}
 }
 
 #------------------------------------------------------------------------------
@@ -929,18 +747,12 @@ sub spawnScript
 	my $script = shift();
 	my @args = @_;
 
-	my $cfg = $m->{cfg};
-
 	# Add forum id for multi-forum setups
+	my $cfg = $m->{cfg};
 	push @args, "-s";
 	push @args, "-f" => $m->{forumId} if $m->{forumId};
 
-	if ($cfg->{oldSpawnMethod}) {
-		# Old method that waits for forked process, uses cwd and $^X, and may timeout
-		system("$^X $script$m->{ext} " . join(" ", @args)) != -1 
-			or $m->logError("system() failed. $!");
-	}
-	elsif ($^O eq 'MSWin32') {
+	if ($^O eq 'MSWin32') {
 		# So far untested
 		require Win32;
 		require Win32::Process;
@@ -963,6 +775,302 @@ sub spawnScript
 		POSIX::setsid() != -1 or die "setsid() failed. $!";
 		exec($cfg->{perlBinary}, "-I", $cfg->{scriptFsPath}, $script, @args) or CORE::exit;
 	}
+}
+
+#------------------------------------------------------------------------------
+# Get MD5 hash
+
+sub md5
+{
+	my $m = shift();
+	my $data = shift();
+	my $rounds = shift() || 1;
+	my $base64url = shift() || 0;
+
+	require Digest::MD5;
+	utf8::encode($data) if utf8::is_utf8($data);
+	if ($rounds > 1) { $data = Digest::MD5::md5($data) for 1 .. $rounds - 1 }
+	if ($base64url) {
+		$data = Digest::MD5::md5_base64($data);
+		$data =~ tr!+/!-_!;
+	}
+	else {
+		$data = Digest::MD5::md5_hex($data);
+	}
+	return $data;
+}
+
+#------------------------------------------------------------------------------
+# Convert password and salt to current hashed format
+
+sub hashPassword
+{
+	my $m = shift();
+	my $password = shift();
+	my $salt = shift();
+
+  return $m->md5($password . $salt, 100000, 1);
+}
+
+#------------------------------------------------------------------------------
+# Get 128-bit base64url random ID
+
+sub randomId
+{
+	my $m = shift();
+
+	my $rnd = "";
+	if ($^O eq 'MSWin32') {
+		eval { 
+			require Win32::API;
+			my $acquireCtx = Win32::API->new('advapi32', 'CryptAcquireContext', 'PPPNN', 'I') or die;
+			my $releaseCtx = Win32::API->new('advapi32', 'CryptReleaseContext', 'NN', 'I') or die;
+			my $genRandom = Win32::API->new('advapi32', 'CryptGenRandom', 'NNP', 'I') or die;
+			my $ctx = chr(0) x Win32::API::Type->sizeof('PULONG');
+			$acquireCtx->Call($ctx, 0, 0, 1, hex('40') | hex('F0000000')) or die;
+			$ctx = unpack(Win32::API::Type::packing('PULONG'), $ctx);
+			$rnd = chr(0) x 16;
+			$genRandom->Call($ctx, 16, $rnd) or die;
+			$releaseCtx->Call($ctx, 0);
+		};
+		!$@ or $rnd = "";
+	}
+	else {
+		eval { 
+			open my $fh, "<", "/dev/urandom" or die;
+			read $fh, $rnd, 16;
+			close $fh;
+		};
+	}
+	if (length($rnd) != 16) {
+		require Time::HiRes;
+		$rnd = Time::HiRes::gettimeofday() . rand() . $$ . $< . $] . $m;
+	}
+	return $m->md5($rnd, 1, 1);
+}
+
+#------------------------------------------------------------------------------
+# Convert filename/path to filesystem encoding
+
+sub encFsPath
+{
+	my $m = shift();
+	my $path = shift();
+
+	if (lc($m->{cfg}{fsEncoding}) ne 'ascii' && utf8::is_utf8($path)) {	
+		require Encode;
+		return Encode::encode($m->{cfg}{fsEncoding}, $path);
+	}
+	else {
+		return $path;
+	}
+}
+
+#------------------------------------------------------------------------------
+# Convert filename/path from filesystem encoding to UTF-8
+
+sub decFsPath
+{
+	my $m = shift();
+	my $path = shift();
+
+	if (lc($m->{cfg}{fsEncoding}) ne 'ascii') {	
+		require Encode;
+		return Encode::decode($m->{cfg}{fsEncoding}, $path);
+	}
+	else {
+		return $path;
+	}
+}
+
+#------------------------------------------------------------------------------
+# Set file permissions
+
+sub setMode
+{
+	my $m = shift();
+	my $path = shift();
+	my $type = shift();
+
+	my $cfg = $m->{cfg};
+
+	if ($type eq 'dir') {
+		chmod $cfg->{dirMode} ? oct($cfg->{dirMode}) : 0777 & ~umask(), $path;
+	}
+	elsif ($type eq 'file') {
+		chmod $cfg->{fileMode} ? oct($cfg->{fileMode}) : 0666 & ~umask(), $path;
+	}
+}
+
+#------------------------------------------------------------------------------
+# Create directory hierarchy
+
+sub createDirectories
+{
+	my $m = shift();
+	my @dirs = @_;
+
+	# First arg is absolute path, rest are relative dir names
+	my $path;
+	for my $dir (@dirs) {
+		$path = $path ? "$path/$dir" : $dir;
+		if (!-d $path) { 
+			mkdir $path or $m->error("Directory creation failed. ($!)");
+			$m->setMode($path, 'dir');
+		}
+	}
+}
+
+#------------------------------------------------------------------------------
+# Read whole file into variable
+
+sub slurpFile
+{
+	my $m = shift();
+	my $file = shift();
+	my $mode = shift() || "<";
+
+	open(my $fh, $mode, $file);
+	local $/;
+	return scalar <$fh>;
+}
+
+#------------------------------------------------------------------------------
+# Create resized image as JPEG if sizes are bigger than specified max
+
+sub resizeImage
+{
+	my $m = shift();
+	my $oldFile = shift();
+	my $newFile = shift();
+	my $cfg = $m->{cfg};
+	my $maxW = shift() || $cfg->{attachImgRszW} || 1280;
+	my $maxH = shift() || $cfg->{attachImgRszH} || 1024;
+	my $maxS = shift() || $cfg->{attachImgRszS} || 204800;
+	my $newQ = shift() || $cfg->{attachImgRszQ} || 80;
+
+	# Load modules
+	my $module;
+	if (!$cfg->{noGd} && eval { require GD }) { $module = 'GD' }
+	elsif (!$cfg->{noImager} && eval { require Imager }) { $module = 'Imager' }
+	elsif (!$cfg->{noGMagick} && eval { require Graphics::Magick }) { $module = 'Graphics::Magick' }
+	elsif (!$cfg->{noIMagick} && eval { require Image::Magick }) { $module = 'Image::Magick' }
+	else { $m->logError("GD, Imager or Magick modules not available."), return }
+	
+	# Get image info
+	my $oldFileEnc = $m->encFsPath($oldFile);
+	my $newFileEnc = $m->encFsPath($newFile);
+	my ($oldW, $oldH, $oldImg, $err);
+	if ($module eq 'GD') {
+		GD::Image->trueColor(1);
+		$oldImg = GD::Image->new($oldFileEnc) or $m->logError("Image loading failed."), return;
+		$oldW = $oldImg->width();
+		$oldH = $oldImg->height();
+		$oldW && $oldH or $m->logError("Image size check failed."), return;
+	}
+	elsif ($module eq 'Imager') {
+		$oldImg = Imager->new(file => $oldFileEnc) 
+			or $m->logError("Image loading failed. " . Imager->errstr()), return;
+		$oldW = $oldImg->getwidth();
+		$oldH = $oldImg->getheight();
+		$oldW && $oldH or $m->logError("Image size check failed."), return;
+	}
+	elsif ($module eq 'Graphics::Magick' || $module eq 'Image::Magick') {
+		my $magick = $module->new() or $m->logError("Magick creation failed."), return;
+		($oldW, $oldH) = $magick->Ping($oldFileEnc);
+		$oldW && $oldH or $m->logError("Image size check failed."), return;
+	}
+
+	# Check whether resizing is required
+	my $fact = $m->min($maxW / $oldW, $maxH / $oldH, 1);
+	my $oldS = -s $oldFileEnc;
+	return if !($fact < 1 || $oldS > $maxS);
+	
+	# Resize image to JPEG with white matte
+	my $newW = int($oldW * $fact + .5);
+	my $newH = int($oldH * $fact + .5);
+	if ($module eq 'GD') {
+		my $newImg = GD::Image->new($newW, $newH, 1) or $m->logError("Image creation failed."), return;
+		$newImg->fill(0, 0, $newImg->colorAllocate(255,255,255));
+		$newImg->copyResampled($oldImg, 0, 0, 0, 0, $newW, $newH, $oldW, $oldH);
+		open my $fh, ">:raw", $newFileEnc or $m->logError("Image opening failed. $!"), return;
+		print $fh $newImg->jpeg($newQ) or $m->logError("Image storing failed. $!"), return;
+		close $fh;
+	}
+	elsif ($module eq 'Imager') {
+		$oldImg = $oldImg->scale(xpixels => $newW, ypixels => $newH, 
+			type => 'nonprop', qtype => 'mixing') 
+			or $m->logError("Image scaling failed. " . Imager->errstr()), return;
+		$oldImg->write(file => $newFileEnc, i_background => 'white', jpegquality => $newQ)
+			or $m->logError("Image storing failed. " . $oldImg->errstr()), return;
+	}
+	elsif ($module eq 'Graphics::Magick' || $module eq 'Image::Magick') {
+		$oldImg = $module->new()
+			or $m->logError("Image creation failed."), return;
+		$err = $oldImg->Read($oldFileEnc . "[0]")
+			and $m->logError("Image loading failed. $err"), return;
+		$err = $oldImg->Scale(width => $newW, height => $newH)
+			and $m->logError("Image scaling failed. $err"), return;
+		my $newImg = $module->new(size => "${newW}x$newH") 
+			or $m->logError("Image creation failed."), return;
+		$err = $newImg->Read('xc:#ffffff')
+			and $m->logError("Image filling failed. $err"), return;
+		$err = $newImg->Composite(image => $oldImg)
+			and $m->logError("Image compositing failed. $err"), return;
+		$err = $newImg->Write(filename => $newFileEnc, compression => 'JPEG', quality => $newQ)
+			and $m->logError("Image storing failed. $err"), return;
+	}
+	$m->setMode($newFileEnc, 'file');
+	
+	return 1;
+}
+
+#------------------------------------------------------------------------------
+# Resize image attachment
+
+sub resizeAttachment
+{
+	my $m = shift();
+	my $attachId = shift();
+
+	# Get attachment
+	my ($postId, $oldFileName) = $m->fetchArray("
+		SELECT postId, fileName FROM attachments WHERE id = ?", $attachId);
+	$postId && $oldFileName or return;
+
+	# Resize image file	
+	my $newFileName = $oldFileName;
+	$newFileName =~ s!\.(?:jpg|png|gif)\z!.rsz.jpg!i;
+	my $postIdMod = $postId % 100;
+	my $oldFile = "$m->{cfg}{attachFsPath}/$postIdMod/$postId/$oldFileName";
+	my $newFile = "$m->{cfg}{attachFsPath}/$postIdMod/$postId/$newFileName";
+	$m->resizeImage($oldFile, $newFile) or return;
+
+	# Update attachment	filename
+	$m->dbDo("
+		UPDATE attachments SET fileName = ? WHERE id = ?", $newFileName, $attachId);
+	unlink $m->encFsPath($oldFile);
+
+	return $newFileName;
+}
+
+#------------------------------------------------------------------------------
+# Create thumbnail image
+
+sub addThumbnail
+{
+	my $m = shift();
+	my $oldFile = shift();
+	
+	my $cfg = $m->{cfg};
+	my $maxW = $cfg->{attachImgThbW} || 150;
+	my $maxH = $cfg->{attachImgThbH} || 150;
+	my $maxS = $cfg->{attachImgThbS} || 15360;
+	my $newQ = $cfg->{attachImgThbQ} || 90;
+	my $newFile = $oldFile;
+	$newFile =~ s!\.(?:jpg|png|gif)\z!.thb.jpg!i;
+	$m->resizeImage($oldFile, $newFile, $maxW, $maxH, $maxS, $newQ) or return;
+	return 1;
 }
 
 #------------------------------------------------------------------------------
@@ -1121,6 +1229,83 @@ sub paramStrId
 }
 
 #------------------------------------------------------------------------------
+# Get upload object, sanitized filename and size
+
+sub getUpload
+{
+	my $m = shift();
+	my $name = shift();
+
+	# Get object, filename and size
+	my $cfg = $m->{cfg};
+	my ($upload, $file, $size);
+	if ($MP) {
+		require Apache2::Upload if $MP2;
+		$upload = $m->{apr}->upload($name);
+		$upload or return;
+		$file = $upload->filename();
+		$size = $upload->size();
+	}
+	else {
+		$file = $m->{cgi}->param_filename($name);
+		$size = length($m->{cgi}->param($name));
+	}
+
+	# Remove path
+	$file =~ s!.*[\\/]!!;
+
+	# Get rid of non-convertible and replacement chars
+	if (lc($cfg->{fsEncoding}) ne 'ascii') {
+		require Encode;
+		utf8::decode($file);
+		$file =~ s![^\w.-]+!!g;
+		$file = Encode::encode($cfg->{fsEncoding}, $file);
+		$file =~ s!\?+!!g;
+		$file = Encode::decode($cfg->{fsEncoding}, $file);
+	}
+	else {
+		$file =~ s![^A-Za-z_0-9.-]+!!g;
+	}
+
+	# Make sure filename doesn't end up special or empty
+	if ($file =~ /\.(?:$cfg->{attachBlockExt})\z/i) { $file = "$file.ext" }
+	if (!length($file) || $file eq ".htaccess") { $file = "attachment" }
+
+	return ($upload, $file, $size);
+}
+
+#------------------------------------------------------------------------------
+# Save upload to its final file
+
+sub saveUpload
+{
+	my $m = shift();
+	my $name = shift();
+	my $upload = shift();
+	my $file = shift();
+
+	$file = $m->encFsPath($file);
+	if ($MP1) {
+		# Create new hardlink or copy tempfile
+		if (!$upload->link($file)) {
+			require File::Copy;
+			File::Copy::copy($upload->tempname(), $file) or $m->error("Upload saving failed. ($!)");
+		}
+	}
+	elsif ($MP2) {
+		# Create new hardlink or copy tempfile or write data from memory for small uploads
+		eval { $upload->link($file) } or $m->error("Upload saving failed. ($@)");
+	}
+	else {
+		# Write data from memory to file
+		open my $fh, ">:raw", $file or $m->error("Upload saving failed. ($!)");
+		print $fh $m->{cgi}->param($name) or $m->error("Upload saving failed. ($!)");
+		close $fh;
+	}
+	$m->setMode($file, 'file');
+}
+
+#------------------------------------------------------------------------------
 # Assemble script URL with query string
 
 sub url
@@ -1133,7 +1318,6 @@ sub url
 
 	# Add global parameters	
 	push @params, arc => 1 if $m->{archive};
-	push @params, sid => $m->{sessionId} if $m->{sessionId};
 	
 	# Start URL
 	my $qm = 0;
@@ -1155,6 +1339,7 @@ sub url
 		}
 		elsif ($key eq 'auth') { 
 			# Required for non-idempotent links, which should become POSTs one of these days
+			next if !$m->{user}{id};
 			$value = $m->{user}{sourceAuth};
 		}
 		elsif ($key eq 'ori') { 
@@ -1166,7 +1351,6 @@ sub url
 			else {
 				$value = $env->{script} . $m->{ext};
 				$value .= "?$env->{params}" if $env->{params};
-				$value =~ s![?;]?sid=[0-9a-f]+!!;
 				$value =~ s![?;]?msg=[A-Za-z]+!!;
 			}
 		}
@@ -1202,8 +1386,9 @@ sub redirect
 	my $cfg = $m->{cfg};
 	my $env = $m->{env};
 	
-	# Determine status, host, script and params
+	# Determine status, schema, host, script and params
 	my $status = $env->{protocol} eq "HTTP/1.1" ? 303 : 302;
+	my $schema = $cfg->{sslOnly} || $env->{https} ? 'https' : 'http';
 	my $host = $env->{host};
 	if (!$host) {
 		($host) = $cfg->{baseUrl} =~ m!^https?://(.+)!;
@@ -1212,21 +1397,19 @@ sub redirect
 	$host .= ":" . $env->{port} if $env->{port} != 80;
 	my $scriptAndParam = $m->url($script, @params);
 
-	# If there was an origin parameter, use that instead, but add sid and msg
+	# If there was an origin parameter, use that instead, but add msg
 	my $origin = $m->paramStr('ori');
 	if ($origin) {
 		my %params = @params;
 		my $msg = $params{msg};
 		$msg = $origin =~ /=/ ? ";msg=$msg" : "?msg=$msg" if $msg;
-		my $sessionId = $m->{sessionId};
-		$sessionId = ($origin . $msg) =~ /=/ ? ";sid=$sessionId" : "?sid=$sessionId" if $sessionId;
-		$scriptAndParam = $origin . $msg . $sessionId;
+		$scriptAndParam = $origin . $msg;
 	}
 	
 	# Location URL must be absolute according to HTTP
 	my $location = $cfg->{relRedir} 
 		? "$env->{scriptUrlPath}/$scriptAndParam" 
-		: "$m->{http}://$host$env->{scriptUrlPath}/$scriptAndParam";  
+		: "$schema://$host$env->{scriptUrlPath}/$scriptAndParam";  
 
 	# Print HTTP redirection	
 	if ($MP) {
@@ -1286,9 +1469,6 @@ sub authenticateUser
 	my $m = shift();
 	
 	my $cfg = $m->{cfg};
-	my $env = $m->{env};
-	my $sessionId = $m->paramStrId('sid');
-
 	if ($cfg->{authenPlg}{request}) {
 		# Call request authentication plugin
 		my $dbUser = $m->callPlugin($cfg->{authenPlg}{request});
@@ -1296,27 +1476,10 @@ sub authenticateUser
 	}
 	else {
 		# Cookie authentication
-		my ($id, $pwd) = $m->getCookie('login') =~ /([0-9]+)-(.+)/;
+		my ($id, $loginAuth) = $m->getCookie('login') =~ /([0-9]+):(.+)/;
 		if ($id) {
 			my $dbUser = $m->getUser($id);
-			$m->{user} = $dbUser if $dbUser && $pwd eq $dbUser->{password};
-		}
-		elsif ($sessionId) {
-			# URL session authentication
-			$id = $m->fetchArray("
-				SELECT userId 
-				FROM sessions 
-				WHERE id = :sessionId
-					AND ip = :userIp
-					AND lastOnTime > :now - :sessionTimeout * 60",
-				{ sessionId => $sessionId, userIp => $env->{userIp}, now => $m->{now},
-					sessionTimeout => $cfg->{sessionTimeout} });
-			my $dbUser = undef;
-			$dbUser = $m->getUser($id) if $id;
-			if ($id && $dbUser) {
-				$m->{user} = $dbUser;
-				$m->{sessionId} = $sessionId;
-			}
+			$m->{user} = $dbUser if $dbUser && length($loginAuth) && $loginAuth eq $dbUser->{loginAuth};
 		}
 	}
 }
@@ -1363,7 +1526,7 @@ sub initUser
 	
 	# Deny access if forum is in lockdown
 	!$cfg->{locked} || $user->{admin} || $env->{script} eq 'user_login' 
-		or $m->note("<p>$m->{lng}{errForumLock}</p>\n<p>$cfg->{locked}</p>");
+		or $m->note("<p>$lng->{errForumLock}</p>\n<p>$cfg->{locked}</p>");
 
 	# Deny access if IP-blocked
 	$m->checkIp() if !$m->{user}{id} && @{$cfg->{ipBlocks}};
@@ -1399,9 +1562,8 @@ sub cacheUserStatus
 		SELECT groupId FROM groupMembers WHERE userId = ?", $userId);
 
 	if (@$groups) {
-		my @groupIds = map($_->[0], @$groups);
-
 		# Cache group admin status for boards
+		my @groupIds = map($_->[0], @$groups);
 		my $sth = $m->fetchSth("
 			SELECT boardId FROM boardAdminGroups WHERE groupId IN (:groupIds)",
 			{ groupIds => \@groupIds });
@@ -1450,11 +1612,8 @@ sub createUser
 	# Set values to params or defaults
 	my $userName = $params{userName};
 	my $realName = $params{realName} || "";
-	my $salt = int(rand(2147483647));
-	my $passwordMd5 = $m->md5($params{password} . $salt);
 	my $email = $params{email} || "";
 	my $openId = $params{openId} || "";
-	my $hideEmail = $m->firstDef($params{hideEmail}, $cfg->{hideEmail});
 	my $notify = $m->firstDef($params{notify}, $cfg->{notify}, 0);
 	my $msgNotify = $m->firstDef($params{msgNotify}, $cfg->{msgNotify});
 	my $tempLogin = $m->firstDef($params{tempLogin}, $cfg->{tempLogin});
@@ -1481,26 +1640,27 @@ sub createUser
 	my $postsPP = $m->firstDef($params{postsPP}, $cfg->{postsPP});
 	my $prevOnTime = $params{prevOnTime} || $m->{now};
 	my $ip = $cfg->{recordIp} ? $m->{env}{userIp} : "";
-	my $bounceAuth = int(rand(2147483647));
-	my $sourceAuth = int(rand(2147483647));
+	my $bounceAuth = $m->randomId();
+	my $salt = $m->randomId();
+	my $password = $m->hashPassword($params{password}, $salt);
+	my $loginAuth = $m->randomId();
+	my $sourceAuth = $m->randomId();
 	my $renamesLeft = $m->firstDef($params{renamesLeft}, $cfg->{renamesLeft});
 
 	# Insert user	
 	$m->dbDo("
 		INSERT INTO users (
-			userName, realName, salt, password, email, openId, 
-			admin, hideEmail, notify, msgNotify, tempLogin, privacy,
+			userName, realName, email, openId, admin, notify, msgNotify, tempLogin, privacy,
 			extra1, extra2, extra3, birthyear, birthday, location, timezone, language,
 			style, fontFace, fontSize, boardDescs, showDeco, showAvatars, showImages, showSigs,
 			collapse, indent, topicsPP, postsPP, regTime, lastOnTime, prevOnTime, 
-			lastIp, bounceAuth, sourceAuth, renamesLeft) 
-		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-		$userName, $realName, $salt, $passwordMd5, $email, $openId, 
-		$admin, $hideEmail, $notify, $msgNotify, $tempLogin, $privacy,
+			lastIp, bounceAuth, salt, password, loginAuth, sourceAuth, sourceAuth2, renamesLeft) 
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+		$userName, $realName, $email, $openId, $admin, $notify, $msgNotify, $tempLogin, $privacy,
 		$extra1, $extra2, $extra3, $birthyear, $birthday, $location, $timezone, $language, 
 		$style, $fontFace, $fontSize, $boardDescs, $showDeco, $showAvatars, $showImages, $showSigs,
 		$collapse, $indent, $topicsPP, $postsPP, $m->{now}, $m->{now}, $prevOnTime,
-		$ip, $bounceAuth, $sourceAuth, $renamesLeft);
+		$ip, $bounceAuth, $salt, $password, $loginAuth, $sourceAuth, $sourceAuth, $renamesLeft);
 
 	# Return id of created user	
 	return $m->dbInsertId("users");
@@ -1538,11 +1698,6 @@ sub updateUser
 	chop $query;
 	$m->dbDo("$query\nWHERE id = ?", @values, $user->{id}) if %$updates;
 
-	# Touch user's session
-	$m->dbDo("
-		UPDATE sessions SET lastOnTime = ? WHERE id = ?", $m->{now}, $m->{sessionId})
-		if $m->{sessionId};
-
 	# Delete notification
 	if (my $noteId = $m->paramInt('dln')) {
 		$m->dbDo("
@@ -1559,88 +1714,54 @@ sub deleteUser
 	my $userId = shift();
 	my $wipe = shift();  # Delete almost everything except account itself
 
-	my $cfg = $m->{cfg};
-	my $lng = $m->{lng};
-
 	# Get user
 	my $delUser = $m->getUser($userId);
 	$delUser or $m->error('errUsrNotFnd');
 
+	# Delete keyring and avatar
+	my $cfg = $m->{cfg};
 	if (my $path = $cfg->{attachFsPath}) {
-		# Delete keyring
 		unlink "$path/keys/$userId.gpg";
 		unlink "$path/keys/$userId.gpg~";
-
-		# Delete avatar
 		unlink "$path/avatars/$delUser->{avatar}" 
 			if $delUser->{avatar} && $delUser->{avatar} !~ /[\/:]/;
 	}
-	
-	# Delete user options in the variables table
+
+	# Delete table entries	
 	$m->dbDo("
 		DELETE FROM userVariables WHERE userId = ?", $userId);
-
-	# Delete user badges
 	$m->dbDo("
 		DELETE FROM userBadges WHERE userId = ?", $userId);
-
-	# Delete ban entries
 	$m->dbDo("
 		DELETE FROM userBans WHERE userId = ?", $userId);
-
-	# Delete group admin entries
 	$m->dbDo("
 		DELETE FROM groupAdmins WHERE userId = ?", $userId);
-
-	# Delete group member entries
 	$m->dbDo("
 		DELETE FROM groupMembers WHERE userId = ?", $userId);
-
-	# Delete hidden board entries
 	$m->dbDo("
 		DELETE FROM boardHiddenFlags WHERE userId = ?", $userId);
-	
-	# Delete board subscriptions
 	$m->dbDo("
 		DELETE FROM boardSubscriptions WHERE userId = ?", $userId);
-
-	# Delete topic subscriptions
 	$m->dbDo("
 		DELETE FROM topicSubscriptions WHERE userId = ?", $userId);
-	
-	# Delete ignore entries
 	$m->dbDo("
 		DELETE FROM userIgnores WHERE userId = ?", $userId);
 	$m->dbDo("
 		DELETE FROM userIgnores WHERE ignoredId = ?", $userId);
-
-	# Delete topicReadTimes entries
 	$m->dbDo("
 		DELETE FROM topicReadTimes WHERE userId = ?", $userId);
-
-	# Delete messages from and to user
 	$m->dbDo("
 		DELETE FROM messages WHERE receiverId = ?", $userId);
 	$m->dbDo("
 		DELETE FROM messages WHERE senderId = ?", $userId);
-
-	# Delete reports by user
 	$m->dbDo("
 		DELETE FROM postReports WHERE userId = ?", $userId);
-
-	# Delete poll votes by user
 	$m->dbDo("
 		DELETE FROM pollVotes WHERE userId = ?", $userId);
-
-	# Delete notifications
 	$m->dbDo("
 		DELETE FROM notes WHERE userId = ?", $userId);
-
-	# Delete watch words
 	$m->dbDo("
 		DELETE FROM watchWords WHERE userId = ?", $userId);
-
-	# Delete watch users
 	$m->dbDo("
 		DELETE FROM watchUsers WHERE userId = ?", $userId);
 	$m->dbDo("
@@ -1657,17 +1778,15 @@ sub deleteUser
 				email = '', realName = '', openId = '', title = '', blurb = '',
 				homepage = '', occupation = '', hobbies = '', location = '', icq = '', 
 				avatar = '', signature = '', extra1 = '', extra2 = '', extra3 = '',
-				birthyear = 0, birthday = '', hideEmail = 1,
+				birthyear = 0, birthday = '',
 				password = :password, comment = :comment
 			WHERE id = :userId", 
 			{ password => $m->randomId(), comment => $comment, userId => $userId });
 	}
 	else {
-		# Set post user ids to 0
+		# Set post user ids to 0 and delete user
 		$m->dbDo("
 			UPDATE posts SET userId = 0 WHERE userId = ?", $userId);
-		
-		# Delete user
 		$m->dbDo("
 			DELETE FROM users WHERE id = ?", $userId);
 	}
@@ -1712,8 +1831,9 @@ sub checkSourceAuth
 {
 	my $m = shift();
 
-	my $auth = $m->paramInt('auth');
-	return $auth == $m->{user}{sourceAuth} || $auth == $m->{user}{sourceAuth2};
+	my $auth = $m->paramStr('auth');
+	return 0 if !length($auth);
+	return $auth eq $m->{user}{sourceAuth} || $auth eq $m->{user}{sourceAuth2};
 }
 	
 #------------------------------------------------------------------------------
@@ -1742,7 +1862,6 @@ sub setCookie
 	my $http = shift() || 1;
 	
 	my $cfg = $m->{cfg};
-
 	my $domain = $cfg->{cookieDomain} ? "domain=$cfg->{cookieDomain}; " : "";
 	my $path = "path=" . ($cfg->{cookiePath} || $m->{env}{scriptUrlPath} || "/") . "; ";
 	my $expires = !$temp ? "expires=Wed, 31-Dec-2031 00:00:00 GMT; " : "";
@@ -1763,7 +1882,6 @@ sub deleteCookie
 	my $name = shift();
 
 	my $cfg = $m->{cfg};
-
 	my $domain = $cfg->{cookieDomain} ? "domain=$cfg->{cookieDomain}; " : "";
 	my $path = "path=" . ($cfg->{cookiePath} || $m->{env}{scriptUrlPath} || "/") . "; ";
 	my $expires = "expires=Thu, 01-Jan-1970 00:00:00 GMT";
@@ -1843,7 +1961,6 @@ sub boardWritable
 	my $replyOrEdit = shift() || 0;
 
 	my $user = $m->{user};
-	
 	return 0 if !$user->{id} && !$board->{unregistered};
 	return 1 if $board->{announce} == 0;
 	return 1 if $board->{announce} == 2 && $replyOrEdit;
@@ -1862,9 +1979,8 @@ sub boardVisible
 	my $board = shift();
 	my $user = shift() || $m->{user};
 
-	my $cfg = $m->{cfg};
-
 	# Call authz plugin
+	my $cfg = $m->{cfg};
 	if ($cfg->{authzPlg}{viewBoard}) { 
 		my $result = $m->callPlugin($cfg->{authzPlg}{viewBoard}, user => $user, board => $board);
 		return 1 if $result == 2;  # unconditional access
@@ -1910,33 +2026,22 @@ sub printHttpHeader
 	# Return if header was already printed
 	return if $m->{printPhase} >= 1;
 
-	my $ap = $m->{ap};
-	my $cfg = $m->{cfg};
-	my $user = $m->{user};
-
 	# Set content type etc.
-	if ($m->{ajax}) {
-		$m->{contentType} ||= "application/json";
-	}
-	elsif ($cfg->{xhtml} && $m->{env}{accept} =~ /application\/xhtml\+xml/) {
-		$m->{contentType} ||= "application/xhtml+xml; charset=utf-8";
-		$m->{cdataStart} = "<![CDATA[";
-		$m->{cdataEnd} = "]]>";
-	}
-	else {
-		$m->{contentType} ||= "text/html; charset=utf-8";
-	}
+	if ($m->{ajax}) { $m->{contentType} ||= "application/json; charset=utf-8" }
+	else { $m->{contentType} ||= "text/html; charset=utf-8" }
 
 	# Add standard and conditional headers	
+	my $cfg = $m->{cfg};
 	$headers->{'Cache-Control'} = "private";
 	$headers->{'Expires'} = "Thu, 01 Jan 1970 00:00:00 GMT";
 	$headers->{'Strict-Transport-Security'} = "max-age=500; includeSubDomains" if $cfg->{sslOnly};
 
 	# Print headers
+	my $ap = $m->{ap};
 	if ($MP) {
 		$ap->status(200);
 		$ap->content_type($m->{contentType});
-		my $ho = $ap->headers_out;
+		my $ho = $ap->headers_out();
 		$ho->{$_} = $headers->{$_} for sort keys %$headers;
 		for (@{$cfg->{httpHeader}}) {
 			my ($name, $value) = /([\w-]+): (.+)/;
@@ -1985,19 +2090,16 @@ sub printHeader
 	# Print HTTP header if not already done
 	$m->printHttpHeader() if $m->{printPhase} < 1;
 
-	# Begin (X)HTML5 header
-	my $xml = $m->{contentType} eq "application/xhtml+xml; charset=utf-8";
-	my $xmlns = $xml ? " xmlns='http://www.w3.org/1999/xhtml'" : "";
+	# Begin HTML5 header
 	print 
-		$xml ? "<?xml version='1.0' encoding='utf-8'?>\n" : "",
-		"<!DOCTYPE html>\n<html$xmlns>\n<head>\n",
-		!$xml ? "<meta http-equiv='content-type' content='text/html; charset=utf-8'/>\n" : "";
+		"<!DOCTYPE html>\n<html>\n<head>\n",
+		"<meta http-equiv='content-type' content='text/html; charset=utf-8'>\n";
 
 	# Search engines should only index pages or follow links where it makes sense
 	if ($cfg->{noIndex} || $m->{noIndex} 
 		|| !($script eq 'forum_show' || $script eq 'board_show' || $script eq 'topic_show')
-		|| !$cfg->{seoRewrite} && $script eq 'topic_show' && (grep(!/^(?:tid|pg)\z/, $m->params())
-		|| !$cfg->{seoRewrite} && $m->paramInt('pg') == 1)) {
+		|| $script eq 'topic_show' && (grep(!/^(?:tid|pg)\z/, $m->params())
+		|| $m->paramInt('pg') == 1)) {
 		@{$m->{robotMetas}}{'noindex', 'nofollow'} = (1, 1);
 	}
 	elsif ($script eq 'forum_show' || $script eq 'board_show') {
@@ -2005,44 +2107,44 @@ sub printHeader
 	}
 	$m->{robotMetas}{'noarchive'} = 1 if $cfg->{noArchive};
 	$m->{robotMetas}{'nosnippet'} = 1 if $cfg->{noSnippet};
-	print "<meta name='robots' content='", join(",", keys %{$m->{robotMetas}}), "'/>\n"
+	print "<meta name='robots' content='", join(",", keys %{$m->{robotMetas}}), "'>\n"
 		if %{$m->{robotMetas}};
 
 	# OpenSearchDescription link
 	print 
 		"<link rel='search' href='$dataPath/opensearch.xml'",
-		" type='application/opensearchdescription+xml' title='$cfg->{forumName}'/>\n"
+		" type='application/opensearchdescription+xml' title='$cfg->{forumName}'>\n"
 		if $cfg->{openSearch};
 
 	# Feed links
 	if ($cfg->{rssDiscovery} && $script eq 'forum_show') {
 		print
 			"<link rel='alternate' href='$cfg->{attachUrlPath}/xml/forum.atom10.xml'",
-			" type='application/atom+xml' title='$lng->{frmForumFeed} (Atom 1.0)'/>\n",
+			" type='application/atom+xml' title='$lng->{frmForumFeed} (Atom 1.0)'>\n",
 			"<link rel='alternate' href='$cfg->{attachUrlPath}/xml/forum.rss200.xml'",
-			" type='application/rss+xml' title='$lng->{frmForumFeed} (RSS 2.0)'/>\n";
+			" type='application/rss+xml' title='$lng->{frmForumFeed} (RSS 2.0)'>\n";
 	}
 	if ($cfg->{rssDiscovery} && $script eq 'board_show') {
 		my $boardId = $m->paramInt('bid');
 		print
 			"<link rel='alternate' href='$cfg->{attachUrlPath}/xml/board$boardId.atom10.xml'",
-			" type='application/atom+xml' title='$lng->{brdBoardFeed} (Atom 1.0)'/>\n",
+			" type='application/atom+xml' title='$lng->{brdBoardFeed} (Atom 1.0)'>\n",
 			"<link rel='alternate' href='$cfg->{attachUrlPath}/xml/board$boardId.rss200.xml'",
-			" type='application/rss+xml' title='$lng->{brdBoardFeed} (RSS 2.0)'/>\n"
+			" type='application/rss+xml' title='$lng->{brdBoardFeed} (RSS 2.0)'>\n"
 			if $boardId;
 	}
 
 	# Style-independent, style-dependent and local stylesheets
 	print 
-		"<link rel='stylesheet' href='$dataPath/mwforum.css'/>\n",
-		"<link rel='stylesheet' href='$dataPath/$m->{style}/$m->{style}.css'/>\n",
-		$cfg->{forumStyle} ? "<link rel='stylesheet' href='$dataPath/$cfg->{forumStyle}'/>\n" : "";
+		"<link rel='stylesheet' href='$dataPath/mwforum.css'>\n",
+		"<link rel='stylesheet' href='$dataPath/$m->{style}/$m->{style}.css'>\n",
+		$cfg->{forumStyle} ? "<link rel='stylesheet' href='$dataPath/$cfg->{forumStyle}'>\n" : "";
 	
 	# Inline styles
 	my $fontFaceStr = $user->{fontFace} ? "font-family: '$user->{fontFace}', sans-serif;" : "";
 	my $fontSizeStr = $user->{fontSize} ? "font-size: $user->{fontSize}px" : "";
 	print
-		"<style>$m->{cdataStart}\n",
+		"<style>\n",
 		"body, input, textarea, select, button { $fontFaceStr $fontSizeStr }\n",
 		"img.ava { width: $cfg->{avatarWidth}px; height: $cfg->{avatarHeight}px }\n",
 		map("span.cst_$_ { $cfg->{customStyles}{$_} }\n", keys %{$cfg->{customStyles}});
@@ -2053,20 +2155,20 @@ sub printHeader
 			SELECT name FROM userVariables WHERE userId = ? AND name LIKE ?", $userId, 'sty%');
 		print map("$cfg->{styleSnippets}{$_->[0]}\n", @$snippets);
 	}
-	print "$m->{cdataEnd}</style>\n";
+	print "</style>\n";
 
 	# Include Javascript
+	my $autocomplete = $m->{autocomplete} && $userId && !$cfg->{noAutocomplete};
+	$jsParams->{autocomplete} = $m->{autocomplete} if $autocomplete;
 	$jsParams->{m_ext} = $m->{ext};
 	$jsParams->{env_script} = $script;
 	$jsParams->{cfg_dataPath} = $dataPath;
 	$jsParams->{user_sourceAuth} = $user->{sourceAuth} if $userId;
-	if ($cfg->{boardJumpList}) {
-		$jsParams->{cfg_boardJumpList} = 1;
-		$jsParams->{m_sessionId} = $m->{sessionId} if $m->{sessionId};
-	}
+	$jsParams->{cfg_boardJumpList} = 1 if $cfg->{boardJumpList};
+	my $json = $m->json($jsParams);
 	print "<script src='$dataPath/jquery.js'></script>\n";
-	print "<script src='$dataPath/mwforum.js' id='mwfjs' data-params='", 
-		$m->json($jsParams), "'></script>\n";
+	print "<script src='$dataPath/jquery.autocomplete.js'></script>\n" if $autocomplete;
+	print "<script src='$dataPath/mwforum.js' id='mwfjs' data-params='$json'></script>\n";
 	
 	# Print header includes
 	print $cfg->{htmlHeader}, "\n" if $cfg->{htmlHeader};
@@ -2088,7 +2190,7 @@ sub printHeader
 	if ($cfg->{titleImage} && $script ne 'attach_show') {
 		print
 			"<div class='tim'><a href='$topUrl'>",
-			"<img src='$dataPath/$cfg->{titleImage}' alt=''/>",
+			"<img src='$dataPath/$cfg->{titleImage}' alt=''>",
 			"</a></div>\n\n";
 	}
 
@@ -2106,7 +2208,7 @@ sub printHeader
 	print
 		"<div class='frm tpb'>\n",
 		$cfg->{pageIcons} && $user->{showDeco}
-			? "<img class='pic' src='$dataPath/pageicons/$script.png' alt=''/>\n" : "",
+			? "<img class='pic' src='$dataPath/pageicons/$script.png' alt=''>\n" : "",
 		"<div class='hcl'>$nameStr<span class='htt'>$cfg->{forumName}</span>$topMsg</div>\n",
 		"<div class='bcl'>\n",
 		$m->buttonLink($topUrl, 'hdrForum', 'forum');
@@ -2172,7 +2274,7 @@ sub printHeader
 			"<!--[if lt IE 7]>\n",
 			"<div class='frm hnt err'>\n",
 			"<div class='ccl'>\n",
-			"<img class='sic sic_hint_error' src='$dataPath/epx.png' alt=''/>\n",
+			"<img class='sic sic_hint_error' src='$dataPath/epx.png' alt=''>\n",
 			"<p>$lng->{errOldAgent}</p>\n",
 			"</div>\n",
 			"</div>\n",
@@ -2184,7 +2286,7 @@ sub printHeader
 	print
 		"<div class='frm hnt exe'>\n",
 		"<div class='ccl'>\n",
-		"<img class='sic sic_hint_exec' src='$dataPath/epx.png' alt=''/>\n",
+		"<img class='sic sic_hint_exec' src='$dataPath/epx.png' alt=''>\n",
 		"<p>", ($lng->{"msg$execMsg"} || $execMsg), "</p>\n",
 		"</div>\n",
 		"</div>\n\n"
@@ -2240,15 +2342,11 @@ sub printFooter
 				$lastCategId = $board->{categoryId};
 				print "<option value='cid$board->{categoryId}'>$board->{categTitle}</option>\n";
 			}
-			my $sel = $boardId && $board->{id} == $boardId ? "selected='selected'" : '';
+			my $sel = $boardId && $board->{id} == $boardId ? 'selected' : "";
 			print "<option value='$board->{id}' $sel>- $board->{title}</option>\n";
 		}
 
-		print
-			"</select>\n",
-			$m->{sessionId} ? "<input type='hidden' name='sid' value='$m->{sessionId}'/>\n" : "",
-			"</div>\n",
-			"</form>\n\n";
+		print "</select>\n</div>\n</form>\n\n";
 	}
 
 	# Print wrapper divs for shadow effects etc.	
@@ -2276,15 +2374,13 @@ sub printFooter
 		print
 			"<div class='frm hnt err'>\n",
 			"<div class='ccl'>\n",
-			"<img class='sic sic_hint_error' src='$m->{cfg}{dataPath}/epx.png' alt=''/>\n",
+			"<img class='sic sic_hint_error' src='$m->{cfg}{dataPath}/epx.png' alt=''>\n",
 			map("<p>" . $m->escHtml($_) . "</p>\n", @{$m->{warnings}}),
 			"</div>\n",
 			"</div>\n\n";
 	}
 
-	print	
-		"</body>\n",
-		"</html>\n\n";
+	print	"</body>\n</html>\n";
 
 	$m->{printPhase} = 4;
 }
@@ -2327,9 +2423,9 @@ sub printPageBar
 		my $textTT = $lng->{$textId . 'TT'};
 		$link->{dsb}
 			? push @lines, 
-				"<img class='sic sic_nav_$link->{ico}_d' $emptyPixel title='$textTT' alt='$text'/>\n"
+				"<img class='sic sic_nav_$link->{ico}_d' $emptyPixel title='$textTT' alt='$text'>\n"
 			: push @lines, "<a href='$link->{url}'>",
-				"<img class='sic sic_nav_$link->{ico}' $emptyPixel title='$textTT' alt='$text'/></a>\n";
+				"<img class='sic sic_nav_$link->{ico}' $emptyPixel title='$textTT' alt='$text'></a>\n";
 	}
 
 	# Title
@@ -2351,9 +2447,9 @@ sub printPageBar
 				my $img = "nav_" . lc($dir);
 				$link->{dsb} 
 					? push @bclLines, 
-						"<img class='sic dsb sic_${img}_d' $emptyPixel title='$textTT' alt='$text'/>\n"
+						"<img class='sic dsb sic_${img}_d' $emptyPixel title='$textTT' alt='$text'>\n"
 					: push @bclLines, "<a href='$link->{url}'>",
-						"<img class='sic sic_${img}' $emptyPixel title='$textTT' alt='$text'/></a>\n";
+						"<img class='sic sic_${img}' $emptyPixel title='$textTT' alt='$text'></a>\n";
 			}
 			elsif ($textId eq "..." || $textId eq "&#8230;") {
 				push @bclLines, "&#8230;\n";
@@ -2377,7 +2473,7 @@ sub printPageBar
 			my $textTT = $lng->{$textId . 'TT'};
 			$link->{ico} && $m->{buttonIcons}
 				? push @bclLines, "<a href='$link->{url}' title='$textTT'>",
-					"<img class='bic bic_$link->{ico}' $emptyPixel alt=''/> $text</a>\n"
+					"<img class='bic bic_$link->{ico}' $emptyPixel alt=''> $text</a>\n"
 				: push @bclLines, "<a href='$link->{url}' title='$textTT'>$text</a>\n";
 		}
 		push @bclLines, "</div>\n" if @$userLinks;
@@ -2392,7 +2488,7 @@ sub printPageBar
 			my $textTT = $lng->{$textId . 'TT'};
 			$link->{ico} && $m->{buttonIcons}
 				? push @bclLines, "<a href='$link->{url}' title='$textTT'>",
-					"<img class='bic bic_$link->{ico}' $emptyPixel alt=''/> $text</a>\n"
+					"<img class='bic bic_$link->{ico}' $emptyPixel alt=''> $text</a>\n"
 				: push @bclLines, "<a href='$link->{url}' title='$textTT'>$text</a>\n";
 		}
 		push @bclLines, "</div>\n" if @$adminLinks;
@@ -2425,7 +2521,7 @@ sub printHints
 	print
 		"<div class='frm hnt inf'$id$hidden>\n",
 		"<div class='ccl'>\n",
-		"<img class='sic sic_hint_info' src='$m->{cfg}{dataPath}/epx.png' alt=''/>\n",
+		"<img class='sic sic_hint_info' src='$m->{cfg}{dataPath}/epx.png' alt=''>\n",
 		map("<p>" . ($m->{lng}{$_} || $_) . "</p>\n", @$msgs),
 		"</div>\n",
 		"</div>\n\n";
@@ -2479,12 +2575,10 @@ sub buttonLink
 	my $textId = shift();
 	my $icon = shift();
 
-	my $lng = $m->{lng};
-
-	my $text = $lng->{$textId} || $textId;
-	my $title = $lng->{$textId . 'TT'};
+	my $text = $m->{lng}{$textId} || $textId;
+	my $title = $m->{lng}{$textId . 'TT'};
 	my $str = "<a href='$url' title='$title'>";
-	$str .= "<img class='bic bic_$icon' src='$m->{cfg}{dataPath}/epx.png' alt=''/> "
+	$str .= "<img class='bic bic_$icon' src='$m->{cfg}{dataPath}/epx.png' alt=''> "
 		if $icon && $m->{buttonIcons};
 	$str .= $text . "</a>\n";
 	return $str;
@@ -2503,7 +2597,7 @@ sub submitButton
 	$text = $m->{lng}{$text} || $text;
 	my $nameStr = $name ? "name='$name' value='1'" : "";
 	my $img = $m->{buttonIcons} 
-		? "<img class='bic bic_$icon' src='$m->{cfg}{dataPath}/epx.png' alt=''/> " : "";
+		? "<img class='bic bic_$icon' src='$m->{cfg}{dataPath}/epx.png' alt=''> " : "";
 	return "<button type='submit' class='isb' $nameStr> $img$text</button>\n";
 }
 
@@ -2616,12 +2710,11 @@ sub stdFormFields
 	my $m = shift();
 
 	my @lines = ();
-	push @lines, "<input type='hidden' name='subm' value='1'/>\n";
-	push @lines, "<input type='hidden' name='auth' value='$m->{user}{sourceAuth}'/>\n"
+	push @lines, "<input type='hidden' name='subm' value='1'>\n";
+	push @lines, "<input type='hidden' name='auth' value='$m->{user}{sourceAuth}'>\n"
 		if $m->{user} && $m->{user}{sourceAuth};
-	push @lines, "<input type='hidden' name='sid' value='$m->{sessionId}'/>\n" if $m->{sessionId};
 	my $originEsc = $m->escHtml($m->paramStr('ori'));
-	push @lines, "<input type='hidden' name='ori' value='$originEsc'/>\n" if $originEsc;
+	push @lines, "<input type='hidden' name='ori' value='$originEsc'>\n" if $originEsc;
 	return @lines;
 }
 
@@ -2645,7 +2738,7 @@ sub error
 	$m->{error} = 1;
 
 	# Default to English if error came too early for regular language loading
-	if (!$m->{lng}{comUp}) {
+	if (!$lng->{errDefault}) {
 		eval {
 			require MwfEnglish;
 			$m->{lng} = $lng = $MwfEnglish::lng;
@@ -2658,11 +2751,14 @@ sub error
 	# Log error
 	$m->logError($msg);
 	
-	if ($m->{ajax}) {
-		# AJAX output
+	if (index($m->{contentType}, "application/json") == 0) {
+		# JSON output
 		$m->printHttpHeader();
 		my $msgEsc = $m->escHtml($msg, 2);
 		print "{ \"error\": \"$msgEsc\" }";
+	}
+	elsif (index($m->{contentType}, "text/plain") == 0) {
+		# No output
 	}
 	elsif ($m->{env}{script}) {
 		# Normal CGI output
@@ -2672,7 +2768,7 @@ sub error
 		print
 			"<div class='frm hnt err'>\n",
 			"<div class='ccl'>\n",
-			"<img class='sic sic_hint_error' src='$cfg->{dataPath}/epx.png' alt=''/>\n",
+			"<img class='sic sic_hint_error' src='$cfg->{dataPath}/epx.png' alt=''>\n",
 			"<p>$msgEsc</p>\n",
 			"</div>\n",
 			"</div>\n\n";
@@ -2706,7 +2802,7 @@ sub note
 	print
 		"<div class='frm hnt inf'>\n",
 		"<div class='ccl'>\n",
-		"<img class='sic sic_hint_info' src='$m->{cfg}{dataPath}/epx.png' alt=''/>\n",
+		"<img class='sic sic_hint_info' src='$m->{cfg}{dataPath}/epx.png' alt=''>\n",
 		"$msg\n",
 		"</div>\n",
 		"</div>\n\n";
@@ -2767,26 +2863,24 @@ sub printFormErrors
 	my $m = shift();
 
 	return if !@{$m->{formErrors}};
-
 	$m->printHeader();
-
 	print
 		"<div class='frm hnt err'>\n",
 		"<div class='ccl'>\n",
-		"<img class='sic sic_hint_error' src='$m->{cfg}{dataPath}/epx.png' alt=''/>\n",
+		"<img class='sic sic_hint_error' src='$m->{cfg}{dataPath}/epx.png' alt=''>\n",
 		map("<p>$_</p>\n", @{$m->{formErrors}}),
 		"</div>\n",
 		"</div>\n\n";
 }
 
 #------------------------------------------------------------------------------
-# Log error to webserver log
+# Log non-fatal error to webserver and/or forum log
 
 sub logError
 {
 	my $m = shift();
 	my $msg = shift();
-	my $warning = shift();  # Is non-fatal error, print at page bottom
+	my $warning = shift();  # Also print at page bottom
 
 	# Log to webserver log	
 	$msg =~ s!\s+! !g;
@@ -2801,7 +2895,7 @@ sub logError
 	# Optionally log to own logfile	
 	$m->logToFile($m->{cfg}{errorLog}, $msg) if $m->{cfg}{errorLog};
 	
-	# Add to warnings shown at bottom of page (not if script redirects)
+	# Add to warnings shown at bottom of page if possible
 	push @{$m->{warnings}}, $msg if $warning;
 }
 
@@ -2866,7 +2960,7 @@ sub deescHtml
 	my $text = shift();
 
 	# Translate newlines
-	$text =~ s!<br/>!\n!g;
+	$text =~ s!<br/?>!\n!g;
 
 	# Decode HTML special chars
 	$text =~ s!&#160;! !g;
@@ -2885,7 +2979,7 @@ sub deescHtml
 sub editToDb
 {
 	my $m = shift();
-	my $board = shift();
+	shift();
 	my $post = shift();
 
 	my $cfg = $m->{cfg};
@@ -2917,9 +3011,6 @@ sub editToDb
 		$$body =~ s!$wordRxEsc!'*' x length($word)!egi;
 	}
 	
-	# Remove sessions in posted forum links
-	$$body =~ s![?&]sid=[0-9a-f]{32}!!g;
-	
 	# Escape HTML
 	$$body = $m->escHtml($$body, 2);
 
@@ -2928,8 +3019,8 @@ sub editToDb
 	$$body =~ s!  !&#160; !g;
 
 	# Quotes
-	$$body =~ s~(^|<br/>)((?:&gt;).*?)(?=(?:<br/>)+(?!&gt;)|$)~$1<blockquote><p>$2</p></blockquote>~g;
-	$$body =~ s~</blockquote>(?:<br/>){2,}~</blockquote><br/>~g;
+	$$body =~ s~(^|<br/?>)((?:&gt;).*?)(?=(?:<br/?>)+(?!&gt;)|$)~$1<blockquote><p>$2</p></blockquote>~g;
+	$$body =~ s~</blockquote>(?:<br/?>){2,}~</blockquote><br/>~g;
 
 	# Style tags
 	$$body =~ s!\[(/?)(b|i)\]!"<$1".lc($2).">"!egi;
@@ -3010,7 +3101,7 @@ sub editToDb
 sub dbToEdit
 {
 	my $m = shift();
-	my $board = shift();
+	shift();
 	my $post = shift();
 
 	my $cfg = $m->{cfg};
@@ -3020,7 +3111,7 @@ sub dbToEdit
 	my $body = \$post->{body};
 
 	# Translate linebreaks
-	$$body =~ s!<br/>!\n!g;
+	$$body =~ s!<br/?>!\n!g;
 
 	# Translate escaped spaces to normal spaces
 	$$body =~ s!&#160;! !g;
@@ -3035,7 +3126,7 @@ sub dbToEdit
 	$$body =~ s!<a class='urs' href='(.+?)'>.+?</a>![url]${1}[/url]!g;
 	$$body =~ s!<a class='url' href='(.+?)'>(.+?)</a>![url=$1]${2}[/url]!gs;
 	$$body =~ s!<a class='ura' href='(.+?)'>(.+?)</a>!$1!g;
-	$$body =~ s!<img class='emi' src='(.+?)' alt=''/>![img]${1}[/img]!g if $cfg->{imgTag};
+	$$body =~ s!<img class='emi' src='(.+?)' alt=''/?>![img]${1}[/img]!g;
 	if (%{$cfg->{customStyles}}) {
 		$$body =~ s!<span class='cst_([a-z]+)'>![c=$1]!g;
 		$$body =~ s!</span>![/c]!g;
@@ -3091,24 +3182,9 @@ sub dbToDisplay
 
 	# De-embed [img] for overviews and low-bandwidth users
 	if (!$embed) {
-		$$body =~ s!(?:<a class='url' href='[^']+'>)?<img class='emi' src='([^']+)' alt=''/>(?:</a>)?!<a href='$1'>$1</a>!g;
-		$$sig  =~ s!(?:<a class='url' href='[^']+'>)?<img class='emi' src='([^']+)' alt=''/>(?:</a>)?!<a href='$1'>$1</a>!g 
+		$$body =~ s!(?:<a class='url' href='[^']+'>)?<img class='emi' src='([^']+)' alt=''/?>(?:</a>)?![<a href='$1'>$1</a>]!g;
+		$$sig  =~ s!(?:<a class='url' href='[^']+'>)?<img class='emi' src='([^']+)' alt=''/?>(?:</a>)?![<a href='$1'>$1</a>]!g 
 			if $$sig && $cfg->{fullSigs};
-	}
-
-	# Add session id to internal links
-	if ($m->{sessionId}) {
-		if ($post->{userId} != -2) {
-			my $hostnames = $cfg->{hostNames} || $env->{realHost};
-			$$body =~ s!href='(https?://)(?:$hostnames)$env->{scriptUrlPath}/(\w+)$m->{ext}\??
-				!href='$1$env->{realHost}$env->{scriptUrlPath}/$2$m->{ext}?sid=$m->{sessionId};!gx;
-			$$sig  =~ s!href='(https?://)(?:$hostnames)$env->{scriptUrlPath}/(\w+)$m->{ext}\??
-				!href='$1$env->{realHost}$env->{scriptUrlPath}/$2$m->{ext}?sid=$m->{sessionId};!gx 
-				if $$sig && $cfg->{fullSigs};
-		}
-		else {
-			$$body =~ s!topic_show$m->{ext}\?(pid=[0-9]+)!topic_show$m->{ext}?sid=$m->{sessionId};$1!g;
-		}
 	}
 
 	# Embed videos
@@ -3120,15 +3196,15 @@ sub dbToDisplay
 			}
 			elsif (($srv eq 'youtube' || $srv eq 'vimeo') && $id =~ /^[A-Za-z_0-9-]+\z/) {
 				$srv eq 'youtube' 
-					?	"<iframe class='vif' width='640' height='385' src='$m->{http}://www.youtube.com/embed/$id'></iframe>"
-					: "<iframe class='vif' width='640' height='360' src='$m->{http}://player.vimeo.com/video/$id'></iframe>"
+					?	"<iframe class='vif' width='640' height='385' src='//www.youtube-nocookie.com/embed/$id?rel=0'></iframe>"
+					: "<iframe class='vif' width='640' height='360' src='//player.vimeo.com/video/$id'></iframe>"
 			} 
 			else { "[vid=$srv]${id}[/vid]" }
 		%egi;
 	}
 	elsif ($cfg->{videoTag} && $filter) {
 		$$body =~ s!\[vid=(youtube|vimeo)\]([A-Za-z_0-9-]+)\[/vid\]!
-			if (lc($1) eq 'youtube') { "[<a href='http://youtube.com/watch?v=$2'>YouTube</a>]" }
+			if (lc($1) eq 'youtube') { "[<a href='http://www.youtube.com/watch?v=$2'>YouTube</a>]" }
 			else { "[<a href='http://vimeo.com/$2'>Vimeo</a>]" }
 		!egi;
 	}
@@ -3137,30 +3213,33 @@ sub dbToDisplay
 	my $attachments = $post->{attachments};
 	if ($attachments && @$attachments) {
 		my $postIdMod = $post->{id} % 100;
-		my $attFsBasePath = "$cfg->{attachFsPath}/$postIdMod/$post->{id}";
-		my $attUrlBasePath = "$cfg->{attachUrlPath}/$postIdMod/$post->{id}";
+		my $attFsPath = "$cfg->{attachFsPath}/$postIdMod/$post->{id}";
+		my $attUrlPath = "$cfg->{attachUrlPath}/$postIdMod/$post->{id}";
 
 		# Embed image attachments with tags
 		my %attachments = map({ $_->{fileName} => $_ } @$attachments);
 		$$body =~ s^\[img( thb)?\]([\w.-]+\.(?:jpg|png|gif))\[/img\]^
 			my ($thumb, $fileName) = ($1, $2);
-			if (exists($attachments{$fileName})) {
-				my $attFsPath = "$attFsBasePath/$fileName";
-				my $attUrlPath = "$attUrlBasePath/$fileName";
-				my $attShowUrl = $m->url('attach_show', aid => $attachments{$fileName}{id});
-				my $size = -s $m->encFsPath($attFsPath) || 0;
-				$size = sprintf("%.0fk", $size / 1024);
-				my $thbFsPath = $attFsPath;
-				my $thbUrlPath = $attUrlPath;
-				$thbFsPath =~ s!\.(?:jpg|png|gif)\z!.thb.jpg!i;
-				$thbUrlPath =~ s!\.(?:jpg|png|gif)\z!.thb.jpg!i;
-				$attachments{$fileName}{drop} = 1;
+			my $attach = $attachments{$fileName};
+			if ($attach) {
+				my $attFile = "$attFsPath/$fileName";
+				my $attUrl = "$attUrlPath/$fileName";
+				my $attShowUrl = $m->url('attach_show', aid => $attach->{id});
+				my $sizeStr = $m->formatSize(-s $m->encFsPath($attFile));
+				my $thbFile = $attFile;
+				my $thbUrl = $attUrl;
+				$thbFile =~ s!\.(?:jpg|png|gif)\z!.thb.jpg!i;
+				$thbUrl =~ s!\.(?:jpg|png|gif)\z!.thb.jpg!i;
+				my $title = $attach->{caption} || $attach->{fileName};
+				$title = "title='$title ($sizeStr)'";
+				$attach->{drop} = 1;
 				if ($embed) {
-					($thumb || $cfg->{attachImgThb}) && (-f $thbFsPath || $m->addThumbnail($attFsPath) > 0)
-						? "<a href='$attShowUrl'><img class='amt' src='$thbUrlPath' title='$size' alt=''/></a>"
-						: "<img class='ami' src='$attUrlPath' alt=''/>";
+					($thumb || $cfg->{attachImgThb}) 
+						&& (-f $m->encFsPath($thbFile) || $m->addThumbnail($attFile))
+						? "<a href='$attShowUrl'><img class='amt' src='$thbUrl' $title alt=''/></a>"
+						: "<img class='ami' src='$attUrl' $title alt=''/>";
 				}
-				else { "<a href='$attShowUrl'>$fileName</a> ($size)" }
+				else { "[<a href='$attShowUrl'>$fileName</a> ($sizeStr)]" }
 			}
 			else { "[$fileName]" }
 		^egi;
@@ -3170,44 +3249,41 @@ sub dbToDisplay
 		$$body .= "\n</div>\n<div class='ccl pat'>" if @$attachments;
 		for my $attach (@$attachments) {
 			my $fileName = $attach->{fileName};
-			my $attFsPath = "$attFsBasePath/$fileName";
-			my $attUrlPath = "$attUrlBasePath/$fileName";
+			my $attFile = "$attFsPath/$fileName";
+			my $attUrl = "$attUrlPath/$fileName";
 			my $attShowUrl = $m->url('attach_show', aid => $attach->{id});
 			my $caption = $attach->{caption} ? "- $attach->{caption}" : "";
-			my $size = -s $m->encFsPath($attFsPath) || 0;
-			$size = sprintf("%.0fk", $size / 1024);
+			my $sizeStr = $m->formatSize(-s $m->encFsPath($attFile));
 			if ($cfg->{attachImg} && $attach->{webImage} == 2 && $embed) {
-				my $thbFsPath = $attFsPath;
-				my $thbUrlPath = $attUrlPath;
-				$thbFsPath =~ s!\.(?:jpg|png|gif)\z!.thb.jpg!i;
-				$thbUrlPath =~ s!\.(?:jpg|png|gif)\z!.thb.jpg!i;
-				my $title = "title='$attach->{caption} ($size)'";
-				$$body .= $cfg->{attachImgThb} && (-f $thbFsPath || $m->addThumbnail($attFsPath) > 0)
-					? "\n<a href='$attShowUrl'><img class='amt' src='$thbUrlPath' $title alt=''/></a>"
-					: "\n<img class='ami' src='$attUrlPath' $title alt=''/>";
+				my $thbFile = $attFile;
+				my $thbUrl = $attUrl;
+				$thbFile =~ s!\.(?:jpg|png|gif)\z!.thb.jpg!i;
+				$thbUrl =~ s!\.(?:jpg|png|gif)\z!.thb.jpg!i;
+				my $title = $attach->{caption} || $attach->{fileName};
+				$title = "title='$title ($sizeStr)'";
+				$$body .= $cfg->{attachImgThb} 
+					&& (-f $m->encFsPath($thbFile) || $m->addThumbnail($attFile))
+					? "\n<a href='$attShowUrl'><img class='amt' src='$thbUrl' $title alt=''/></a>"
+					: "\n<img class='ami' src='$attUrl' $title alt=''/>";
 			}
 			else {
-				my $url = $attach->{webImage} ? $attShowUrl : $attUrlPath;
+				my $url = $attach->{webImage} ? $attShowUrl : $attUrl;
 				$$body .=  "\n<div class='amf'>$lng->{tpcAttText} <a href='$url'>$fileName</a>"
-					. " $caption ($size)</div>";
+					. " $caption ($sizeStr)</div>";
 			}
 		}
 	}
 
 	# Append raw body
-	$$body .= "\n</div>\n<div class='ccl raw'>\n<pre>$post->{rawBody}</pre>" 
-		if $post->{rawBody};
+	$$body .= "\n</div>\n<div class='ccl raw'>\n<pre>$post->{rawBody}</pre>" if $post->{rawBody};
 
 	# Append signature
-	$$body .= "\n</div>\n<div class='ccl sig'>\n$$sig"
-		if $user->{id} && $user->{showSigs} && $$sig;
+	$$body .= "\n</div>\n<div class='ccl sig'>\n$$sig" if $user->{id} && $user->{showSigs} && $$sig;
 
 	# Append appendixes
 	my $appendixes = $post->{appendixes};
 	if ($appendixes && @$appendixes) {
-		for my $app (@$appendixes) {
-			$$body .= "\n</div>\n<div class='ccl app $app->{class}'>\n$app->{text}";
-		}
+		$$body .= "\n</div>\n<div class='ccl app $_->{class}'>\n$_->{text}" for @$appendixes;
 	}
 }	
 
@@ -3217,7 +3293,7 @@ sub dbToDisplay
 sub dbToEmail
 {
 	my $m = shift();
-	my $board = shift();
+	shift();
 	my $post = shift();
 
 	# Alias
@@ -3236,7 +3312,7 @@ sub dbToEmail
 	$$body =~ s!<span class='cst_[a-z]+'>!!g;
 	$$body =~ s!</span>!!g;
 	$$body =~ s!<a class='ur[sla]' href='(.+?)'>(.+?)</a>!$2 <$1>!g;
-	$$body =~ s!<img class='emi' src='(.+?)' alt=''/>!<$1>!g;
+	$$body =~ s!<img class='emi' src='(.+?)' alt=''/?>!<$1>!g;
 } 
 
 
@@ -3264,12 +3340,13 @@ sub dbConnect
 			or $m->error("DBD::mysql is too old, need at least 2.9003, preferably 4.0 or newer.");
 		my $dbName = $m->{gcfg}{dbName} || $cfg->{dbName};
 		$dbh = DBI->connect(
-			"dbi:mysql:database=$dbName;host=$cfg->{dbServer};mysql_server_prepare=0;$cfg->{dbParam}", 
+			"dbi:mysql:database=$dbName;host=$cfg->{dbServer};$cfg->{dbParam}", 
 			$cfg->{dbUser}, $cfg->{dbPassword}, 
-			{ PrintError => 0, RaiseError => 0, AutoCommit => 1 })
+			{ PrintError => 0, PrintWarn => 0, AutoCommit => 1,
+				mysql_server_prepare => 0, mysql_no_autocommit_cmd => 1 })
 			or $m->dbError();
 		$dbh->do("USE $cfg->{dbName}") if $m->{gcfg}{dbName};
-		$dbh->do("SET NAMES 'utf8'");
+		$dbh->do("SET NAMES '" .($cfg->{mysqlUtf} || 'utf8'). "'");
 		$dbh->do("SET SESSION sql_mode = 'ANSI_QUOTES,PIPES_AS_CONCAT'");
 		$m->{mysql} = 1;
 	}
@@ -3278,8 +3355,8 @@ sub dbConnect
 		$dbh = DBI->connect(
 			"dbi:Pg:dbname=$cfg->{dbName};host=$cfg->{dbServer};$cfg->{dbParam}",
 			$cfg->{dbUser}, $cfg->{dbPassword}, 
-			{ PrintError => 0, PrintWarn => 0, RaiseError => 0, AutoCommit => 1, 
-				pg_utf8_strings => 0, pg_server_prepare => 0 })
+			{ PrintError => 0, PrintWarn => 0, AutoCommit => 1,
+				pg_server_prepare => 0, pg_utf8_strings => 0 })
 			or $m->dbError();
 		$dbh->do("SET NAMES 'utf8'");
 		$dbh->do("SET search_path = $cfg->{dbSchema}, public") if $cfg->{dbSchema};
@@ -3289,7 +3366,7 @@ sub dbConnect
 	elsif ($cfg->{dbDriver} eq 'SQLite') {
 		eval { require DBD::SQLite } or $m->error("DBD::SQLite module not available.");
 		$dbh = DBI->connect("dbi:SQLite:dbname=$cfg->{dbName}", "", "",
-			{ PrintError => 0, RaiseError => 0, AutoCommit => 1 })
+			{ PrintError => 0, PrintWarn => 0, AutoCommit => 1 })
 			or $m->dbError();
 		$dbh->do("PRAGMA synchronous = " . ($cfg->{dbSync} || "OFF"));
 		$dbh->func(1000, 'busy_timeout');
@@ -3389,7 +3466,7 @@ sub dbPlaceholders
 				$value = join(",", map(int, @$value));
 				$value = 'NULL' if !length($value);
 			}
-			elsif ($value !~ /^[0-9]+\z/) { 
+			elsif (!DBI::looks_like_number($value)) { 
 				$value = $m->{dbh}->quote($value);
 				utf8::decode($value) if !utf8::is_utf8($value);
 			}
@@ -3449,7 +3526,7 @@ sub dbBegin
 
 	# Only the outermost call should start a transaction
 	$m->{activeXa}++;
-	$m->{dbh}->begin_work() if $m->{activeXa} == 1;
+	$m->{dbh}->do("BEGIN") if $m->{activeXa} == 1;
 }
 
 #------------------------------------------------------------------------------
@@ -3460,7 +3537,7 @@ sub dbCommit
 	my $m = shift();
 
 	# Only the outermost call should commit transaction
-	$m->{dbh}->commit() or $m->dbError() if $m->{activeXa} == 1;
+	$m->{dbh}->do("COMMIT") or $m->dbError() if $m->{activeXa} == 1;
 	$m->{activeXa}--;
 }
 
@@ -3471,23 +3548,23 @@ sub dbPrepare
 {
 	my $m = shift();
 	my $query = shift();
-
-	my $cfg = $m->{cfg};
+	my $attr = shift();
 
 	# Add table name prefix
+	my $cfg = $m->{cfg};
 	$query = $m->dbPrefix($query) if $cfg->{dbPrefix};
 
 	# Debug info
 	$m->{query}	= $query;
-	if ($m->{cfg}{queryLog}) {
+	if ($cfg->{queryLog}) {
 		$query =~ s!^\n+!!g;
 		$query =~ s!\t!!g;
 		$query =~ s!\n{2,}!\n!g;
-		$m->logToFile($m->{cfg}{queryLog}, "EXPLAIN\n$query;\n");
+		$m->logToFile($cfg->{queryLog}, "EXPLAIN\n$query;\n");
 	}
 
 	# Prepare query	
-	my $sth = $m->{dbh}->prepare($query) or $m->dbError();
+	my $sth = $m->{dbh}->prepare($query, $attr) or $m->dbError();
 	return $sth;
 }
 
@@ -3500,10 +3577,7 @@ sub dbExecute
 	my $sth = shift();
 	my @values = @_;
 
-	# Debug info
 	$m->{queryNum}++;
-	
-	# Execute query
 	my $result = $sth->execute(@values);
 	defined($result) or $m->dbError();
 	return $result;
@@ -3517,15 +3591,9 @@ sub dbInsertId
 	my $m = shift();
 	my $table = shift();
 
-	if ($m->{mysql}) {
-		return $m->{dbh}{mysql_insertid};
-	}
-	elsif ($m->{pgsql}) {
-		return scalar $m->fetchArray("SELECT CURRVAL(?)", $table . "_id_seq");
-	}
-	elsif ($m->{sqlite}) {
-		return $m->{dbh}->func('last_insert_rowid');
-	}
+	return $m->{dbh}{mysql_insertid} if $m->{mysql};
+	return scalar $m->fetchArray("SELECT CURRVAL(?)", $table . "_id_seq") if $m->{pgsql};
+	return $m->{dbh}->func('last_insert_rowid') if $m->{sqlite};
 }
 
 #------------------------------------------------------------------------------
@@ -3537,9 +3605,8 @@ sub dbDo
 	my $query = shift();
 	my @values = @_;
 	
-	my $cfg = $m->{cfg};
-
 	# Add table name prefix
+	my $cfg = $m->{cfg};
 	$query = $m->dbPrefix($query) if $cfg->{dbPrefix};
 
 	# Debug info
@@ -3581,9 +3648,8 @@ sub fetchSth
 	my $query = shift();
 	my @values = @_;
 
-	my $cfg = $m->{cfg};
-
 	# Add table name prefix
+	my $cfg = $m->{cfg};
 	$query = $m->dbPrefix($query) if $cfg->{dbPrefix};
 
 	# Debug info
@@ -3733,28 +3799,30 @@ sub setRel
 sub recalcStats
 {
 	my $m = shift();
-	my $boardId = shift();
-	my $topicId = shift() || undef;
+	my $boardIds = shift() || [];
+	my $topicIds = shift() || [];
 
-	# Recalc board stats
-	if ($boardId) {	
-		my ($postNum, $lastPostTime) = $m->fetchArray("
-			SELECT COUNT(*), MAX(postTime) FROM posts WHERE boardId = ?", $boardId);
-		$lastPostTime ||= 0;
-		$m->dbDo("
-			UPDATE boards SET postNum = ?, lastPostTime = ? WHERE id = ?", 
-			$postNum, $lastPostTime, $boardId);
-	}
+	$boardIds = [ $boardIds ] if !ref($boardIds);
+	$topicIds = [ $topicIds ] if !ref($topicIds);
+	my $pfx = $m->{cfg}{dbPrefix};
 
-	# Recalc topic stats
-	if ($topicId) {
-		my ($postNum, $lastPostTime) = $m->fetchArray("
-			SELECT COUNT(*), MAX(postTime) FROM posts WHERE topicId = ?", $topicId);
-		$lastPostTime ||= 0;
-		$m->dbDo("
-			UPDATE topics SET postNum = ?, lastPostTime = ? WHERE id = ?",
-			$postNum, $lastPostTime, $topicId);
-	}
+	$m->dbDo("
+		UPDATE topics SET 
+			postNum = (SELECT COUNT(*) FROM posts WHERE topicId = ${pfx}topics.id), 
+			lastPostTime = (SELECT MAX(postTime) FROM posts WHERE topicId = ${pfx}topics.id)
+		WHERE id IN (:topicIds)", 
+		{ topicIds => $topicIds })
+		if @$topicIds;
+
+	$m->dbDo("
+		UPDATE boards SET 
+			postNum = COALESCE((
+				SELECT SUM(postNum) FROM topics WHERE boardId = ${pfx}boards.id), 0), 
+			lastPostTime = COALESCE((
+				SELECT MAX(lastPostTime) FROM topics WHERE boardId = ${pfx}boards.id), 0)
+		WHERE id IN (:boardIds)", 
+		{ boardIds => $boardIds })
+		if @$boardIds;
 }
 
 #------------------------------------------------------------------------------
@@ -3817,11 +3885,10 @@ sub logAction
 	my $topicId = shift() || 0;
 	my $postId = shift() || 0;
 	my $extraId = shift() || 0;
-	my $string = shift() || '';
+	my $string = shift() || "";
 
-	my $cfg = $m->{cfg};
-	
 	# Call event plugins
+	my $cfg = $m->{cfg};
 	$m->callPlugin($_, level => $level, entity => $entity, action => $action,
 		userId => $userId, boardId => $boardId, topicId => $topicId,
 		postId => $postId, extraId => $extraId, string => $string) for @{$cfg->{logPlg}};
@@ -3848,17 +3915,17 @@ sub deleteAttachment
 	my $attachId = shift();
 
 	my $cfg = $m->{cfg};
-	
 	my $attach = $m->fetchHash("
 		SELECT postId, fileName FROM attachments WHERE id = ?", $attachId);
-	my $attachFsPath = $cfg->{attachFsPath};
-	my $postIdMod = $attach->{postId} % 100;
-	my $file = "$attachFsPath/$postIdMod/$attach->{postId}/" . $m->encFsPath($attach->{fileName});
-	my $thumbnail = $file;
-	$thumbnail =~ s!\.(?:jpg|png|gif)\z!.thb.jpg!i;
-	unlink $file, $thumbnail;
-	rmdir "$attachFsPath/$postIdMod/$attach->{postId}";
-	rmdir "$attachFsPath/$postIdMod";
+	my $path = $cfg->{attachFsPath};
+	my $postId = $attach->{postId};
+	my $postIdMod = $postId % 100;
+	my $attFile = "$path/$postIdMod/$postId/" . $m->encFsPath($attach->{fileName});
+	my $thumbFile = $attFile;
+	$thumbFile =~ s!\.(?:jpg|png|gif)\z!.thb.jpg!i;
+	unlink $attFile, $thumbFile;
+	rmdir "$path/$postIdMod/$postId";
+	rmdir "$path/$postIdMod";
 	$m->dbDo("
 		DELETE FROM attachments WHERE id = ?", $attachId);
 }
@@ -4081,6 +4148,7 @@ sub notifyPost
 	my $parent = $params{parent};
 
 	my $cfg = $m->{cfg};
+	my $lng = $m->{lng};
 	my $postUserId = $post->{userId};
 	my $postUserName = $post->{userNameBak};
 	my $url = "topic_show$m->{ext}?pid=$post->{id}";
@@ -4093,10 +4161,21 @@ sub notifyPost
 		if ($recvUser && $recvUser->{notify} && $recvUser->{id} != $postUserId && !$ignored
 			&& $m->boardVisible($board, $recvUser)) {
 			$m->addNote('pstAdd', $recvUser->{id}, 'notPstAdd', usrNam => $postUserName, pstUrl => $url);
-			$m->sendEmail($m->createEmail(type => 'replyNtf', 
-				user => $recvUser, replUser => { userName => $postUserName },
-				board => $board, topic => $topic, post => $post, parent => $parent,
-				url => "$cfg->{baseUrl}$m->{env}{scriptUrlPath}/$url"))
+			$post->{subject} = $topic->{subject};
+			$m->dbToEmail({}, $post);
+			$lng = $m->setLanguage($recvUser->{language});
+			my $subject = "$lng->{rplEmailSbPf} $postUserName: $post->{subject}";
+			my $body = $lng->{rplEmailT2} . "\n\n" . "-" x 70 . "\n\n"
+				. $lng->{subLink} . "$cfg->{baseUrl}$m->{env}{scriptUrlPath}/$url\n"
+				. $lng->{subBoard} . $board->{title} . "\n"
+				. $lng->{subTopic} . $post->{subject} . "\n"
+				. $lng->{subBy} . $postUserName . "\n"
+				. $lng->{subOn} . $m->formatTime($post->{postTime}, $recvUser->{timezone}) . "\n\n"
+				. $post->{body} . "\n\n"
+				. ($post->{rawBody} ? $post->{rawBody} . "\n\n" : "")
+				. "-" x 70 . "\n\n";
+			$lng = $m->setLanguage();
+			$m->sendEmail(user => $recvUser, subject => $subject, body => $body)
 				if $recvUser->{msgNotify} && $recvUser->{email} && !$recvUser->{dontEmail};
 		}
 	}
@@ -4159,79 +4238,6 @@ sub encWord
 }
 
 #------------------------------------------------------------------------------
-# Create email
-
-sub createEmail
-{
-	my $m = shift();
-	my %params = @_;
-
-	my $cfg = $m->{cfg};
-	my $lng = $m->{lng};
-	my $user = $params{user};
-
-	my $subject = "";
-	my $body = "";
-
-	# User registration email	
-	if ($params{type} eq 'userReg') {
-		$subject = $cfg->{forumName} . " - " . $lng->{regMailSubj};
-		$body = $lng->{regMailT} . "\n\n"
-			. $params{url} . "\n\n"
-			. $lng->{regMailName} . $user->{userName} . "\n"
-			. $lng->{regMailPwd} . $user->{password} . "\n\n"
-			. $lng->{regMailT2}
-			. ($cfg->{policy} ? "\n\n$cfg->{policyTitle}:\n\n$cfg->{policy}\n\n" : "\n\n");
-	}
-	# Forgot password ticket
-	elsif ($params{type} eq 'fgtPwd') {
-		$subject = $cfg->{forumName} . " - " . $lng->{lgiFpwMlSbj};
-		$body = $lng->{lgiFpwMlT} . "\n\n" 
-			. $params{url} . "\n\n";
-	}
-	# Email change ticket
-	elsif ($params{type} eq 'emlChg') {
-		$subject = $cfg->{forumName} . " - " . $lng->{emlChgMlSubj};
-		$body = $lng->{emlChgMlT} . "\n\n" . $params{url} . "\n\n";
-	}
-	# Reply notification email
-	elsif ($params{type} eq 'replyNtf') {
-		$m->setLanguage($user->{language});
-		$lng = $m->{lng};
-		$params{post}{subject} = $params{topic}{subject};
-		$m->dbToEmail($params{board}, $params{post});
-		$subject = "$params{replUser}{userName}: $params{post}{subject}";
-		$body = $lng->{rplEmailT2} . "\n\n"
-			. $lng->{rplEmailUrl} . $params{url} . "\n"
-			. $lng->{rplEmailBrd} . $params{board}{title} . "\n"
-			. $lng->{rplEmailTpc} . $params{post}{subject} . "\n"
-			. $lng->{rplEmailUsr} . $params{replUser}{userName} . "\n\n"
-			. $params{post}{body} . "\n\n"
-			. $params{post}{rawBody} . "\n\n";
-		$m->setLanguage();
-	}
-	# Message notification email
-	elsif ($params{type} eq 'msgNtf') {
-		$m->setLanguage($user->{language});
-		$lng = $m->{lng};
-		my $msgCopy = { %{$params{msg}} };
-		$m->dbToEmail($params{board}, $msgCopy);
-		$subject = "$params{sendUser}{userName}: $msgCopy->{subject}";
-		$body = $lng->{msaEmailT2} . "\n\n"
-			. $lng->{msaEmailUrl} . $params{url} . "\n"
-			. $lng->{msaEmailUsr} . $params{sendUser}{userName} . "\n"
-			. $lng->{msaEmailTSbj} . $msgCopy->{subject} . "\n\n"
-			. $msgCopy->{body} . "\n\n";
-		$m->setLanguage();
-	}
-	# Error
-	else { $m->logError("Create email failed: no valid email type specified.") }
-
-	# Return params
-	return (user => $params{user}, subject => $subject, body => $body);
-}
-
-#------------------------------------------------------------------------------
 # Send email
 
 sub sendEmail
@@ -4256,8 +4262,9 @@ sub sendEmail
 	# Sign and encrypt body
 	my $body = $params{body};
 	utf8::encode($body);
-	if ($cfg->{gpgSignKeyId}) {
+	if ($cfg->{gpgSignKeyId} && $params{user}{gpgKeyId}) {
 		my $gpgPath = $cfg->{gpgPath} || "gpg";
+		my @gpgOptions = $cfg->{gpgOptions} ? @{$cfg->{gpgOptions}} : ();
 		my $password = $cfg->{gpgSignKeyPwd}; 
 		utf8::encode($password);
 		my $keyring = "$cfg->{attachFsPath}/keys/$params{user}{id}.gpg";
@@ -4265,19 +4272,12 @@ sub sendEmail
 		my $in = "$password\n$body";
 		my $out = "";
 		my $err = "";
-		my $cmd = [
-			$gpgPath, "--batch", "--no-auto-check-trustdb", "--charset" => "utf-8",
-			$encrypt ? "--always-trust" : (),
-			$encrypt ? ("--keyring" => $keyring) : (),
-			"--default-key" => $cfg->{gpgSignKeyId},
-			"--passphrase-fd" => 0,
-			$cfg->{gpgOptions} ? @{$cfg->{gpgOptions}} : (),
-			$encrypt 
-				? ("--sign", "--encrypt", "--armor", "--recipient" => $params{user}{gpgKeyId}) 
-				: "--clearsign",
-		];
-		my $success = $m->ipcRun($cmd, \$in, \$out, \$err);
-		$success && $out or $m->logError("Send email: GnuPG failed ($err)");
+		my $cmd = [ $gpgPath, "--batch", "--no-auto-check-trustdb", "--no-emit-version", "--armor",
+			"--charset=utf-8", "--passphrase-fd=0", "--default-key=$cfg->{gpgSignKeyId}",
+			"--always-trust", "--recipient=$params{user}{gpgKeyId}", "--keyring=$keyring", @gpgOptions,
+			"--sign", "--encrypt" ];
+		my $ok = $m->ipcRun($cmd, \$in, \$out, \$err);
+		$ok && $out or $m->logError("Send email: GnuPG failed ($err)");
 		$body = $out;
 	}
 
@@ -4317,18 +4317,22 @@ sub sendEmail
 		$body = MIME::QuotedPrint::encode($body, "\n");
 		my $cmd = $cfg->{mailer} eq 'mail' ? 'mail' : $cfg->{sendmail};
 		my @arg = $cfg->{mailer} eq 'mail' ? ($to) : ();
+		$SIG{PIPE} = 'IGNORE';
 		open my $pipe, "|-", $cmd, @arg or $m->logError("Send email: opening pipe failed."), return;
 		print $pipe
 			"From: $from\n", "To: $to\n", "Subject: $subject\n",
 			"MIME-Version: 1.0\n", "Content-Type: text/plain; charset=utf-8\n",
 			"Content-Transfer-Encoding: quoted-printable\n", "X-mwForum-BounceAuth: $bounceAuth\n",
 			"\n", $body;
+		close $pipe;
 	}
 	elsif ($cfg->{mailer} eq 'mailx') {
 		# Send via mailx command (no portable way to pass headers except subject)
-		open my $pipe, "|-", 'mailx', "-s", $subject, $to
-			or $m->logError("Send email: opening pipe failed."), return;
+		$SIG{PIPE} = 'IGNORE';
+		open my $pipe, "|-", 'mailx', "-s $subject", $to
+			or $m->logError("Send email: opening pipe failed."), return;;
 		print $pipe $body;
+		close $pipe;
 	}
 	else { $m->logError("Send email failed: no valid email transport selected.") }
 }
@@ -4340,9 +4344,6 @@ sub checkEmail
 {
 	my $m = shift();
 	my $email = shift();
-
-	my $cfg = $m->{cfg};
-	my $lng = $m->{lng};
 
 	length($email) || $m->{user}{admin} or $m->formError('errEmlEmpty');
 	
@@ -4358,8 +4359,7 @@ sub checkEmail
 		$email !~ /^www\./ or $m->formError('errEmlInval');
 	
 		# Check against hostname blocks
-		index($email, lc) < 0 or $m->formError('errBlockEmlT')
-			for @{$cfg->{hostnameBlocks}};
+		index($email, lc) < 0 or $m->formError('errBlockEmlT') for @{$m->{cfg}{hostnameBlocks}};
 	}
 }
 

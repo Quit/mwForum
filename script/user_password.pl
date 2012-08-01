@@ -51,21 +51,23 @@ if ($submitted) {
 
 	# Check password for validity
 	$password eq $passwordV or $m->formError('errPwdDiffer');
-	length($password) >= 3 or $m->formError('errPwdSize');
-	$password =~ /^[\x20-\x7e]+\z/ or $m->formError('errPwdChar');
+	length($password) >= 8 or $m->formError('errPwdSize');
 	
-	# Get salted password hash
-	my $passwordMd5 = $m->md5($password . $optUser->{salt});
+	# Get new salt, loginAuth and password hash
+	my $salt = $m->randomId();
+	my $loginAuth = $m->randomId();
+	my $passwordHash = $m->hashPassword($password, $salt);
 	
 	# If there's no error, finish action
 	if (!@{$m->{formErrors}}) {
 		# Update user
 		$m->dbDo("
-			UPDATE users SET password = ? WHERE id = ?", $passwordMd5, $optUserId);
+			UPDATE users SET password = ?, salt = ?, loginAuth = ? WHERE id = ?", 
+			$passwordHash, $salt, $loginAuth, $optUserId);
 		
 		# Update cookies if password changed
-		$m->setCookie('login', "$optUserId-$passwordMd5", $optUser->{tempLogin})
-			if $passwordMd5 ne $user->{password} && $optUserId == $userId;
+		$m->setCookie('login', "$optUserId:$loginAuth", $optUser->{tempLogin})
+			if $optUserId == $userId;
 		
 		# Log action and finish
 		$m->logAction(1, 'user', 'passwd', $userId, 0, 0, 0, $optUserId);
@@ -94,17 +96,18 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='frm'>\n",
 		"<div class='hcl'><span class='htt'>$lng->{pwdChgTtl}</span></div>\n",
 		"<div class='ccl'>\n",
-		"<label class='lbw'>$lng->{pwdChgPwd}\n",
-		"<input type='password' class='fcs qwi' name='password' maxlength='15'",
-		" autofocus='autofocus' required='required'/></label>\n",
+		"<label class='lbw'>$lng->{pwdChgPwd} ($lng->{pwdChgPwdFmt})\n",
+		"<input type='password' class='qwi' name='password' pattern='.{8,}'",
+		" title='$lng->{pwdChgPwdFmt}' required autofocus></label>\n",
 		"<label class='lbw'>$lng->{pwdChgPwdV}\n",
-		"<input type='password' class='qwi' name='passwordV' maxlength='15' required='required'/>",
+		"<input type='password' class='qwi' name='passwordV' pattern='.{8,}'",
+		" title='$lng->{pwdChgPwdFmt}' required>",
 		"</label>\n",
 		$m->submitButton('pwdChgB', 'password'),
-		"<input type='hidden' name='uid' value='$optUserId'/>\n",
+		"<input type='hidden' name='uid' value='$optUserId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
-		"</div>\n\n",
+		"</div>\n",
 		"</form>\n\n";
 
 	# Log action and finish

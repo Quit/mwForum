@@ -71,7 +71,7 @@ my $getBranchPostIds = sub {
 	my $pid = shift();
 	push @branchPostIds, $pid;
 	for my $child (@{$postsByParent{$pid}}) { 
-		$child->{id} != $pid or error("Integrity Error", "Post is its own parent?!");
+		$child->{id} != $pid or $m->error("Post is its own parent?!");
 		$self->($self, $child->{id});
 	}
 };
@@ -134,25 +134,12 @@ else {
 		UPDATE posts SET parentId = 0 WHERE id = ?", $postId);
 }		
 
-# Update posts
+# Update posts, topics and boards
 $m->dbDo("
-	UPDATE posts SET
-		boardId = :newBoardId,
-		topicId = :newTopicId
-	WHERE id IN (:branchPostIds)",
+	UPDATE posts SET boardId = :newBoardId, topicId = :newTopicId WHERE id IN (:branchPostIds)",
 	{ newBoardId => $newBoardId, newTopicId => $newTopicId, branchPostIds => \@branchPostIds });
-
-# Update statistics
-if ($oldBoardId != $newBoardId) {
-	# Update board stats
-	$m->recalcStats($oldBoardId, $oldTopicId);
-	$m->recalcStats($newBoardId, $newTopicId);
-}
-else {
-	# Only update topic stats
-	$m->recalcStats(undef, $oldTopicId);
-	$m->recalcStats(undef, $newTopicId);
-}
+$m->recalcStats(undef, [ $oldTopicId, $newTopicId ]);
+$m->recalcStats([ $oldBoardId, $newBoardId ]) if $oldBoardId != $newBoardId;
 
 # Duplicate topicReadTimes for new topic
 $m->dbDo("

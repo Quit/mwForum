@@ -38,17 +38,16 @@ my $submitted = $m->paramBool('subm');
 # Define names and descriptions of fields
 my %fields = (
 	title => "Title",
-	hideEmail => "Hide Email",
 	dontEmail => "Disable Email",
 	notify => "Reply Notifications",
 	msgNotify => "Email Notifications",
 	tempLogin => "Temporary Login",
-	privacy => "Hide Online Status",
+	privacy => "Privacy",
 	signature => "Signature",
 	blurb => "Miscellaneous",
-	extra1 => "Extra 1",
-	extra2 => "Extra 2",
-	extra3 => "Extra 3",
+	extra1 => "Custom 1",
+	extra2 => "Custom 2",
+	extra3 => "Custom 3",
 	timezone => "Timezone",
 	language => "Language",
 	style => "Style",
@@ -66,6 +65,7 @@ my %fields = (
 	bounceNum => "Bounce Counter",
 	renamesLeft => "Renames Left",
 	oldNames => "Old Usernames",
+	gpgKeyId => "PGP Key ID",
 );
 
 # Process form
@@ -109,15 +109,12 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='hcl'><span class='htt'>Mass-Setting User Fields</span></div>\n",
 		"<div class='ccl'>\n",
 		"<label class='lbw'>Field\n",
-		"<select class='fcs' name='field' size='1' autofocus='autofocus'>\n";
-
-	print "<option value='$_'>$fields{$_}</option>\n"
-		for sort({$fields{$a} cmp $fields{$b}} keys(%fields));
-	
-	print
+		"<select name='field' size='1' autofocus>\n",
+		map("<option value='$_'>$fields{$_}</option>\n", 
+			sort({$fields{$a} cmp $fields{$b}} keys(%fields))),
 		"</select></label>\n",
 		"<label class='lbw'>Value\n",
-		"<input type='text' class='hwi' name='value'/></label>\n",
+		"<input type='text' class='hwi' name='value'></label>\n",
 		$m->submitButton("Mass Set", 'edit'),
 		$m->stdFormFields(),
 		"</div>\n",

@@ -45,6 +45,7 @@ my $columns = $m->fetchAllHash("
 	WHERE table_schema = :schema
 		AND table_name IN ($tablesStr)
 		AND (data_type = 'character varying' OR data_type = 'text')
+		AND character_maximum_length <> 22
 	ORDER BY table_name",
 	{ schema => $cfg->{dbSchema} || 'public' } );
 	

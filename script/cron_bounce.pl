@@ -16,7 +16,7 @@
 
 use strict;
 use warnings;
-no warnings qw(uninitialized redefine);
+no warnings qw(uninitialized);
 
 # Imports
 use Getopt::Std ();
@@ -49,9 +49,9 @@ $pop->Alive() or $m->error("POP3 connection failed.");
 
 # Retrieve messages
 my @emails = ();
-my $mailNum = $pop->Count();
-defined($mailNum) && $mailNum != -1 or $m->error("POP3 connection failed. ($!)");
-for my $i (1 .. $mailNum) {
+my $emailNum = $pop->Count();
+defined($emailNum) && $emailNum != -1 or $m->error("POP3 connection failed. ($!)");
+for my $i (1 .. $emailNum) {
 	push @emails, scalar $pop->Body($i);
 	$pop->Delete($i);
 }
@@ -62,31 +62,19 @@ $pop->Close();
 # For each email
 for my $email (@emails) {
 	# Get auth value from email
-	my ($auth) = $email =~ /X-mwForum-BounceAuth: ([0-9]+)/i;
-
-	# If no auth value found, log and next
-	if (!$auth) { 
-		$m->logAction(3, 'bounce', 'noauth');
-		next;
-	}
+	my ($auth) = $email =~ /X-mwForum-BounceAuth: ([A-Za-z_0-9-]+)/;
+	$auth or $m->logAction(3, 'bounce', 'noauth'), next;
 
 	# Get user with auth value
+	my $cs = 'BINARY';
+	if ($m->{pgsql}) { $cs = 'TEXT' }
+	elsif ($m->{sqlite}) { $cs = 'BLOB' }
 	my $authUser = $m->fetchHash("
-		SELECT id, email, bounceNum, dontEmail, language FROM users WHERE bounceAuth = ?", $auth);
-	
-	# If no user for auth value found, log and next
-	if (!$authUser) { 
-		$m->logAction(2, 'bounce', 'nouser');
-		next;
-	}
-	
-	# Look for users address in email
-	if ($email !~ /$authUser->{email}/i) {
-		$m->logAction(2, 'bounce', 'noemail');
-		next;
-	}
-
-	# Log authenticated user
+		SELECT id, bounceNum, dontEmail, regTime, lastOnTime 
+		FROM users 
+		WHERE bounceAuth = CAST(? AS $cs)", 
+		$auth);
+	$authUser or $m->logAction(2, 'bounce', 'nouser'), next;
 	my $authUserId = $authUser->{id};
 	$m->logAction(1, 'bounce', 'auth', $authUserId);
 

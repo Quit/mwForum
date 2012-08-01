@@ -128,9 +128,9 @@ if ($add) {
 	my $insertParentId = $board->{flat} ? 0 : $parentId;
 
 	# Process text
-	my $post = { userId => $postUserId, userNameBak => $postUserName,
+	my $post = { userId => $postUserId, userNameBak => $postUserName, postTime => $m->{now},
 		body => $body, rawBody => $rawBody };
-	$m->editToDb($board, $post);
+	$m->editToDb({}, $post);
 	length($post->{body}) or $m->formError('errBdyEmpty');
 
 	# Check captcha
@@ -200,7 +200,7 @@ if (!$add || @{$m->{formErrors}}) {
 	# Print header
 	$m->printHeader(undef, { tagButtons => 1, lng_tbbInsSnip => $lng->{tbbInsSnip} });
 	
-	# Print bar
+	# Print page bar
 	my @navLinks = ({ url => $m->url('topic_show', pid => $parentId || $topic->{basePostId}),
 		txt => 'comUp', ico => 'up' });
 	$m->printPageBar(mainTitle => $lng->{rplTitle}, subTitle => $topic->{subject}, 
@@ -223,6 +223,10 @@ if (!$add || @{$m->{formErrors}}) {
 			"</div>\n";
 	}
 	else {
+		# Print hints and form errors
+		$m->printHints(['rplReplyT']) if !$board->{flat} && $user->{postNum} < 20;
+		$m->printFormErrors();
+
 		# Quote parent post body
 		my $quote = undef;
 		if ($cfg->{quote} && $wantQuote	&& ($board->{flat} || $cfg->{quote} == 2)) {
@@ -230,36 +234,32 @@ if (!$add || @{$m->{formErrors}}) {
 			eval { require Text::Flowed } or $m->error("Text::Flowed module not available.");
 			$quote = $parent->{body};
 			$quote =~ s!<blockquote>.+?</blockquote>(?:<br/>)?!!g;
-			$quote =~ s!<br/>!\n!g;  # Preserve linebreaks before removing tags
+			$quote =~ s!<br/?>!\n!g;  # Preserve linebreaks before removing tags
 			$quote =~ s!<.+?>!!g;  # Remove tags before quoting
 			$quote = $m->deescHtml($quote);
 			$quote = Text::Flowed::reformat($quote, { quote => 1, fixed => 1,
 				max_length => $cfg->{quoteCols}, opt_length => $cfg->{quoteCols} - 6});
-	
-			# Prefix "user:" to quote
 			$quote = "$parent->{userNameBak}:\n$quote" if $cfg->{quotePrefix};
 		}
 	
-		# Prepare preview body
+		# Prepare parent and preview body
+		$m->dbToDisplay($board, $parent);
 		if ($preview) {
 			$preview = { body => $body, rawBody => $rawBody };
-			$m->editToDb($board, $preview);
+			$m->editToDb({}, $preview);
 			$m->dbToDisplay($board, $preview);
 		}
 	
-		# Prepare misc values
+		# Escape submitted values
 		my $unregNameEsc = $m->escHtml($unregName) || $cfg->{anonName};
 		$body ||= $quote;
 		my $bodyEsc = $m->escHtml($body, 1);
 		my $rawBodyEsc = $m->escHtml($rawBody, 1);
-		$m->dbToDisplay($board, $parent);
 
-		# Print hints and form errors
-		$m->printHints(['rplReplyT']) if !$board->{flat} && $user->{postNum} < 20;
-		$m->printFormErrors();
-	
-		# Print reply form
+		# Prepare values
 		my $title = $topicReply ? $lng->{rplTopicTtl} : $lng->{rplReplyTtl};
+
+		# Print reply form
 		print
 			"<form action='post_add$m->{ext}' method='post'>\n",
 			"<div class='frm'>\n",
@@ -271,7 +271,7 @@ if (!$add || @{$m->{formErrors}}) {
 			"<fieldset>\n",
 			"<label class='lbw'>$lng->{rplReplyName}\n",
 			"<input type='text' class='qwi' name='name' maxlength='$cfg->{maxUserNameLen}'",
-			" value='$unregNameEsc'/></label>\n",
+			" value='$unregNameEsc'></label>\n",
 			"</fieldset>\n"
 			if $cfg->{allowUnregName} && $board->{unregistered} && !$userId;
 	
@@ -279,15 +279,14 @@ if (!$add || @{$m->{formErrors}}) {
 		print
 			"<fieldset>\n",
 			$m->tagButtons($board),
-	  	"<textarea class='fcs tgi' name='body' rows='14' autofocus='autofocus' required='required'>",
-	  	"$bodyEsc</textarea>\n",
+	  	"<textarea class='tgi' name='body' rows='14' autofocus required>$bodyEsc</textarea>\n",
 			"</fieldset>\n";
 
 		# Print raw body textarea
 		print
 			$rawBodyEsc ? "<fieldset>\n" : 
-				"<div><a class='clk' id='rawlnk'>$lng->{eptEditIRaw} &#187;</a></div>" .
-				"<fieldset id='rawfld' style='display: none'>\n",
+				"<div><a class='clk rvl' data-rvlid='#rawtxt' href='#'>$lng->{eptEditIRaw} &#187;"
+				. "</a></div>\n<fieldset id='rawtxt' style='display: none'>\n",
 			"<label class='lbw'>$lng->{eptEditRaw}\n",
 			"<textarea class='raw' name='raw' rows='14' spellcheck='false'>$rawBodyEsc",
 			"</textarea></label>\n",
@@ -298,12 +297,12 @@ if (!$add || @{$m->{formErrors}}) {
 		print MwfCaptcha::captchaInputs($m, 'pstCpt')
 			if $cfg->{captcha} >= 3 || $cfg->{captcha} >= 2 && !$m->{user}{id};
 
-		# Print rest of form
+		# Print submit section
 		print				
 			$m->submitButton('rplReplyB', 'write', 'add'),
 			$m->submitButton('rplReplyPrvB', 'preview', 'preview'),
-			"<input type='hidden' name='pid' value='$parentId'/>\n",
-			"<input type='hidden' name='tid' value='$topicId'/>\n",
+			"<input type='hidden' name='pid' value='$parentId'>\n",
+			"<input type='hidden' name='tid' value='$topicId'>\n",
 			$m->stdFormFields(),
 			"</div>\n",
 			"</div>\n",

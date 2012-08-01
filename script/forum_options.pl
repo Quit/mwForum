@@ -72,7 +72,7 @@ if ($submitted) {
 					DELETE FROM config WHERE name = ?", $name);
 				$m->dbDo("
 					INSERT INTO config (name, value, parse) VALUES (?, ?, ?)",
-					$name, $value, $opt->{parse} || '');
+					$name, $value, $opt->{parse} || "");
 			}
 		}
 
@@ -96,10 +96,6 @@ if (!$submitted || @{$m->{formErrors}}) {
 	# Print page bar
 	my @navLinks = ({ url => $m->url('forum_show'), txt => 'comUp', ico => 'up' });
 	$m->printPageBar(mainTitle => "Forum", navLinks => \@navLinks);
-
-	# Shortcuts
-	my $checked = "checked='checked'";
-	my $selected = "selected='selected'";
 
 	# Print hints and form errors
 	$m->printFormErrors();
@@ -154,18 +150,18 @@ if (!$submitted || @{$m->{formErrors}}) {
 			# Print text input option
 			print 
 				"<fieldset><input type='text' class='fwi' name='$name' value='", 
-				$m->escHtml($value), "'/></fieldset>\n";
+				$m->escHtml($value), "'></fieldset>\n";
 		}
 		elsif ($opt->{type} eq 'number') {
 			# Print number input option
 			print "<fieldset><input type='number' name='$name' value='",
-				int($value), "'/></fieldset>\n";
+				int($value), "'></fieldset>\n";
 		}
 		elsif ($opt->{type} eq 'textarea') {
 			# Print textarea options
 			if (!$opt->{parse}) {
 				# Print simple textarea option
-				my $rows = $m->min($m->max(4, $value =~ tr/\n//), 15);
+				my $rows = $m->min($m->max(4, $value =~ tr/\n//), 10);
 				print 
 					"<fieldset><textarea name='$name' rows='$rows'>",
 					$m->escHtml($value, 1), 
@@ -173,7 +169,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 			}
 			elsif ($opt->{parse} eq 'array') {
 				# Print array textarea option
-				my $rows = $m->min($m->max(4, scalar @$value), 15);
+				my $rows = $m->min($m->max(4, scalar @$value), 10);
 				print 
 					"<fieldset><textarea name='$name' rows='$rows'>",
 					$m->escHtml(join("\n", @$value), 1), 
@@ -181,7 +177,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 			}
 			elsif ($opt->{parse} eq 'hash') {
 				# Print hash textarea option
-				my $rows = $m->min($m->max(4, scalar keys %$value), 15);
+				my $rows = $m->min($m->max(4, scalar keys %$value), 10);
 				print 
 					"<fieldset><textarea name='$name' rows='$rows'>",
 					$m->escHtml(join("\n", map("$_=$value->{$_}", sort keys %$value)), 1), 
@@ -204,9 +200,9 @@ if (!$submitted || @{$m->{formErrors}}) {
 		}
 		elsif ($opt->{type} eq 'checkbox') {
 			# Print checkbox option
-			my $check = $value ? $checked : "";
+			my $chk = $value ? 'checked' : "";
 			print 
-				"<fieldset><label><input type='checkbox' name='$name' $check/> Yes",
+				"<fieldset><label><input type='checkbox' name='$name' $chk> Yes",
 				"</label></fieldset>\n";
 		}
 		elsif ($opt->{type} eq 'radio') {
@@ -214,9 +210,9 @@ if (!$submitted || @{$m->{formErrors}}) {
 			print "<fieldset>\n";
 			for (my $i = 0; $i < @{$opt->{radio}} - 1; $i += 2) {
 				my $key = $opt->{radio}[$i];
-				my $check = $key eq $value ? $checked : "";
+				my $chk = $key eq $value ? 'checked' : "";
 				print
-					"<div><label><input type='radio' name='$name' value='$key' $check/>",
+					"<div><label><input type='radio' name='$name' value='$key' $chk>",
 					" $opt->{radio}[$i+1]</label></div>\n";
 			}
 			print "</fieldset>\n";

@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2012 Markus Wichitill
+#    Copyright © 1999-2012 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -14,10 +14,11 @@
 #------------------------------------------------------------------------------
 
 package MwfPlgAuthen;
+use utf8;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine once);
-our $VERSION = "2.23.0";
+our $VERSION = "2.27.3";
 
 #------------------------------------------------------------------------------
 # Authenticate user via HTTP authentication on every request.
@@ -147,10 +148,10 @@ sub authenLoginLdap
 	if ($dbUser) {		
 		# If the password from LDAP changed, update mwForum password since the 
 		# mwForum cookies will be checked against that in future requests
-		my $passwordMd5 = $m->md5($password . $dbUser->{salt});
+		my $passwordHash = $m->hashPassword($password, $dbUser->{salt});
 		$m->dbDo("
-			UPDATE users SET password = ? WHERE id = ?", $passwordMd5, $dbUser->{id})
-			if $dbUser->{password} ne $passwordMd5;
+			UPDATE users SET password = ? WHERE id = ?", $passwordHash, $dbUser->{id})
+			if $passwordHash ne $dbUser->{password};
 	}
 	else {
 		# If there's no mwForum user for that name yet, create one

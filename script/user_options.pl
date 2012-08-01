@@ -39,7 +39,6 @@ my $fontSize = $m->paramInt('fontSize') || 0;
 my $indent = $m->paramInt('indent') || $cfg->{indent};
 my $notify = $m->paramBool('notify');
 my $msgNotify = $m->paramBool('msgNotify');
-my $hideEmail = $m->paramBool('hideEmail');
 my $privacy = $m->paramBool('privacy');
 my $boardDescs = $m->paramBool('boardDescs');
 my $showDeco = $m->paramBool('showDeco');
@@ -52,7 +51,8 @@ my $postsPP = $m->paramStr('postsPP');  # Detaint and default later
 my $submitted = $m->paramBool('subm');
 
 # Select which user to edit
-my $optUser = $optUserId && $user->{admin} ? $m->getUser($optUserId) : $user;
+my $admin = $user->{admin};
+my $optUser = $optUserId && $admin ? $m->getUser($optUserId) : $user;
 $optUser or $m->error('errUsrNotFnd');
 $optUserId = $optUser->{id};
 
@@ -82,7 +82,7 @@ if ($submitted) {
 	$language = $cfg->{languages}{$language} ? $language : $cfg->{language};
 	$style = $cfg->{styles}{$style} ? $style : $cfg->{style};
 
-	# Escape strings
+	# Escape submitted values
 	my $timezoneEsc = $m->escHtml($timezone);
 	my $fontFaceEsc = $m->escHtml($fontFace);
 	
@@ -91,13 +91,13 @@ if ($submitted) {
 		# Update user
 		$m->dbDo("
 			UPDATE users SET
-				hideEmail = ?, notify = ?, msgNotify = ?, privacy = ?, 
-				timezone = ?, language = ?,	style = ?, fontFace = ?, fontSize = ?, boardDescs = ?,
+				notify = ?, msgNotify = ?, privacy = ?, timezone = ?, 
+				language = ?,	style = ?, fontFace = ?, fontSize = ?, boardDescs = ?,
 				showDeco = ?, showAvatars = ?, showImages = ?, showSigs = ?,
 				collapse = ?, indent = ?, topicsPP = ?, postsPP = ?
 			WHERE id = ?",
-			$hideEmail, $notify, $msgNotify, $privacy,
-			$timezoneEsc, $language, $style, $fontFaceEsc, $fontSize, $boardDescs,
+			$notify, $msgNotify, $privacy, $timezoneEsc, 
+			$language, $style, $fontFaceEsc, $fontSize, $boardDescs,
 			$showDeco, $showAvatars, $showImages, $showSigs, 
 			$collapse, $indent, $topicsPP, $postsPP,
 			$optUserId);
@@ -135,23 +135,25 @@ if (!$submitted || @{$m->{formErrors}}) {
 
 	# User button links
 	my @userLinks = ();
-	push @userLinks, { url => $m->url('user_password', uid => $optUserId), 
+	push @userLinks, { url => $m->url('user_password', $admin ? (uid => $optUserId) : ()), 
 		txt => 'uopPasswd', ico => 'password' }
 		if !$cfg->{authenPlg}{login} && !$cfg->{authenPlg}{request};
-	push @userLinks, { url => $m->url('user_key', uid => $optUserId), 
+	push @userLinks, { url => $m->url('user_email', $admin ? (uid => $optUserId) : ()), 
+		txt => 'uopEmail', ico => 'subscribe' };
+	push @userLinks, { url => $m->url('user_key', $admin ? (uid => $optUserId) : ()), 
 		txt => 'uopOpenPgp', ico => 'key' }
 		if $cfg->{gpgSignKeyId};
-	push @userLinks, { url => $m->url('user_ignore', uid => $optUserId), 
+	push @userLinks, { url => $m->url('user_ignore', $admin ? (uid => $optUserId) : ()), 
 		txt => 'uopIgnore', ico => 'ignore' };
-	push @userLinks, { url => $m->url('user_watch', uid => $optUserId), 
+	push @userLinks, { url => $m->url('user_watch', $admin ? (uid => $optUserId) : ()), 
 		txt => 'uopWatch', ico => 'watch' } 
 		if $cfg->{watchWords} || $cfg->{watchUsers};
-	push @userLinks, { url => $m->url('user_groups', uid => $optUserId), 
-		txt => "uopGroups", ico => 'group' }
+	push @userLinks, { url => $m->url('user_groups', $admin ? (uid => $optUserId) : ()), 
+		txt => 'uopGroups', ico => 'group' }
 		if $openGroups && $optUserId == $userId;
-	push @userLinks, { url => $m->url('user_boards', uid => $optUserId), 
+	push @userLinks, { url => $m->url('user_boards', $admin ? (uid => $optUserId) : ()), 
 		txt => 'uopBoards', ico => 'board' };
-	push @userLinks, { url => $m->url('user_topics', uid => $optUserId), 
+	push @userLinks, { url => $m->url('user_topics', $admin ? (uid => $optUserId) : ()), 
 		txt => 'uopTopics', ico => 'topic' }
 		if $cfg->{subsInstant} || $cfg->{subsDigest};
 	$m->callPlugin($_, links => \@userLinks, user => $optUser)
@@ -161,6 +163,9 @@ if (!$submitted || @{$m->{formErrors}}) {
 	my @navLinks = ({ url => $m->url('forum_show'), txt => 'comUp', ico => 'up' });
 	$m->printPageBar(mainTitle => $lng->{uopTitle}, subTitle => $optUser->{userName}, 
 		navLinks => \@navLinks, userLinks => \@userLinks);
+
+	# Print hints and form errors
+	$m->printFormErrors();
 	
 	# Determine language
 	my ($httpLangCode) = $m->{env}{acceptLang} =~ /^([A-Za-z]{2})/;
@@ -173,7 +178,6 @@ if (!$submitted || @{$m->{formErrors}}) {
 	$indent = $submitted ? $indent : $optUser->{indent};
 	$topicsPP = $submitted ? int($topicsPP) : $optUser->{topicsPP};
 	$postsPP = $submitted ? int($postsPP) : $optUser->{postsPP};
-	$hideEmail = $submitted ? $hideEmail : $optUser->{hideEmail};
 	$privacy = $submitted ? $privacy : $optUser->{privacy};
 	$boardDescs = $submitted ? $boardDescs : $optUser->{boardDescs};
 	$showDeco = $submitted ? $showDeco : $optUser->{showDeco};
@@ -192,30 +196,21 @@ if (!$submitted || @{$m->{formErrors}}) {
 	$style = $cfg->{styles}{$style} ? $style : $cfg->{style};
 
 	# Determine checkbox, radiobutton and listbox states
-	my $checked = "checked='checked'";
-	my $selected = "selected='selected'";
-	my %state = (
-		hideEmail => $hideEmail ? $checked : undef,
-		privacy => $privacy ? $checked : undef,
-		boardDescs => $boardDescs ? $checked : undef,
-		showDeco => $showDeco ? $checked : undef,
-		showAvatars => $showAvatars ? $checked : undef,
-		showImages => $showImages ? $checked : undef,
-		showSigs => $showSigs ? $checked : undef,
-		collapse => $collapse ? $checked : undef,
-		notify => $notify ? $checked : undef,
-		msgNotify => $msgNotify ? $checked : undef,
-		"zone$timezone" => $selected,
-		"language$language" => $selected,
-		"style$style" => $selected,
-	);
+	my $privacyChk = $privacy ? 'checked' : "";
+	my $boardDescsChk = $boardDescs ? 'checked' : "";
+	my $showDecoChk = $showDeco ? 'checked' : "";
+	my $showAvatarsChk = $showAvatars ? 'checked' : "";
+	my $showImagesChk = $showImages ? 'checked' : "";
+	my $showSigsChk = $showSigs ? 'checked' : "";
+	my $collapseChk = $collapse ? 'checked' : "";
+	my $notifyChk = $notify ? 'checked' : "";
+	my $msgNotifyChk = $msgNotify ? 'checked' : "";
+	my %state = ( "zone$timezone" => 'selected', "language$language" => 'selected', 
+		"style$style" => 'selected' );
 	my $snippets = $m->fetchAllArray("
 		SELECT name FROM userVariables WHERE userId = ? AND name LIKE ?", $optUserId, 'sty%');
-	$state{$_->[0]} = $checked for @$snippets;
+	$state{$_->[0]} = 'checked' for @$snippets;
 
-	# Print hints and form errors
-	$m->printFormErrors();
-	
 	# Print options
 	print
 		"<form action='user_options$m->{ext}' method='post'>\n",
@@ -223,36 +218,35 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='hcl'><span class='htt'>$lng->{uopOptTtl}</span></div>\n",
 		"<div class='ccl'>\n",
 		"<fieldset>\n",
-		"<div><label><input type='checkbox' class='fcs' name='hideEmail' autofocus='autofocus'",
-		" $state{hideEmail}/> $lng->{uopPrefHdEml}</label></div>\n",
-		"<div><label><input type='checkbox' name='privacy' $state{privacy}/>",
+		"<div><label><input type='checkbox' name='privacy' $privacyChk>",
 		" $lng->{uopPrefPrivc}</label></div>\n",
 		"</fieldset>\n",
 		"<fieldset>\n",
-		"<div><label><input type='checkbox' name='notify' $state{notify}/>",
+		"<div><label><input type='checkbox' name='notify' $notifyChk>",
 		" $lng->{uopPrefNt}</label></div>\n",
-		"<div><label><input type='checkbox' name='msgNotify' $state{msgNotify}/>",
+		"<div><label><input type='checkbox' name='msgNotify' $msgNotifyChk>",
 		" $lng->{uopPrefNtMsg}</label></div>\n",
 		"</fieldset>\n",
 		"<fieldset>\n",
-		"<div><label><input type='checkbox' name='boardDescs' $state{boardDescs}/>",
+		"<div><label><input type='checkbox' name='boardDescs' $boardDescsChk>",
 		" $lng->{uopDispDescs}</label></div>\n",
-		"<div><label><input type='checkbox' name='showDeco' $state{showDeco}/>",
+		"<div><label><input type='checkbox' name='showDeco' $showDecoChk>",
 		" $lng->{uopDispDeco}</label></div>\n",
-		$cfg->{avatars} ? "<div><label><input type='checkbox' name='showAvatars' $state{showAvatars}/>" .
-			" $lng->{uopDispAvas}</label></div>\n" : "",
-		"<div><label><input type='checkbox' name='showImages' $state{showImages}/>",
+		$cfg->{avatars} ? "<div><label><input type='checkbox' name='showAvatars' $showAvatarsChk>"
+			. " $lng->{uopDispAvas}</label></div>\n" : "",
+		"<div><label><input type='checkbox' name='showImages' $showImagesChk>",
 		" $lng->{uopDispImgs}</label></div>\n",
-		"<div><label><input type='checkbox' name='showSigs' $state{showSigs}/>",
+		"<div><label><input type='checkbox' name='showSigs' $showSigsChk>",
 		" $lng->{uopDispSigs}</label></div>\n",
-		"<div><label><input type='checkbox' name='collapse' $state{collapse}/>",
+		"<div><label><input type='checkbox' name='collapse' $collapseChk>",
 		" $lng->{uopDispColl}</label></div>\n";
 
+	# Print snippet list
   if (%{$cfg->{styleSnippets}}) {
 		for my $snippet (sort keys %{$cfg->{styleSnippets}}) {
 			my $label = $lng->{$snippet} || $snippet;
 			print 
-				"<div><label><input type='checkbox' name='$snippet' $state{$snippet}/>",
+				"<div><label><input type='checkbox' name='$snippet' $state{$snippet}>",
 				" $label</label></div>\n";
 		}
 	}
@@ -268,6 +262,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<select name='timezone' size='1'>\n",
 		"<option value='SVR' $state{zoneSVR}>$lng->{uopDispTimeS}</option>\n";
 
+	# Print timezone list
 	for (-28 .. 28) {
 		my $zone  = $_ / 2;
 		$zone = "+$zone" if $zone > 0;
@@ -279,7 +274,8 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"</select></label>\n",
 		"<label class='lbw'>$lng->{uopDispStyle}\n",
 		"<select name='style' size='1'>\n";
-	
+
+	# Print style list
 	for (sort keys %{$cfg->{styles}}) {
 		my %styleOpt = $cfg->{styleOptions}{$_} =~ /(\w+)="(.+?)"/g;
 		next if $styleOpt{excludeUA} && $m->{env}{userAgent} =~ /$styleOpt{excludeUA}/
@@ -289,21 +285,25 @@ if (!$submitted || @{$m->{formErrors}}) {
 	
 	print 
 		"</select></label>\n",
+		"<datalist id='fontFaces'>\n",
+		map("<option value='$_'>\n", @{$cfg->{fontFaces}}),
+		"</datalist>\n",
 		"<label class='lbw'>$lng->{uopDispFFace}\n",
-		"<input type='text' class='qwi' name='fontFace' maxlength='20' value='$fontFaceEsc'/></label>\n",
+		"<input type='text' class='qwi' name='fontFace' maxlength='20' list='fontFaces'",
+		" value='$fontFaceEsc'></label>\n",
 		"<label class='lbw'>$lng->{uopDispFSize}\n",
-		"<input type='number' name='fontSize' min='0' max='20' value='$fontSize'/></label>\n",
+		"<input type='number' name='fontSize' min='0' max='20' value='$fontSize'></label>\n",
 		"<label class='lbw'>$lng->{uopDispIndnt}\n",
-		"<input type='number' name='indent' min='1' max='10' value='$indent'/></label>\n",
+		"<input type='number' name='indent' min='1' max='10' value='$indent'></label>\n",
 		"<label class='lbw'>$lng->{uopDispTpcPP}\n",
 		"<input type='number' name='topicsPP' min='0' max='$cfg->{maxTopicsPP}'",
-		" value='$topicsPP'/></label>\n",
+		" value='$topicsPP'></label>\n",
 		"<label class='lbw'>$lng->{uopDispPstPP}\n",
 		"<input type='number' name='postsPP' min='0' max='$cfg->{maxPostsPP}'",
-		" value='$postsPP'/></label>\n",
+		" value='$postsPP'></label>\n",
 		"</fieldset>\n",
 		$m->submitButton('uopSubmitB', 'options'),
-		"<input type='hidden' name='uid' value='$optUserId'/>\n",
+		"<input type='hidden' name='uid' value='$optUserId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

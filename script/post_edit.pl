@@ -102,7 +102,7 @@ if ($edit) {
 		$post->{subject} = $subject;
 		$post->{body} = $body;
 		$post->{rawBody} = $rawBody;
-		$m->editToDb($board, $post);
+		$m->editToDb({}, $post);
 
 		# Only change editTime if there's some time between post and edit, and body changed
 		my $postEditStTime = defined($cfg->{postEditStTime}) ? $cfg->{postEditStTime} : 120;
@@ -137,6 +137,13 @@ if (!$edit || @{$m->{formErrors}}) {
 	# Print header
 	$m->printHeader(undef, { tagButtons => 1, lng_tbbInsSnip => $lng->{tbbInsSnip} });
 
+	# Print page bar
+	my @navLinks = ({ url => $m->url('topic_show', pid => $postId), txt => 'comUp', ico => 'up' });
+	$m->printPageBar(mainTitle => $lng->{eptTitle}, navLinks => \@navLinks);
+
+	# Print hints and form errors
+	$m->printFormErrors();
+
 	# Prepare subject and body
 	my ($subjectEsc, $bodyEsc, $rawBodyEsc);
 	if ($edit || $preview) { 
@@ -146,7 +153,7 @@ if (!$edit || @{$m->{formErrors}}) {
 	}
 	else {
 		$subjectEsc = $topic->{subject};
-		$m->dbToEdit($board, $post);
+		$m->dbToEdit({}, $post);
 		$bodyEsc = $post->{body};
 		$rawBodyEsc = $post->{rawBody};
 	}
@@ -154,17 +161,10 @@ if (!$edit || @{$m->{formErrors}}) {
 	# Prepare preview body
 	if ($preview) {
 		$preview = { body => $body, rawBody => $rawBody };
-		$m->editToDb($board, $preview);
+		$m->editToDb({}, $preview);
 		$m->dbToDisplay($board, $preview);
 	}
 
-	# Print bar
-	my @navLinks = ({ url => $m->url('topic_show', pid => $postId), txt => 'comUp', ico => 'up' });
-	$m->printPageBar(mainTitle => $lng->{eptTitle}, navLinks => \@navLinks);
-
-	# Print hints and form errors
-	$m->printFormErrors();
-	
 	# Print edit post form
 	print
 		"<form action='post_edit$m->{ext}' method='post'>\n",
@@ -176,8 +176,8 @@ if (!$edit || @{$m->{formErrors}}) {
 	print	
 		"<fieldset>\n",
 		"<label class='lbw'>$lng->{eptEditSbj}\n",
-		"<input type='text' class='fcs fwi' name='subject' maxlength='$cfg->{maxSubjectLen}'",
-		" autofocus='autofocus' required='required' value='$subjectEsc'/></label>\n",
+		"<input type='text' class='fwi' name='subject' maxlength='$cfg->{maxSubjectLen}'",
+		" value='$subjectEsc' autofocus required></label>\n",
 		"</fieldset>\n"
 		if $postId == $topic->{basePostId};
 
@@ -185,35 +185,38 @@ if (!$edit || @{$m->{formErrors}}) {
 	print
 		"<fieldset>\n",
 		$m->tagButtons($board),
-		"<textarea class='tgi' name='body' rows='14' required='required'>$bodyEsc</textarea>\n",
+		"<textarea class='tgi' name='body' rows='14' required>$bodyEsc</textarea>\n",
 		"</fieldset>\n"
 		if $post->{userId} != -2;
 
 	# Print raw body textarea
 	print
 		$rawBodyEsc ? "<fieldset>\n" : 
-			"<div><a class='clk' id='rawlnk'>$lng->{eptEditIRaw} &#187;</a></div>" .
-			"<fieldset id='rawfld' style='display: none'>\n",
+			"<div><a class='clk rvl' data-rvlid='#rawtxt' href='#'>$lng->{eptEditIRaw} &#187;"
+			. "</a></div>\n<fieldset id='rawtxt' style='display: none'>\n",
 		"<label class='lbw'>$lng->{eptEditRaw}\n",
 		"<textarea class='raw' name='raw' rows='14' spellcheck='false'>$rawBodyEsc",
 		"</textarea></label>\n",
 		"</fieldset>\n"
 		if $cfg->{rawBody};
 
-	# Print notification checkbox
-	my $checked = $cfg->{noteDefMod} ? "checked='checked'" : "";
+	# Print notification section
+	my $noteChk = $cfg->{noteDefMod} ? 'checked' : "";
 	print		
 		"<fieldset>\n",
-		"<div><label><input type='checkbox' name='notify' $checked/>$lng->{notNotify}</label></div>\n",
-		"<input type='text' class='fwi' name='reason'/>\n",
+		"<div><label><input type='checkbox' name='notify' $noteChk>$lng->{notNotify}</label></div>\n",
+		"<datalist id='reasons'>\n",
+		map("<option value='$_'>\n", @{$cfg->{modReasons}}),
+		"</datalist>\n",
+		"<input type='text' class='fwi' name='reason' list='reasons'>\n",
 		"</fieldset>\n"
 		if $post->{userId} > 0 && $post->{userId} != $userId;
 
-	# Print rest of form
+	# Print submit section
 	print
 		$m->submitButton('eptEditB', 'edit', 'edit'),
 		$m->submitButton('eptEditPrvB', 'preview', 'preview'),
-		"<input type='hidden' name='pid' value='$postId'/>\n",
+		"<input type='hidden' name='pid' value='$postId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

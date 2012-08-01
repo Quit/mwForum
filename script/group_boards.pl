@@ -75,14 +75,6 @@ if (!$submitted || @{$m->{formErrors}}) {
 	# Print hints and form errors
 	$m->printFormErrors();
 
-	# Print board permissions table
-	print 
-		"<form action='group_boards$m->{ext}' method='post'>\n",
-		"<table class='tbl'>\n",
-		"<tr class='hrw'>\n",
-		"<th colspan='3'>Board Permissions</th>\n",
-		"</tr>\n";
-		
 	# Get boards including group status
 	my $boards = $m->fetchAllHash("
 		SELECT boards.id, boards.title,
@@ -101,20 +93,27 @@ if (!$submitted || @{$m->{formErrors}}) {
 		ORDER BY categories.pos, boards.pos",
 		{ groupId => $groupId });
 
+	# Print board permissions table
+	print 
+		"<form action='group_boards$m->{ext}' method='post'>\n",
+		"<table class='tbl'>\n",
+		"<tr class='hrw'>\n",
+		"<th colspan='3'>Board Permissions</th>\n",
+		"</tr>\n";
+
 	# Print board list
 	for my $board (@$boards) {
 		my $boardId = $board->{id};
-		my $admin = $board->{admin} ? "checked='checked'" : '';
-		my $member = $board->{member} ? "checked='checked'" : '';
+		my $adminChk = $board->{admin} ? 'checked' : "";
+		my $memberChk = $board->{member} ? 'checked' : "";
 		my $url = $m->url('board_info', bid => $boardId);
 		print
 			"<tr class='crw'>\n",
 			"<td>$board->{categTitle} / <a href='$url'>$board->{title}</a></td>\n",
 			"<td class='shr'><label>",
-			"<input type='checkbox' class='fcs' name='admin_$boardId'",
-			" autofocus='autofocus' $admin/>Moderator</label></td>\n",
+			"<input type='checkbox' name='admin_$boardId' autofocus $adminChk>Moderator</label></td>\n",
 			"<td class='shr'><label>",
-			"<input type='checkbox' name='member_$boardId' $member/>Member</label></td>\n",
+			"<input type='checkbox' name='member_$boardId' $memberChk>Member</label></td>\n",
 			"</tr>\n";
 	}
 	
@@ -126,7 +125,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='hcl'><span class='htt'>Change Permissions</span></div>\n",
 		"<div class='ccl'>\n",
 		$m->submitButton("Change", 'admopt'),
-		"<input type='hidden' name='gid' value='$groupId'/>\n",
+		"<input type='hidden' name='gid' value='$groupId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

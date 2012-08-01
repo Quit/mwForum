@@ -88,10 +88,8 @@ for my $post (@$posts) {
 
 	# Format output
 	my $userNameStr = $post->{userName} || $post->{userNameBak} || " - ";
-	my $infUrl = $m->url('user_info', uid => $post->{userId});
-	$userNameStr = "<a href='$infUrl'>$userNameStr</a>" if $post->{userId} > 0;
 	my $reporterNameStr = $post->{reporterName} || " - ";
-	$infUrl = $m->url('user_info', uid => $post->{reporterId});
+	my $infUrl = $m->url('user_info', uid => $post->{reporterId});
 	$reporterNameStr = "<a href='$infUrl'>$reporterNameStr</a>";
 	my $report = { isReport => 1, body => $post->{reason} };
 	$m->dbToDisplay({}, $report);
@@ -111,8 +109,8 @@ for my $post (@$posts) {
 		"<div>$lng->{repPoster}: $userNameStr</div>\n",
 		"<div>$post->{body}</div>\n",
 		$m->submitButton('repDeleteB', 'remove'),
-		"<input type='hidden' name='uid' value='$post->{reporterId}'/>\n",
-		"<input type='hidden' name='pid' value='$postId'/>\n",
+		"<input type='hidden' name='uid' value='$post->{reporterId}'>\n",
+		"<input type='hidden' name='pid' value='$postId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

@@ -101,9 +101,9 @@ if ($add) {
 	my $ip = $cfg->{recordIp} ? $m->{env}{userIp} : "";
 	
 	# Process text
-	my $post = { userId => $postUserId, userNameBak => $postUserName,
+	my $post = { userId => $postUserId, userNameBak => $postUserName, postTime => $m->{now},
 		subject => $subject, body => $body, rawBody => $rawBody };
-	$m->editToDb($board, $post);
+	$m->editToDb({}, $post);
 	length($post->{body}) or $m->formError('errBdyEmpty');
 
 	# Check captcha
@@ -171,22 +171,22 @@ if (!$add || @{$m->{formErrors}}) {
 	my @navLinks = ({ url => $m->url('board_show', bid => $boardId), txt => 'comUp', ico => 'up' });
 	$m->printPageBar(mainTitle => $lng->{ntpTitle}, subTitle => $board->{title}, navLinks => \@navLinks);
 
+	# Print hints and form errors
+	$m->printFormErrors();
+
 	# Prepare preview body
 	if ($preview) {
 		$preview = { body => $body, rawBody => $rawBody };
-		$m->editToDb($board, $preview);
+		$m->editToDb({}, $preview);
 		$m->dbToDisplay($board, $preview);
 	}
 
-	# Prepare misc values
+	# Escape submitted values
 	my $unregNameEsc = $m->escHtml($unregName) || $cfg->{anonName};
 	my $subjectEsc = $m->escHtml($subject);
 	my $bodyEsc = $m->escHtml($body, 1);
 	my $rawBodyEsc = $m->escHtml($rawBody, 1);
 
-	# Print hints and form errors
-	$m->printFormErrors();
-	
 	# Print new topic form
 	print
 		"<form action='topic_add$m->{ext}' method='post'>\n",
@@ -199,28 +199,25 @@ if (!$add || @{$m->{formErrors}}) {
 	print
 		"<label class='lbw'>$lng->{ntpTpcName}\n",
 		"<input type='text' class='qwi' name='name' maxlength='$cfg->{maxUserNameLen}'",
-		" value='$unregNameEsc'/></label>\n"
+		" value='$unregNameEsc'></label>\n"
 		if $cfg->{allowUnregName} && $board->{unregistered} && !$userId;
 
-	# Print subject input
+	# Print subject and body inputs
 	print
 		"<label class='lbw'>$lng->{ntpTpcSbj}\n",
-		"<input type='text' class='fcs fwi' name='subject' maxlength='$cfg->{maxSubjectLen}'",
-		" autofocus='autofocus' required='required' value='$subjectEsc'/></label>\n",
-		"</fieldset>\n";
-
-	# Print body textarea
-	print
+		"<input type='text' class='fwi' name='subject' maxlength='$cfg->{maxSubjectLen}'",
+		" value='$subjectEsc' autofocus required></label>\n",
+		"</fieldset>\n",
 		"<fieldset>\n",
 		$m->tagButtons($board),
-		"<textarea class='tgi' name='body' rows='14' required='required'>$bodyEsc</textarea>\n",
+		"<textarea class='tgi' name='body' rows='14' required>$bodyEsc</textarea>\n",
 		"</fieldset>\n";
 
 	# Print raw body textarea
 	print
 		$rawBodyEsc ? "<fieldset>\n" : 
-			"<div><a class='clk' id='rawlnk'>$lng->{eptEditIRaw} &#187;</a></div>" .
-			"<fieldset id='rawfld' style='display: none'>\n",
+			"<div><a class='clk rvl' data-rvlid='#rawtxt' href='#'>$lng->{eptEditIRaw} &#187;"
+			. "</a></div>\n<fieldset id='rawtxt' style='display: none'>\n",
 		"<label class='lbw'>$lng->{eptEditRaw}\n",
 		"<textarea class='raw' name='raw' rows='14' spellcheck='false'>$rawBodyEsc",
 		"</textarea></label>\n",
@@ -231,11 +228,11 @@ if (!$add || @{$m->{formErrors}}) {
 	print MwfCaptcha::captchaInputs($m, 'pstCpt')
 		if $cfg->{captcha} >= 3 || $cfg->{captcha} >= 2 && !$m->{user}{id};
 
-	# Print rest of form
+	# Print submit section
 	print
 		$m->submitButton('ntpTpcB', 'write', 'add'),
 		$m->submitButton('ntpTpcPrvB', 'preview', 'preview'),
-		"<input type='hidden' name='bid' value='$boardId'/>\n",
+		"<input type='hidden' name='bid' value='$boardId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

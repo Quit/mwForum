@@ -31,7 +31,7 @@ my $boardId = $m->paramInt('bid');
 
 # Update user's previous online time
 if ($userId) {
-	my $prevOnCookie = $m->getCookie('prevon');
+	my $prevOnCookie = int($m->getCookie('prevon') || 0);
 	my $prevOnTime = $m->max($prevOnCookie, $user->{lastOnTime}) || $m->{now};
 	$m->{userUpdates}{prevOnTime} = $prevOnTime;
 	$m->setCookie('prevon', $prevOnTime);
@@ -39,6 +39,5 @@ if ($userId) {
 
 # Log action and finish
 $m->logAction(2, 'forum', 'enter', $userId);
-if ($cfg->{seoRewrite} && !$userId) { $m->redirect('forum.html') }
-elsif ($boardId) { $m->redirect('board_show', bid => $boardId) }
+if ($boardId) { $m->redirect('board_show', bid => $boardId) }
 else { $m->redirect('forum_show') }

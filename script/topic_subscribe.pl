@@ -65,8 +65,8 @@ if ($submitted) {
 		if (!@{$m->{formErrors}}) {
 			# Add topic subscription
 			$m->dbDo("
-				INSERT INTO topicSubscriptions (userId, topicId, instant) VALUES (?, ?, ?)",
-				$userId, $topicId, $instant);
+				INSERT INTO topicSubscriptions (userId, topicId, instant, unsubAuth) VALUES (?, ?, ?, ?)",
+				$userId, $topicId, $instant, $m->randomId());
 			
 			# Log action and finish
 			$m->logAction(1, 'topic', 'sub', $userId, $boardId, $topicId);
@@ -107,22 +107,22 @@ if (!$submitted || @{$m->{formErrors}}) {
 
 	if (!$subscribed) {
 		# Print subscribe form
-		my $instantDisbl = !$cfg->{subsInstant} ? "disabled='disabled'" : "";
-		my $digestDisbl = !$cfg->{subsDigest} ? "disabled='disabled'" : "";
-		my $instantChk = $cfg->{subsInstant} && !$cfg->{subsDigest} ? "checked='checked'" : "";
-		my $digestChk = $cfg->{subsDigest} ? "checked='checked'" : "";
+		my $instantDsb = !$cfg->{subsInstant} ? 'disabled' : "";
+		my $digestDsb = !$cfg->{subsDigest} ? 'disabled' : "";
+		my $instantChk = $cfg->{subsInstant} && !$cfg->{subsDigest} ? 'checked' : "";
+		my $digestChk = $cfg->{subsDigest} ? 'checked' : "";
 		print
 			"<form action='topic_subscribe$m->{ext}' method='post'>\n",
 			"<div class='frm'>\n",
 			"<div class='hcl'><span class='htt'>$lng->{tsbSubTtl}</span></div>\n",
 			"<div class='ccl'>\n",
-			"<div><label><input type='radio' name='instant' value='1' $instantChk $instantDisbl/>",
+			"<div><label><input type='radio' name='instant' value='1' $instantChk $instantDsb>",
 			" $lng->{tsbInstant}</label></div>\n",
-			"<div><label><input type='radio' name='instant' value='0' $digestChk $digestDisbl/>",
+			"<div><label><input type='radio' name='instant' value='0' $digestChk $digestDsb>",
 			" $lng->{tsbDigest}</label></div>\n",
 			$m->submitButton('tsbSubB', 'subscribe'),
-			"<input type='hidden' name='tid' value='$topicId'/>\n",
-			"<input type='hidden' name='act' value='subscribe'/>\n",
+			"<input type='hidden' name='tid' value='$topicId'>\n",
+			"<input type='hidden' name='act' value='subscribe'>\n",
 			$m->stdFormFields(),
 			"</div>\n",
 			"</div>\n",
@@ -136,8 +136,8 @@ if (!$submitted || @{$m->{formErrors}}) {
 			"<div class='hcl'><span class='htt'>$lng->{tsbUnsubTtl}</span></div>\n",
 			"<div class='ccl'>\n",
 			$m->submitButton('tsbUnsubB', 'remove'),
-			"<input type='hidden' name='tid' value='$topicId'/>\n",
-			"<input type='hidden' name='act' value='unsubscribe'/>\n",
+			"<input type='hidden' name='tid' value='$topicId'>\n",
+			"<input type='hidden' name='act' value='unsubscribe'>\n",
 			$m->stdFormFields(),
 			"</div>\n",
 			"</div>\n",

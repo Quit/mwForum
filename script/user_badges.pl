@@ -81,6 +81,10 @@ if (!$submitted || @{$m->{formErrors}}) {
 
 	# Print hints and form errors
 	$m->printFormErrors();
+	
+	# Get badges
+	my $userBadges = $m->fetchAllArray("
+		SELECT badge FROM userBadges WHERE userId = ?", $optUserId);
 
 	# Print badge table
 	print
@@ -90,20 +94,18 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<th colspan='2'>$lng->{bdgSelTtl}</th>\n",
 		"</tr>\n";
 
-	# Print badges
-	my $userBadges = $m->fetchAllArray("
-		SELECT badge FROM userBadges WHERE userId = ?", $optUserId);
+	# Print badge list
 	for my $line (@{$cfg->{badges}}) {
 		my ($id, $type, $smallIcon, $bigIcon, $title, $description) = 
 			$line =~ /(\w+)\s+(\w+)\s+(\S+)\s+(\S+)\s+"([^"]+)"\s+"([^"]+)"/;
 		next if !($type eq 'user' || $type eq 'admin' && $user->{admin});
-		my $checked = grep($_->[0] eq $id, @$userBadges) ? "checked='checked'" : '';
+		my $chk = grep($_->[0] eq $id, @$userBadges) ? 'checked' : "";
 		my $icon = $smallIcon ne '-' ? $smallIcon : $bigIcon;
 		print
 			"<tr class='crw'>\n",
 			"<td class='hco'><label>\n",
-			"<input type='checkbox' name='badge_$id' $checked/>\n",
-			"<img class='ubs' src='$cfg->{dataPath}/$icon' alt=''/> $title</label></td>\n",
+			"<input type='checkbox' name='badge_$id' $chk>\n",
+			"<img class='ubs' src='$cfg->{dataPath}/$icon' alt=''> $title</label></td>\n",
 			"<td>$description</td>\n",
 			"</tr>\n";
 	}
@@ -116,7 +118,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='hcl'><span class='htt'>$lng->{bdgSubmitTtl}</span></div>\n",
 		"<div class='ccl'>\n",
 		$m->submitButton('bdgSubmitB', 'tag'),
-		"<input type='hidden' name='uid' value='$optUserId'/>\n",
+		"<input type='hidden' name='uid' value='$optUserId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

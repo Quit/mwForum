@@ -39,6 +39,7 @@ my $remember = $m->paramBool('rmb');
 my $origin = $m->paramStr('ori');
 my $submitted = $m->paramBool('subm');
 my $openIdMode = $m->paramStrId('openid.mode');
+my $prevOnCookie = int($m->getCookie('prevon') || 0);
 
 # Process form or returning UA
 if ($submitted || $openIdMode) {
@@ -55,26 +56,22 @@ if ($submitted || $openIdMode) {
 
 	# Prepare cache
 	my $cacheFsPath = "$cfg->{attachFsPath}/openid";
-	mkdir $cacheFsPath or $m->error("Cache directory creation failed. ($!)") if !-d $cacheFsPath;
-	my $cache = Cache::FastMmap->new(
-		share_file => "$cacheFsPath/cache.db",
-		page_size => 4096, num_pages => 31,
-		raw_values => 1, unlink_on_exit => 0,
-	);
+	$m->createDirectories($cacheFsPath);
+	my $cache = Cache::FastMmap->new(share_file => "$cacheFsPath/cache.db",
+		page_size => 4096, num_pages => 31, raw_values => 1, unlink_on_exit => 0);
 
 	# Use own nonce
 	my $nonce = $m->randomId();
 	$cache->set("mwf.nonce:$nonce", 1);
 
 	# Create consumer object
-	my $csr = Net::OpenID::Consumer->new(
-		cache => $cache,
+	my $env = $m->{env};
+	my $schema = $cfg->{sslOnly} || $env->{https} ? 'https' : 'http';
+	my $baseUrl = "$schema://$env->{host}";
+	my $csr = Net::OpenID::Consumer->new(cache => $cache, consumer_secret => 1,
 		ua => LWPx::ParanoidAgent->new(timeout => 5),
 		args => sub { @_ ? $m->paramStr($_[0]) : $m->params() },
-		required_root => $cfg->{baseUrl},
-		consumer_secret => 1,
-		debug => $cfg->{debug} ? 1 : 0,
-	);
+		required_root => $baseUrl, debug => $cfg->{debug} ? 1 : 0);
 	$csr or $m->error("OpenID consumer creation failed.");
 	my $verifiedId = undef;
 
@@ -98,10 +95,10 @@ if ($submitted || $openIdMode) {
 			if (!@{$m->{formErrors}}) {
 				$origin =~ s/([^A-Za-z_0-9.!~()-])/'%'.unpack("H2",$1)/eg;
 				my $ori = $origin ? "ori=$origin&" : "";
+				my $returnUrl = "$baseUrl$env->{scriptUrlPath}/user_openid$m->{ext}?"
+					. "${ori}rmb=$remember&nnc=$nonce";
 				my $checkUrl = $claimedId->check_url(delayed_return => 1,
-					return_to => "$cfg->{baseUrl}$cfg->{scriptUrlPath}/user_openid$m->{ext}?"
-					. "${ori}rmb=$remember&nnc=$nonce",
-					trust_root => $cfg->{baseUrl});
+					trust_root => $baseUrl, return_to => $returnUrl);
 				my $sregNs = "openid.ns.sreg=http://openid.net/extensions/sreg/1.1";
 				my $sregParams = "openid.sreg.optional=nickname,fullname,dob,country";
 				redirectRaw($m, "$checkUrl&$sregNs&$sregParams");
@@ -190,7 +187,6 @@ if ($submitted || $openIdMode) {
 		}
 		else {
 			# Update user's previous online time and remember-me selection
-			my $prevOnCookie = $m->getCookie('prevon');
 			my $prevOnTime = $m->max($prevOnCookie, $dbUser->{lastOnTime});
 			my $tempLogin = $remember ? 0 : 1;
 			$m->dbDo("
@@ -200,7 +196,7 @@ if ($submitted || $openIdMode) {
 		}
 
 		# Set login cookie
-		$m->setCookie('login', "$dbUser->{id}-$dbUser->{password}", !$remember);
+		$m->setCookie('login', "$dbUser->{id}:$dbUser->{loginAuth}", !$remember);
 
 		# Log action and finish
 		$m->logAction(1, 'user', 'openid', $dbUser->{id});
@@ -211,38 +207,32 @@ if ($submitted || $openIdMode) {
 # Print forms
 if (!$submitted || @{$m->{formErrors}}) {
 	# Check cookie support
-	$m->setCookie('check', "1", 1) if !$cfg->{urlSessions} && !$submitted;
+	$m->setCookie('check', "1", 1) if !$submitted;
 
 	# Print header
-	$m->printHeader(undef, { cfg_urlSessions => $cfg->{urlSessions} });
+	$m->printHeader(undef, { !$prevOnCookie ? (checkCookie => 1) : () });
 
 	# Print page bar
 	my @navLinks = ({ url => $m->url('forum_show'), txt => 'comUp', ico => 'up' });
 	$m->printPageBar(mainTitle => $lng->{oidTitle}, navLinks => \@navLinks);
 
-	# Set submitted or database values
-	$remember = $submitted ? $remember : !$cfg->{tempLogin};
-
-	# Escape submitted values
-	my $openIdUrlEsc = $m->escHtml($openIdUrl);
-
-	# Determine checkbox, radiobutton and listbox states
-	my %state = (
-		remember => $remember ? "checked='checked'" : undef,
-	);
-
 	# Print hints and form errors
 	print
 		"<div class='frm hnt err' id='cookieError' style='display: none'>\n",
 		"<div class='ccl'>\n",
-		"<img class='sic sic_hint_error' src='$m->{cfg}{dataPath}/epx.png' alt=''/>\n",
+		"<img class='sic sic_hint_error' src='$m->{cfg}{dataPath}/epx.png' alt=''>\n",
 		"<p>$lng->{errNoCookies}</p>\n",
 		"</div>\n",
 		"</div>\n\n"
-		if !$cfg->{urlSessions} && !$submitted;
+		if !$submitted;
 	$m->printFormErrors();
 
-	# Print login form
+	# Prepare values
+	$remember = $submitted ? $remember : !$cfg->{tempLogin};
+	my $rememberChk = $remember ? 'checked' : "";
+	my $openIdUrlEsc = $m->escHtml($openIdUrl);
+
+	# Print OpenID login form
 	print
 		"<form action='user_openid$m->{ext}' method='post'>\n",
 		"<div class='frm'>\n",
@@ -250,11 +240,11 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='ccl'>\n",
 		"<fieldset>\n",
 		"<label class='lbw'>$lng->{oidLoginUrl}\n",
-		"<input type='text' class='fcs hwi' id='openid_url' name='openid_url' maxlength='200'",
-		" autofocus='autofocus' required='required' value='$openIdUrlEsc'/></label>\n",
+		"<input type='text' class='hwi' id='openid_url' name='openid_url' maxlength='200'",
+		" value='$openIdUrlEsc' autofocus required></label>\n",
 		"</fieldset>\n",
 		"<fieldset>\n",
-		"<label><input type='checkbox' name='rmb' $state{remember}/>",
+		"<label><input type='checkbox' name='rmb' $rememberChk>",
 		" $lng->{oidLoginRmbr}</label>\n",
 		"</fieldset>\n",
 		$m->submitButton('oidLoginB', 'openid'),
@@ -269,7 +259,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='frm'>\n",
 		"<div class='hcl'><span class='htt'>$lng->{oidListTtl}</span></div>\n",
 		"<div class='ccl'>\n",
-		join("", map("<div>".URI->new($_)->canonical()."</div>\n", @{$cfg->{openIdServers}})),
+		map("<div>" . URI->new($_)->canonical() . "</div>\n", @{$cfg->{openIdServers}}),
 		"</div>\n",
 		"</div>\n\n"
 		if @{$cfg->{openIdServers}};

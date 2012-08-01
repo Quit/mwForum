@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2012 Markus Wichitill
+#    Copyright © 1999-2012 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -14,10 +14,11 @@
 #------------------------------------------------------------------------------
 
 package MwfPlgInclude;
+use utf8;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine once);
-our $VERSION = "2.19.3";
+our $VERSION = "2.27.0";
 
 #------------------------------------------------------------------------------
 # Print additional HTTP header lines
@@ -43,8 +44,11 @@ sub htmlHeader
 	my %params = @_;
 	my $m = $params{m};
 
-	print
-		"<link rel='shortcut icon' href='/favicon.ico' type='image/x-icon'/>\n";
+	# Include Javascript for pages with posts
+	my $script = $m->{env}{script};
+	if ($script eq 'topic_show' || $script eq 'forum_overview') {
+		print	"<script src='/scripts/chessboard.js'></script>\n";
+	}
 }
 
 #------------------------------------------------------------------------------
@@ -56,7 +60,7 @@ sub top
 	my $m = $params{m};
 
 	# Print static text
-	print	"<img src='/ads/annoying-ad.png' alt='Buy stuff'/>\n";
+	print	"<img src='/ads/annoying-ad.png' alt='Buy stuff'>\n";
 }
 
 #------------------------------------------------------------------------------
@@ -67,10 +71,9 @@ sub middle
 	my %params = @_;
 	my $m = $params{m};
 
-	# Only on forum page
+	# Load UTF-8-encoded text from file and show on forum page only
 	if ($m->{env}{script} eq 'forum_show') {
-		# Load text from a file
-		open my $fh, "/etc/motd";
+		open my $fh, "<:utf8", "/etc/motd";
 		while (<$fh>) {	print }
 		close $fh;
 	}
@@ -149,11 +152,9 @@ sub tagButton
 	my $m = $params{m};
 	my $lines = $params{lines};
 
-	# Print YouTube tag insertion button
+	# Print audio tag insertion button
 	push @$lines, 
-		"<button type='button' class='tbt' title='YouTube Video ID'",
-		" onfocus='document.getElementsByName(\"body\")[0].focus()'",
-		" onclick='mwfInsertTags(\"yt\",\"yt\")'>yt</button>\n";
+		"<button type='button' class='tbt' id='tbt_audio' tabindex='-1' title='Audio'>aud</button>";
 }
 
 

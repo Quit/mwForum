@@ -35,7 +35,7 @@ my $hilite = $m->paramStr('hl');
 $topicId || $targetPostId or $m->error('errParamMiss');
 
 # Get missing topicId from post
-my $arcPfx = $m->{archive} ? 'arc_' : '';
+my $arcPfx = $m->{archive} ? 'arc_' : "";
 if (!$topicId && $targetPostId) {
 	$topicId = $m->fetchArray("
 		SELECT topicId FROM ${arcPfx}posts WHERE id = ?", $targetPostId);
@@ -296,18 +296,6 @@ my $postNum = $topic->{postNum};
 my $pageNum = int($postNum / $postsPP) + ($postNum % $postsPP != 0);
 my @pageLinks = $pageNum < 2 ? ()
 	: $m->pageLinks('topic_show', [ tid => $topicId ], $page, $pageNum);
-$pageLinks[-1] = { url => "topic_${topicId}_" . ($page + 1) . ".html", 
-	txt => 'comPgNext', dsb => $page == $pageNum }
-	if @pageLinks && $cfg->{seoRewrite} && !$userId;
-
-# Navigation button links
-my @navLinks = ();
-push @navLinks, { url => $m->url('prevnext', tid => $topicId, dir => 'prev'), 
-	txt => 'tpcPrev', ico => 'prev' };
-push @navLinks, { url => $m->url('prevnext', tid => $topicId, dir => 'next'), 
-	txt => 'tpcNext', ico => 'next' };
-push @navLinks, { url => $m->url('board_show', tid => $topicId, tgt => "tid$topicId"), 
-	txt => 'comUp', ico => 'up' };
 
 # User button links
 my @userLinks = ();
@@ -359,11 +347,13 @@ if (($boardAdmin || $topicAdmin) && !$m->{archive}) {
 }
 
 # Print page bar
-my $url = $m->url('forum_show', tgt => "bid$boardId");
-my $categStr = "<a href='$url'>$board->{categTitle}</a> / ";
-$url = $m->url('board_show', tid => $topicId, tgt => "tid$topicId");
-my $boardStr = "<a href='$url'>$board->{title}</a> / ";
+my $categUrl = $m->url('forum_show', tgt => "bid$boardId");
+my $categStr = "<a href='$categUrl'>$board->{categTitle}</a> / ";
+my $boardUrl = $m->url('board_show', tid => $topicId, tgt => "tid$topicId");
+my $boardStr = "<a href='$boardUrl'>$board->{title}</a> / ";
 my $lockStr = $topic->{locked} ? " $lng->{tpcLocked}" : "";
+my @navLinks = ({ url => $m->url('board_show', tid => $topicId, tgt => "tid$topicId"), 
+	txt => 'comUp', ico => 'up' });
 $m->printPageBar(
 	mainTitle => $lng->{tpcTitle}, 
 	subTitle => $categStr . $boardStr . $topic->{subject} . $lockStr, 
@@ -426,7 +416,7 @@ if ($poll && $polls && !$m->{archive}) {
 		print	"<div class='ccl'>\n<table class='plr'>\n";
 		for my $option (@$options) {
 			my $votes = $option->{votes};
-			my $percent = sprintf("%.0f", $votes / $voteSum * 100);
+			my $percent = int($votes / $voteSum * 100 + .5);
 			my $width = $percent * 4;
 			print	
 				"<tr>\n",
@@ -449,26 +439,25 @@ if ($poll && $polls && !$m->{archive}) {
 		my $votes = $m->fetchAllArray("
 			SELECT optionId FROM pollVotes WHERE pollId = ? AND userId = ?", $pollId, $userId);
 
-		print "<div class='ccl'>\n";
-
 		# Print poll options
+		print "<div class='ccl'>\n";
 		for my $option (@$options) {
-			my $disabled = "";
+			my $votedAttr = "";
 			for my $vote (@$votes) { 
-				$disabled = "disabled='disabled' checked='checked'", last if $vote->[0] == $option->{id} 
+				$votedAttr = "disabled checked", last if $vote->[0] == $option->{id} 
 			}
 			print $poll->{multi} 
-				? "<div><label><input type='checkbox' name='option_$option->{id}' $disabled/> " .
-					"$option->{title}</label></div>\n"
-				: "<div><label><input type='radio' name='option' value='$option->{id}'/> " .
-					"$option->{title}</label></div>\n";
+				? "<div><label><input type='checkbox' name='option_$option->{id}' $votedAttr> "
+					. "$option->{title}</label></div>\n"
+				: "<div><label><input type='radio' name='option' value='$option->{id}'> "
+					. "$option->{title}</label></div>\n";
 		}
 
-		$url = $m->url('topic_show', tid => $topicId, results => 1);	
+		my $topicUrl = $m->url('topic_show', tid => $topicId, results => 1);	
 		print
 			$m->submitButton('tpcPolVote', 'poll'),
-			$poll->{multi} ? "" : "<a href='$url'>$lng->{tpcPolShwRes}</a>\n",
-			"<input type='hidden' name='tid' value='$topicId'/>\n",
+			$poll->{multi} ? "" : "<a href='$topicUrl'>$lng->{tpcPolShwRes}</a>\n",
+			"<input type='hidden' name='tid' value='$topicId'>\n",
 			$m->stdFormFields(),
 			"</div>\n",
 	}
@@ -476,13 +465,13 @@ if ($poll && $polls && !$m->{archive}) {
 	# Print lock poll button
 	my @btlLines = ();
 	if ($canPoll && !$poll->{locked}) {
-		$url = $m->url('poll_lock', tid => $topicId, auth => 1);
+		my $url = $m->url('poll_lock', tid => $topicId, auth => 1);
 		push @btlLines, "<a href='$url' title='$lng->{tpcPolLockTT}'>$lng->{tpcPolLock}</a>\n";
 	}
 
 	# Print delete poll button
 	if ($canPoll && (!$poll->{locked} || $boardAdmin || $topicAdmin)) {
-		$url = $m->url('user_confirm', tid => $topicId, pollId => $pollId, script => 'poll_delete',
+		my $url = $m->url('user_confirm', tid => $topicId, pollId => $pollId, script => 'poll_delete',
 			auth => 1, name => $poll->{title});
 		push @btlLines, "<a href='$url' title='$lng->{tpcPolDelTT}'>$lng->{tpcPolDel}</a>\n";
 	}
@@ -537,10 +526,10 @@ my $printPost = sub {
 			}
 			
 			# Format username
-			$url = $m->url('user_info', uid => $postUserId);
+			my $userUrl = $m->url('user_info', uid => $postUserId);
 			my $userNameStr = $post->{userName} || $post->{userNameBak} || " - ";
 			my $openIdStr = $post->{openId} ? "title='OpenID: $post->{openId}'" : "";
-			$userNameStr = "<a href='$url' $openIdStr>$userNameStr</a>" if $postUserId > 0;
+			$userNameStr = "<a href='$userUrl' $openIdStr>$userNameStr</a>" if $postUserId > 0;
 			$userNameStr .= " " . $m->formatUserTitle($post->{userTitle})
 				if $post->{userTitle} && $user->{showDeco};
 			$userNameStr .= " " . $m->formatUserRank($post->{userPostNum})
@@ -552,7 +541,7 @@ my $printPost = sub {
 					for my $userBadge (@{$userBadges{$postUserId}}) {
 						if ($userBadge eq $badge->[0]) {
 							$userNameStr .= " <img class='ubs' src='$cfg->{dataPath}/$badge->[2]'"
-								. " title='$badge->[1]' alt=''/>";
+								. " title='$badge->[1]' alt=''>";
 							last;
 						}
 					}
@@ -575,7 +564,7 @@ my $printPost = sub {
 				}
 				if ($code && $code ne $cfg->{userFlagSkip}) {
 					$userNameStr .= " <img class='flg' src='$cfg->{dataPath}/flags/$code.png'"
-						. " alt='[$code]' title='$name'/>";
+						. " alt='[$code]' title='$name'>";
 				}
 			}
 
@@ -588,9 +577,9 @@ my $printPost = sub {
 
 			# Format invisible and locked post icons
 			my $invisImg = !$post->{approved} ? " <img class='sic sic_post_i' $emptyPixel"
-				. " title='$lng->{tpcInvisTT}' alt='$lng->{tpcInvis}'/> " : "";
+				. " title='$lng->{tpcInvisTT}' alt='$lng->{tpcInvis}'> " : "";
 			my $lockImg = $post->{locked} ? " <img class='sic sic_topic_l' $emptyPixel"
-				. " title='$lng->{tpcLockdTT}' alt='$lng->{tpcLockd}'/> " : "";
+				. " title='$lng->{tpcLockdTT}' alt='$lng->{tpcLockd}'> " : "";
 				
 			# Highlight search keywords
 			if (@hiliteWords) {
@@ -653,24 +642,24 @@ my $printPost = sub {
 						}
 					}
 					if ($nextPostId) {
-						$url = $postsById{$nextPostId}{page} == $page 
+						my $url = $postsById{$nextPostId}{page} == $page 
 							? "#pid$nextPostId" : $m->url('topic_show', pid => $nextPostId);
 						print
 							"<a class='nnl' href='$url'><img class='sic sic_post_nn' $emptyPixel",
-							" title='$lng->{tpcNxtPstTT}' alt='$lng->{tpcNxtPst}'/></a>\n";
+							" title='$lng->{tpcNxtPstTT}' alt='$lng->{tpcNxtPst}'></a>\n";
 					}
 				}
 
 				# Print jump to parent post button or alignment dummy
 				if (!$parentId) {
-					print "<img class='sic sic_nav_up' $emptyPixel style='visibility: hidden' alt=''/>\n";
+					print "<img class='sic sic_nav_up' $emptyPixel style='visibility: hidden' alt=''>\n";
 				}
 				else {
 					my $url = $postsById{$parentId}{page} == $page 
 						? "#pid$parentId" : $m->url('topic_show', pid => $parentId);
 					print
 						"<a class='prl' href='$url'><img class='sic sic_nav_up' $emptyPixel",
-						" title='$lng->{tpcParentTT}' alt='$lng->{tpcParent}'/></a>\n";
+						" title='$lng->{tpcParentTT}' alt='$lng->{tpcParent}'></a>\n";
 				}
 			}
 			elsif ($postPos == 0 && @newUnrPostIds && @newUnrPostIds < $postNum && $postNum > 2) {
@@ -680,7 +669,7 @@ my $printPost = sub {
 					? "#pid$nextPostId" : $m->url('topic_show', pid => $nextPostId);
 				print
 					"<a href='$url'><img class='sic sic_post_nn' $emptyPixel",
-					" title='$lng->{tpcNxtPstTT}' alt='$lng->{tpcNxtPst}'/></a>\n";
+					" title='$lng->{tpcNxtPstTT}' alt='$lng->{tpcNxtPst}'></a>\n";
 			}
 
 			print "</span>\n";
@@ -691,13 +680,13 @@ my $printPost = sub {
 				my $alt = $collapsed ? '+' : '-';
 				print 
 					"<img class='tgl clk sic sic_$img' id='tgl$postId' $emptyPixel",
-					" title='$lng->{tpcBrnCollap}' alt='$alt'/>\n";
+					" title='$lng->{tpcBrnCollap}' alt='$alt'>\n";
 			}
 
 			# Print icon and main header items
-			$url = $m->url('topic_show', pid => $postId, tgt => "pid$postId");
+			my $postUrl = $m->url('topic_show', pid => $postId, tgt => "pid$postId");
 			print
-				"<a class='psl' href='$url'><img $emptyPixel $imgAttr/></a>\n",
+				"<a class='psl' href='$postUrl'><img $emptyPixel $imgAttr></a>\n",
 				$lockImg,
 				$invisImg,
 				$postUserId > -2 ? "<span class='htt'>$lng->{tpcBy}</span> $userNameStr\n" : "",
@@ -719,11 +708,11 @@ my $printPost = sub {
 			# Print avatar
 			if ($showAvatars && index($post->{avatar}, "gravatar:") == 0) {
 				my $md5 = $m->md5(substr($post->{avatar}, 9));
-				my $url = "$m->{http}://gravatar.com/avatar/$md5?s=$cfg->{avatarWidth}";
-				print "<img class='ava' src='$url' alt=''/>\n";
+				my $url = "//gravatar.com/avatar/$md5?s=$cfg->{avatarWidth}";
+				print "<img class='ava' src='$url' alt=''>\n";
 			}
 			elsif ($showAvatars && $post->{avatar}) {
-				print	"<img class='ava' src='$cfg->{attachUrlPath}/avatars/$post->{avatar}' alt=''/>\n";
+				print	"<img class='ava' src='$cfg->{attachUrlPath}/avatars/$post->{avatar}' alt=''>\n";
 			}
 
 			# Print body
@@ -733,7 +722,7 @@ my $printPost = sub {
 			my @btlLines = ();
 			if (($boardWritable && !$topic->{locked} && !$post->{locked} || $boardAdmin || $topicAdmin) 
 				&& $postUserId != -2) {
-				$url = $m->url('post_add', pid => $postId);
+				my $url = $m->url('post_add', pid => $postId);
 				push @btlLines, $m->buttonLink($url, 'tpcReply', 'write');
 			}
 
@@ -741,7 +730,7 @@ my $printPost = sub {
 			if (($boardWritable && !$topic->{locked} && !$post->{locked} || $boardAdmin || $topicAdmin)
 				&& $cfg->{quote} && ($flat || $cfg->{quote} == 2)
 				&& $postUserId != -2) {
-				$url = $m->url('post_add', pid => $postId, quote => 1);
+				my $url = $m->url('post_add', pid => $postId, quote => 1);
 				push @btlLines, $m->buttonLink($url, 'tpcQuote', 'write');
 			}
 
@@ -750,7 +739,7 @@ my $printPost = sub {
 				&& ($userId == $postUserId && !$topic->{locked} 
 				&& !$post->{locked} || $boardAdmin || $topicAdmin)
 				&& !($postUserId == -2 && $postId != $basePostId)) {
-				$url = $m->url('post_edit', pid => $postId);
+				my $url = $m->url('post_edit', pid => $postId);
 				push @btlLines, $m->buttonLink($url, 'tpcEdit', 'edit');
 			}
 
@@ -759,36 +748,35 @@ my $printPost = sub {
 				&& ($userId == $postUserId && !$topic->{locked} 
 				&& !$post->{locked} || $boardAdmin || $topicAdmin)
 				&& ($board->{attach} == 1 || $board->{attach} == 2 && $boardAdmin)) {
-				$url = $m->url('post_attach', pid => $postId);
+				my $url = $m->url('post_attach', pid => $postId);
 				push @btlLines, $m->buttonLink($url, 'tpcAttach', 'attach');
 			}
 
 			# Print report button
-			if (($cfg->{reports} && $userId && $userId != $postUserId && $postUserId != -2)
-				|| (!$board->{flat} && $boardAdmin && $post->{postTime} > $m->{now} - 86400)) {
-				$url = $m->url('report_add', pid => $postId);
+			if ($userId) {
+				my $url = $m->url('report_add', pid => $postId);
 				push @btlLines, $m->buttonLink($url, 'tpcReport', 'report');
 			}
 
 			# Print approve button
 			if (!$post->{approved} && ($boardAdmin || $topicAdmin)) {
-				$url = $m->url('post_approve', pid => $postId, auth => 1);
+				my $url = $m->url('post_approve', pid => $postId, auth => 1);
 				push @btlLines, $m->buttonLink($url, 'tpcApprv', 'approve');
 			}
 
 			# Print lock/unlock button
 			if (!$post->{locked} && ($boardAdmin || $topicAdmin) && $postUserId != -2) {
-				$url = $m->url('post_lock', pid => $postId, act => 'lock', auth => 1);
+				my $url = $m->url('post_lock', pid => $postId, act => 'lock', auth => 1);
 				push @btlLines, $m->buttonLink($url, 'tpcLock', 'lock');
 			}
 			elsif (($boardAdmin || $topicAdmin) && $postUserId != -2) {
-				$url = $m->url('post_lock', pid => $postId, act => 'unlock', auth => 1);
+				my $url = $m->url('post_lock', pid => $postId, act => 'unlock', auth => 1);
 				push @btlLines, $m->buttonLink($url, 'tpcUnlock', 'lock');
 			}
 
 			# Print branch button
 			if ($postId != $basePostId && $postUserId != -2 && ($boardAdmin || $topicAdmin)) {
-				$url = $m->url('branch_admin', pid => $postId);
+				my $url = $m->url('branch_admin', pid => $postId);
 				push @btlLines, $m->buttonLink($url, 'tpcBranch', 'branch');
 			}
 
@@ -798,7 +786,7 @@ my $printPost = sub {
 				&& !$post->{locked} || $boardAdmin || $topicAdmin)
 				&& ($postId != $basePostId || @$posts == 1)
 				&& !@{$postsByParent{$postId}}) {
-				$url = $m->url('user_confirm', script => 'post_delete', pid => $postId, 
+				my $url = $m->url('user_confirm', script => 'post_delete', pid => $postId, 
 					notify => ($postUserId != $userId ? 1 : 0), name => $postId);
 				push @btlLines, $m->buttonLink($url, 'tpcDelete', 'delete');
 			}

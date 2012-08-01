@@ -108,7 +108,7 @@ for my $table (@schema) {
 	my $name = $table->[0];
 	print "Copying table $name...\n";
 	my $fields = join(",", @$table[1 .. @$table - 1]);
-	print "  $fields\n";
+	#print "  $fields\n";
 	my $order = $table->[1] eq 'id' ? "ORDER BY id" : "";
 	my $selSth = $srcDbh->prepare("SELECT $fields FROM $name $order");
 	$selSth->execute();
@@ -128,7 +128,7 @@ if ($dstDriver eq 'pg') {
 print "Committing...\n";
 $srcDbh->commit();
 $dstDbh->commit();
-print "Vacuuming...\n";
+print "Optimizing...\n";
 if ($dstDriver eq 'mysql') {
 	$dstDbh->do("OPTIMIZE TABLE $_->[0]") for @schema;
 }

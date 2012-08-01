@@ -24,7 +24,7 @@ use MwfMain;
 #------------------------------------------------------------------------------
 
 # Init
-my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
+my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_, autocomplete => 1);
 $m->cacheUserStatus() if $userId;
 
 # Check if access should be denied
@@ -53,8 +53,8 @@ $order = 'desc' if $order !~ /^(?:asc|desc)\z/;
 $gallery = 0 if !$cfg->{attachGallery};
 
 # Preserve parameters in links
-my @params = (words => $words, user => $userName, board => $categBoardIdStr, field => $field,
-	min => $minAge, max => $maxAge, order => $order, gallery => $gallery);
+my @params = ( words => $words, user => $userName, board => $categBoardIdStr, field => $field,
+	min => $minAge, max => $maxAge, order => $order, gallery => $gallery );
 
 # Get visible boards with attachments enabled
 my $boards = $m->fetchAllHash("
@@ -146,13 +146,9 @@ $attachments = $m->fetchAllHash("
 	ORDER BY attachments.id $order",
 	{ pageAttachIds => \@pageAttachIds });
 
-# Determine checkbox and listbox states
-my %state = (
-	$categBoardIdStr => "selected='selected'",
-	$field => "selected='selected'",
-	$order => "selected='selected'",
-	gallery => $gallery ? "checked='checked'" : undef,
-);
+# Determine checkbox, radiobutton and listbox states
+my $galleryChk = $gallery ? 'checked' : "";
+my %state = ( $categBoardIdStr => 'selected', $field => 'selected', $order => 'selected' );
 
 # Display age 0 as empty string
 $minAge = $minAge ? $minAge : "";
@@ -170,10 +166,9 @@ print
 	"<div class='ccl'>\n",
 	"<div class='cli'>\n",
 	"<label>$lng->{aliLfmWords}\n",
-	"<input type='text' class='fcs' name='words' size='20'",
-	" autofocus='autofocus' value='$wordsEsc'/></label>\n",
+	"<input type='text' name='words' size='20' value='$wordsEsc' autofocus></label>\n",
 	"<label>$lng->{aliLfmUser}\n",
-	"<input type='text' name='user' size='15' value='$userNameEsc'/></label>\n",
+	"<input type='text' class='acu acs' name='user' size='15' value='$userNameEsc'></label>\n",
 	"<label>$lng->{aliLfmBoard}\n",
 	"<select name='board' size='1'>\n",
 	"<option value='0'>$lng->{seaBoardAll}</option>\n";
@@ -198,20 +193,26 @@ print
 	"<option value='filename' $state{filename}>$lng->{aliLfmFldFnm}</option>\n",
 	"<option value='caption' $state{caption}>$lng->{aliLfmFldCpt}</option>\n",
 	"</select></label>\n",
+	"<datalist id='age'>\n",
+	"<option value='1'>\n",
+	"<option value='7'>\n",
+	"<option value='30'>\n",
+	"<option value='90'>\n",
+	"<option value='365'>\n",
+	"</datalist>\n",
 	"<label>$lng->{aliLfmMinAge}\n",
-	"<input type='text' name='min' size='3' maxlength='4' value='$minAge'/></label>\n",
+	"<input type='text' name='min' size='3' maxlength='4' list='age' value='$minAge'></label>\n",
 	"<label>$lng->{aliLfmMaxAge}\n",
-	"<input type='text' name='max' size='3' maxlength='4' value='$maxAge'/></label>\n",
+	"<input type='text' name='max' size='3' maxlength='4' list='age' value='$maxAge'></label>\n",
 	"<label>$lng->{aliLfmOrder}\n",
 	"<select name='order' size='1'>\n",
 	"<option value='desc' $state{desc}>$lng->{aliLfmOrdDsc}</option>\n",
 	"<option value='asc' $state{asc}>$lng->{aliLfmOrdAsc}</option>\n",
 	"</select></label>\n",
-	$cfg->{attachGallery} ? "<label><input type='checkbox' name='gallery' value='1' "
-		. "$state{gallery}/>$lng->{aliLfmGall}</label>\n" : "",
+	$cfg->{attachGallery} ? "<label><input type='checkbox' name='gallery' value='1'"
+		. " $galleryChk>$lng->{aliLfmGall}</label>\n" : "",
 	$m->submitButton('aliLfmListB', 'search'),
 	"</div>\n",
-	$m->{sessionId} ? "<input type='hidden' name='sid' value='$m->{sessionId}'/>\n" : "",
 	"</div>\n",
 	"</div>\n",
 	"</form>\n\n";
@@ -229,22 +230,22 @@ if (!$gallery) {
 		"</tr>\n";
 	
 	for my $attach (@$attachments) {
+		my $fileName = $attach->{fileName};
 		my $postId = $attach->{postId};
 		my $postIdMod = $postId % 100;
-		my $attUrlPath = "$cfg->{attachUrlPath}/$postIdMod/$postId/$attach->{fileName}";
-		my $attUrl = $attach->{fileName} =~ /\.(?:jpg|png|gif)\z/i
-		 ? $m->url('attach_show', aid => $attach->{id}) : $attUrlPath;
+		my $attShowUrl = $attach->{webImage} ? $m->url('attach_show', aid => $attach->{id}) 
+			: "$cfg->{attachUrlPath}/$postIdMod/$postId/$fileName";
 		my $postUrl = $m->url('topic_show', pid => $postId);
-		my $size = -s "$cfg->{attachFsPath}/$postIdMod/$postId/$attach->{fileName}";
-		$size = sprintf("%.0fk", $size / 1024);
+		my $size = -s $m->encFsPath("$cfg->{attachFsPath}/$postIdMod/$postId/$fileName");
+		my $sizeStr = $m->formatSize($size);
 		my $userNameStr = $attach->{userNameBak} || " - ";
 		my $userUrl = $m->url('user_info', uid => $attach->{userId});
 		
 		print
 			"<tr class='crw'>\n",
-			"<td><a href='$attUrl'>$attach->{fileName}</a></td>\n",
+			"<td><a href='$attShowUrl'>$fileName</a></td>\n",
 			"<td>$attach->{caption}</td>\n",
-			"<td>$size</td>\n",
+			"<td>$sizeStr</td>\n",
 			"<td><a href='$postUrl'>$postId</a></td>\n",
 			"<td><a href='$userUrl'>$userNameStr</a></td>\n",
 			"</tr>\n";
@@ -255,34 +256,34 @@ if (!$gallery) {
 # Print attachment image gallery
 else {
 	print	"<table class='tbl igl'>\n<tr class='crw'>\n";
-	for (my $i=0; $i < @$attachments; $i++) {
+	for (my $i = 0; $i < @$attachments; $i++) {
 		print "</tr><tr class='crw'>\n" if $i && $i % 4 == 0;
 		
 		# Determine values
 		my $attach = @$attachments[$i];
+		my $fileName = $attach->{fileName};
 		my $postId = $attach->{postId};
 		my $postIdMod = $postId % 100;
-		my $imgFsPath = "$cfg->{attachFsPath}/$postIdMod/$postId/$attach->{fileName}";
-		my $imgUrlPath = "$cfg->{attachUrlPath}/$postIdMod/$postId/$attach->{fileName}";
+		my $imgFile = "$cfg->{attachFsPath}/$postIdMod/$postId/$fileName";
+		my $imgUrl = "$cfg->{attachUrlPath}/$postIdMod/$postId/$fileName";
 		my $imgShowUrl = $m->url('attach_show', aid => $attach->{id});
-		my $thbFsPath = $imgFsPath;
-		my $thbUrlPath = $imgUrlPath;
-		$thbFsPath =~ s!\.(?:jpg|png|gif)\z!.thb.jpg!i;
-		$thbUrlPath =~ s!\.(?:jpg|png|gif)\z!.thb.jpg!i;
-		my $imgSize = -s $imgFsPath;
-		my $imgSizeStr = sprintf("%.0fk", $imgSize / 1024);
-		my $useThb = -f $thbFsPath || $m->addThumbnail($imgFsPath);
+		my $thbFile = $imgFile;
+		my $thbUrl = $imgUrl;
+		$thbFile =~ s!\.(?:jpg|png|gif)\z!.thb.jpg!i;
+		$thbUrl =~ s!\.(?:jpg|png|gif)\z!.thb.jpg!i;
+		my $size = -s $m->encFsPath($imgFile);
+		my $sizeStr = $m->formatSize($size);
+		my $useThb = -f $m->encFsPath($thbFile) || $m->addThumbnail($imgFile);
 		my $postUrl = $m->url('topic_show', pid => $postId);
-		my $src = $useThb ? $thbUrlPath : $imgUrlPath;
+		my $src = $useThb ? $thbUrl : $imgUrl;
 		my $thbStr = $useThb >= 0 
-			? "<img class='igl' src='$src' title='$imgSizeStr' alt=''/>"
-			: ($imgSize ? "?" : "404");
+			? "<img class='igl' src='$src' title='$sizeStr' alt=''>" : ($size ? "?" : "404");
 		
 		# Print image and file size
 		print
 			"<td>\n",
 			"<div><a href='$postUrl'>$thbStr</a></div>\n",
-			"<div><a href='$imgShowUrl'>$attach->{fileName}</a></div>\n",
+			"<div><a href='$imgShowUrl'>$fileName</a></div>\n",
 			"<div>$attach->{caption}</div>\n",
 			"</td>\n";
 	}

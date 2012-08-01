@@ -89,14 +89,14 @@ if (!$submitted || @{$m->{formErrors}}) {
 
 	# Print page bar
 	my @navLinks = ({ url => $m->url('categ_admin'), txt => 'comUp', ico => 'up' });
-	$m->printPageBar(mainTitle => "Category", navLinks => \@navLinks);
-
-	# Set submitted or database values
-	my $titleEsc = $submitted ? $m->escHtml($title) : $categ->{title};
+	$m->printPageBar(mainTitle => "Category", subTitle => $categ->{title}, navLinks => \@navLinks);
 
 	# Print hints and form errors
 	$m->printFormErrors();
 	
+	# Prepare values
+	my $titleEsc = $submitted ? $m->escHtml($title) : $categ->{title};
+
 	# Print options form
 	print
 		"<form action='categ_options$m->{ext}' method='post'>\n",
@@ -104,16 +104,16 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='hcl'><span class='htt'>Options</span></div>\n",
 		"<div class='ccl'>\n",
 		"<label class='lbw'>Title (50 chars)\n",
-		"<input type='text' class='fcs hwi' name='title' maxlength='50'",
-		" autofocus='autofocus' required='required' value='$titleEsc'/></label>\n",
+		"<input type='text' class='hwi' name='title' maxlength='50' value='$titleEsc'",
+		" autofocus required></label>\n",
 		"<label class='lbw'>Position\n",
 		"<select name='pos' size='1'>\n",
-		"<option value='-1' selected='selected'>Unchanged</option>\n",
+		"<option value='-1' selected>Unchanged</option>\n",
 		"<option value='0'>Top</option>\n",
 		map("<option value='$_->{pos}'>Below \"$_->{title}\"</option>\n", @$categs),
 		"</select></label>\n",
 		$m->submitButton("Change", 'admopt'),
-		"<input type='hidden' name='cid' value='$categId'/>\n",
+		"<input type='hidden' name='cid' value='$categId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

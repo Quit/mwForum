@@ -46,7 +46,7 @@ length($body) <= $cfg->{chatMaxLength} or $m->error('errBdyLen');
 
 # Process text
 my $chat = { isChat => 1, body => $body };
-$m->editToDb($board, $chat);
+$m->editToDb({}, $chat);
 
 # Any text left after filtering?
 length($chat->{body}) or $m->error('errBdyEmpty');

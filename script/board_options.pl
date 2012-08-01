@@ -118,6 +118,9 @@ if (!$submitted || @{$m->{formErrors}}) {
 	# Print page bar
 	my @navLinks = ({ url => $m->url('board_show', bid => $boardId), txt => 'comUp', ico => 'up' });
 	$m->printPageBar(mainTitle => "Board", subTitle => $board->{title}, navLinks => \@navLinks);
+
+	# Print hints and form errors
+	$m->printFormErrors();
 	
 	# Set submitted or database values
 	my $titleEsc = $submitted ? $m->escHtml($title) : $board->{title};
@@ -138,23 +141,15 @@ if (!$submitted || @{$m->{formErrors}}) {
 	$longDescEsc =~ s!&lt;br/&gt;!\n!g;
 
 	# Determine checkbox, radiobutton and listbox states
-	my $checked = "checked='checked'";
-	my %state = (
-		topicAdmins => $topicAdmins ? $checked : undef,
-		flat => $flat ? $checked : undef,
-		approve => $approve ? $checked : undef,
-		unregistered => $unregistered ? $checked : undef,
-		list => $list ? $checked : undef,
-		"private$private" => $checked,
-		"announce$announce" => $checked,
-		"attach$attach" => $checked,
-		"category$categId" => "selected='selected'",
-	);
-	$state{attach} = "disabled='disabled'" if !$cfg->{attachments};
+	my $topicAdminsChk = $topicAdmins ? 'checked' : "";
+	my $flatChk = $flat ? 'checked' : "";
+	my $approveChk = $approve ? 'checked' : "";
+	my $unregisteredChk = $unregistered ? 'checked' : "";
+	my $listChk = $list ? 'checked' : "";
+	my %state = ( "private$private" => 'checked', "announce$announce" => 'checked',
+		"attach$attach" => 'checked', "category$categId" => 'selected' );
+	$state{attach} = 'disabled' if !$cfg->{attachments};
 
-	# Print hints and form errors
-	$m->printFormErrors();
-	
 	# Print options form
 	print
 		"<form action='board_options$m->{ext}' method='post'>\n",
@@ -163,19 +158,19 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='ccl'>\n",
 		"<fieldset>\n",
 		"<label class='lbw'>Title (50 chars)\n",
-		"<input type='text' class='fcs hwi' name='title' maxlength='50'",
-		" autofocus='autofocus' required='required' value='$titleEsc'/></label>\n",
+		"<input type='text' class='hwi' name='title' maxlength='50' value='$titleEsc'",
+		" autofocus required></label>\n",
 		"<label class='lbw'>Short Description (200 chars, shown on forum page, HTML enabled)\n",
-		"<input type='text' class='fwi' name='shortDesc' maxlength='200' value='$shortDescEsc'/></label>\n",
+		"<input type='text' class='fwi' name='shortDesc' maxlength='200' value='$shortDescEsc'></label>\n",
 		"<label class='lbw'>Long Description (shown on board info and optionally board page, HTML enabled)\n",
 		"<textarea name='longDesc' rows='3'>$longDescEsc</textarea></label>\n",
 		"<label class='lbw'>Locking (days after that inactive topics get locked, 0 = never)\n",
-		"<input type='number' name='locking' value='$locking'/></label>\n",
+		"<input type='number' name='locking' value='$locking'></label>\n",
 		"<label class='lbw'>Expiration (days after that inactive topics get deleted, 0 = never)\n",
-		"<input type='number' name='expiration' value='$expiration'/></label>\n",
+		"<input type='number' name='expiration' value='$expiration'></label>\n",
 		"<label class='lbw'>Category and position\n",
 		"<select name='catPos' size='1'>\n",
-		"<option value='-1 -1' selected='selected'>Unchanged</option>\n";
+		"<option value='-1 -1' selected>Unchanged</option>\n";
 
 	# Print category/position list
 	for my $cat (@$categs) {
@@ -195,46 +190,46 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"</fieldset>\n",
 		"<fieldset>\n",
 		"<legend>Read Access</legend>\n",
-		"<div><label><input type='radio' name='private' value='1' $state{private1}/>",
+		"<div><label><input type='radio' name='private' value='1' $state{private1}>",
 		"Only moderators and members can read board</label></div>\n",
-		"<div><label><input type='radio' name='private' value='2' $state{private2}/>",
+		"<div><label><input type='radio' name='private' value='2' $state{private2}>",
 		"Only registered users can read board</label></div>\n",
-		"<div><label><input type='radio' name='private' value='0' $state{private0}/>",
+		"<div><label><input type='radio' name='private' value='0' $state{private0}>",
 		"Everybody can read board</label></div>\n",
-		"<div><label><input type='checkbox' name='list' $state{list}/>",
+		"<div><label><input type='checkbox' name='list' $listChk>",
 		"List board on forum page even if user has no access</label></div>\n",
 		"</fieldset>\n",
 		"<fieldset>\n",
 		"<legend>Write Access</legend>\n",
-		"<div><label><input type='radio' name='announce' value='1' $state{announce1}/>",
+		"<div><label><input type='radio' name='announce' value='1' $state{announce1}>",
 		"Only moderators and members can post</label></div>\n",
-		"<div><label><input type='radio' name='announce' value='2' $state{announce2}/>",
+		"<div><label><input type='radio' name='announce' value='2' $state{announce2}>",
 		"Only moderators and members can start topics, all users can reply</label></div>\n",
-		"<div><label><input type='radio' name='announce' value='0' $state{announce0}/>",
+		"<div><label><input type='radio' name='announce' value='0' $state{announce0}>",
 		"All users can post</label></div>\n",
-		"<div><label><input type='checkbox' name='unregistered' $state{unregistered}/>",
+		"<div><label><input type='checkbox' name='unregistered' $unregisteredChk>",
 		"Unregistered Posting (unregistered guests can post)</label></div>\n",
 		"</fieldset>\n",
 		"<fieldset>\n",
 		"<legend>Attachments</legend>\n",
-		"<div><label><input type='radio' name='attach' value='0' $state{attach0}/>",
+		"<div><label><input type='radio' name='attach' value='0' $state{attach0}>",
 		"Disable</label></div>\n",
-		"<div><label><input type='radio' name='attach' value='2' $state{attach2}/>",
+		"<div><label><input type='radio' name='attach' value='2' $state{attach2}>",
 		"Enable uploading for admins and moderators only</label></div>\n",
-		"<div><label><input type='radio' name='attach' value='1' $state{attach1}/>",
+		"<div><label><input type='radio' name='attach' value='1' $state{attach1}>",
 		"Enable uploading for all registered users</label></div>\n",
 		"</fieldset>\n",
 		"<fieldset>\n",
 		"<legend>Miscellaneous Options</legend>\n",
-		"<div><label><input type='checkbox' name='flat' $state{flat}/>",
-		"Non-Threaded (no post indentation in topics)</label></div>\n",
-		"<div><label><input type='checkbox' name='approve' $state{approve}/>",
+		"<div><label><input type='checkbox' name='flat' $flatChk>",
+		"Non-Threaded (no topic tree structure)</label></div>\n",
+		"<div><label><input type='checkbox' name='approve' $approveChk>",
 		"Moderation (posts have to be approved by moderators to be visible)</label></div>\n",
-		"<div><label><input type='checkbox' name='topicAdmins' $state{topicAdmins}/>",
+		"<div><label><input type='checkbox' name='topicAdmins' $topicAdminsChk>",
 		"Topic Moderators (topic creators are moderators inside their topics)</label></div>\n",
 		"</fieldset>\n",
 		$m->submitButton("Change", 'admopt'),
-		"<input type='hidden' name='bid' value='$boardId'/>\n",
+		"<input type='hidden' name='bid' value='$boardId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

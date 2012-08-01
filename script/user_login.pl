@@ -32,9 +32,11 @@ my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
 # Get CGI parameters
 my $userName = $m->paramStr('userName');
 my $password = $m->paramStr('password');
+my $email = $m->paramStr('email');
 my $remember = $m->paramBool('remember');
 my $action = $m->paramStrId('act') || 'login';
 my $submitted = $m->paramBool('subm') || $userName && $password;
+my $prevOnCookie = int($m->getCookie('prevon') || 0);
 
 # Process form
 if ($submitted) {
@@ -63,8 +65,8 @@ if ($submitted) {
 			# Check password
 			$password or $m->formError('errPwdEmpty');
 			if ($dbUser && $password) {
-				my $passwordMd5 = $m->md5($password . $dbUser->{salt});
-				if ($passwordMd5 ne $dbUser->{password}) {
+				my $passwordHash = $m->hashPassword($password, $dbUser->{salt});
+				if ($passwordHash ne $dbUser->{password}) {
 					$m->logError("Login attempt with invalid password for user $userName");
 					$m->formError('errPwdWrong');
 				}
@@ -73,8 +75,16 @@ if ($submitted) {
 		
 		# If there's no error, finish action
 		if (!@{$m->{formErrors}}) {
+			# Update salt to new length
+			if (length($dbUser->{salt}) < 22) {
+				my $salt = $m->randomId();
+				my $passwordHash = $m->hashPassword($password, $salt);
+				$m->dbDo("
+					UPDATE users SET salt = ?, password = ? WHERE id = ?",
+					$salt, $passwordHash, $dbUser->{id});
+			}
+
 			# Update user's previous online time and remember-me selection
-			my $prevOnCookie = $m->getCookie('prevon');
 			my $prevOnTime = $m->max($prevOnCookie, $dbUser->{lastOnTime});
 			my $tempLogin = $remember ? 0 : 1;
 			$m->dbDo("
@@ -83,20 +93,8 @@ if ($submitted) {
 			$m->setCookie('prevon', $prevOnTime);
 
 			# Set login cookie
-			$m->setCookie('login', "$dbUser->{id}-$dbUser->{password}", !$remember);
-			
-			# Delete old sessions
-			$m->dbDo("
-				DELETE FROM sessions WHERE lastOnTime < ? - ? * 60", $m->{now}, $cfg->{sessionTimeout});
+			$m->setCookie('login', "$dbUser->{id}:$dbUser->{loginAuth}", !$remember);
 
-			# Insert session if cookies might not work
-			if (!$prevOnCookie && $cfg->{urlSessions}) {
-				$m->{sessionId} = $m->randomId();
-				$m->dbDo("
-					INSERT INTO sessions (id, userId, lastOnTime, ip) VALUES (?, ?, ?, ?)",
-					$m->{sessionId}, $dbUser->{id}, $m->{now}, $m->{env}{userIp});
-			}
-				
 			# Log action and finish
 			$m->logAction(1, 'user', 'login', $dbUser->{id});
 			$m->redirect('forum_show');
@@ -105,30 +103,19 @@ if ($submitted) {
 	# Process forgot password form
 	elsif ($action eq 'forgotPwd') {
 		# Don't enable when auth plugin is used
-		!$cfg->{authenPlg}{login} or $m->error("Password request n/a when auth plugin is used.");
+		!$cfg->{authenPlg}{login} or $m->error("Forgot-password n/a when auth plugin is used.");
 
 		# Get user
 		my $dbUser = $m->fetchHash("
-			SELECT * FROM users WHERE userName = ?", $userName);
-		$dbUser = $m->fetchHash("
-			SELECT * FROM users WHERE email = ?", $userName)
-			if !$dbUser && $userName =~ /\@/;
-
+			SELECT * FROM users WHERE email = ?", $email);
 		if (!$dbUser) {
-			$m->logError("Forgot-password request for non-existing user $userName");
+			$m->logError("Forgot-password request for non-existing email $email");
 			$m->formError('errUsrNotFnd');
 		}
 		else {
-			$m->logError("Forgot-password request for user $userName");
-
-			# Don't send email to email-less or defective accounts
-			$dbUser->{email} or $m->error('errNoEmail');
+			# Don't send if blocked, user has just registered or used this recently
 			!$dbUser->{dontEmail} or $m->error('errDontEmail');
-	
-			# Check if user has just registered and shouldn't be using this already
 			$dbUser->{regTime} < $m->{now} - 900 or $m->error('errFgtPwdDuh');
-			
-			# Check if user has already used this function recently
 			!$m->fetchArray("
 				SELECT 1 FROM tickets WHERE userId = ? AND type = ? AND issueTime > ? - 900",
 				$dbUser->{id}, 'fgtPwd', $m->{now})
@@ -148,11 +135,10 @@ if ($submitted) {
 				$ticketId, $dbUser->{id}, $m->{now}, 'fgtPwd');
 			
 			# Email ticket to user
-			$m->sendEmail($m->createEmail(
-				type => 'fgtPwd', 
-				user => $dbUser, 
-				url => "$cfg->{baseUrl}$m->{env}{scriptUrlPath}/user_ticket$m->{ext}?t=$ticketId",
-			));
+			my $subject = "$cfg->{forumName}: $lng->{lgiFpwMlSbj}";
+			my $body = "$lng->{lgiFpwMlT}\n\n"
+				. "$cfg->{baseUrl}$m->{env}{scriptUrlPath}/user_ticket$m->{ext}?t=$ticketId\n";
+			$m->sendEmail(user => $dbUser, subject => $subject, body => $body);
 		
 			# Log action and finish
 			$m->logAction(1, 'user', 'fgtpwd', $dbUser->{id});
@@ -164,25 +150,14 @@ if ($submitted) {
 # Print forms
 if (!$submitted || @{$m->{formErrors}}) {
 	# Check cookie support
-	$m->setCookie('check', "1", 1) if !$cfg->{urlSessions} && !$submitted;
+	$m->setCookie('check', "1", 1) if !$submitted && !$prevOnCookie;
 
 	# Print header
-	$m->printHeader(undef, { cfg_urlSessions => $cfg->{urlSessions} });
+	$m->printHeader(undef, { !$prevOnCookie ? (checkCookie => 1) : () });
 
 	# Print page bar
 	my @navLinks = ({ url => $m->url('forum_show'), txt => 'comUp', ico => 'up' });
 	$m->printPageBar(mainTitle => $lng->{lgiTitle}, navLinks => \@navLinks);
-
-	# Set submitted or database values
-	$remember = $submitted ? $remember : !$cfg->{tempLogin};
-
-	# Escape submitted values
-	my $userNameEsc = $m->escHtml($userName);
-
-	# Determine checkbox, radiobutton and listbox states
-	my %state = (
-		remember => $remember ? "checked='checked'" : undef,
-	);
 
 	# Print hints and form errors
 	$m->printHints([$m->formatStr($lng->{lgiLoginT}, { regUrl => $m->url('user_register') })])
@@ -190,13 +165,19 @@ if (!$submitted || @{$m->{formErrors}}) {
 	print
 		"<div class='frm hnt err' id='cookieError' style='display: none'>\n",
 		"<div class='ccl'>\n",
-		"<img class='sic sic_hint_error' src='$m->{cfg}{dataPath}/epx.png' alt=''/>\n",
+		"<img class='sic sic_hint_error' src='$m->{cfg}{dataPath}/epx.png' alt=''>\n",
 		"<p>$lng->{errNoCookies}</p>\n",
 		"</div>\n",
 		"</div>\n\n"
-		if !$cfg->{urlSessions} && !$submitted;
+		if !$submitted;
 	$m->printFormErrors();
-	
+
+	# Prepare values
+	$remember = $submitted ? $remember : !$cfg->{tempLogin};
+	my $rememberChk = $remember ? 'checked' : "";
+	my $userNameEsc = $m->escHtml($userName);
+	my $emailEsc = $m->escHtml($email);
+
 	# Print login form
 	print
 		"<form action='user_login$m->{ext}' method='post'>\n",
@@ -205,18 +186,18 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='ccl'>\n",
 		"<fieldset>\n",
 		"<label class='lbw'>$lng->{lgiLoginName}\n",
-		"<input type='text' class='fcs qwi' name='userName' maxlength='50'",
-		" autofocus='autofocus' required='required' value='$userNameEsc'/></label>\n",
+		"<input type='text' class='qwi' name='userName' value='$userNameEsc'",
+		" autofocus required></label>\n",
 		"<label class='lbw'>$lng->{lgiLoginPwd}\n",
-		"<input type='password' class='qwi' name='password' maxlength='15' required='required'/>",
+		"<input type='password' class='qwi' name='password' required>",
 		"</label>\n",
 		"</fieldset>\n",
 		"<fieldset>\n",
-		"<label><input type='checkbox' name='remember' $state{remember}/>",
+		"<label><input type='checkbox' name='remember' $rememberChk>",
 		" $lng->{lgiLoginRmbr}</label>\n",
 		"</fieldset>\n",
 		$m->submitButton('lgiLoginB', 'login'),
-		"<input type='hidden' name='act' value='login'/>\n",
+		"<input type='hidden' name='act' value='login'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",
@@ -232,11 +213,10 @@ if (!$submitted || @{$m->{formErrors}}) {
 			"<div class='frm'>\n",
 			"<div class='hcl'><span class='htt'>$lng->{lgiFpwTtl}</span></div>\n",
 			"<div class='ccl'>\n",
-			"<label class='lbw'>$lng->{lgiLoginName}\n",
-			"<input type='text' class='qwi' name='userName' maxlength='50' required='required'",
-			" value='$userNameEsc'/></label>\n",
+			"<label class='lbw'>$lng->{lgiFpwEmail}\n",
+			"<input type='email' class='qwi' name='email' value='$emailEsc' required></label>\n",
 			$m->submitButton('lgiFpwB', 'subscribe'),
-			"<input type='hidden' name='act' value='forgotPwd'/>\n",
+			"<input type='hidden' name='act' value='forgotPwd'>\n",
 			$m->stdFormFields(),
 			"</div>\n",
 			"</div>\n",

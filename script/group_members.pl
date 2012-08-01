@@ -24,7 +24,7 @@ use MwfMain;
 #------------------------------------------------------------------------------
 
 # Init
-my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
+my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_, autocomplete => 1);
 
 # Get CGI parameters
 my $groupId = $m->paramInt('gid');
@@ -53,7 +53,7 @@ if ($submitted) {
 	if ($action eq 'add') {
 		# Split/expand user/group names
 		if ($userNames) {
-			my @userNames = split(/\s*;\s*/, $userNames);
+			my @userNames = split(/\s*[;,]\s*/, $userNames);
 			@userNames or $m->formError('errUsrNotFnd');
 			for my $name (@userNames) {
 				if (substr($name, 0, 1) eq '!') {
@@ -116,40 +116,21 @@ if (!$submitted || @{$m->{formErrors}}) {
 	# Print hints and form errors
 	$m->printFormErrors();
 
+	# Prepare values
+	my $userNamesEsc = $m->escHtml($userNames);
+
 	# Print add form
 	print
 		"<form action='group_members$m->{ext}' method='post'>\n",
 		"<div class='frm'>\n",
 		"<div class='hcl'><span class='htt'>$lng->{grmAddTtl}</span></div>\n",
 		"<div class='ccl'>\n",
-		"<label class='lbw'>$lng->{grmAddUser}\n";
-
-	# Print username input as either text field or listbox
-	my $userNum = $m->fetchArray("
-		SELECT COUNT(*) FROM users");
-	if ($userNum > $cfg->{maxListUsers}) {
-		my $userNamesEsc = $m->escHtml($userNames);
-		print 
-			"<input type='text' class='fcs hwi' name='userNames'",
-			" autofocus='autofocus' required='required' value='$userNamesEsc'/></label>\n";
-	}
-	else {
-		my $users = $m->fetchAllArray("
-			SELECT id, userName 
-			FROM users
-			WHERE id NOT IN (SELECT userId FROM groupMembers WHERE groupId = :groupId)
-			ORDER BY userName",
-			{ groupId => $groupId });
-		print 
-			"<select class='fcs' name='uid' size='10' multiple='multiple' autofocus='autofocus'>\n",
-			map("<option value='$_->[0]'>$_->[1]</option>\n", @$users),
-			"</select></label>\n";
-	}
-
-	print
+		"<label class='lbw'>$lng->{grmAddUser}\n",
+		"<input type='text' class='hwi acu acm' name='userNames' value='$userNamesEsc'",
+		" autofocus required></label>\n",
 		$m->submitButton('grmAddB', 'user'),
-		"<input type='hidden' name='gid' value='$groupId'/>\n",
-		"<input type='hidden' name='act' value='add'/>\n",
+		"<input type='hidden' name='gid' value='$groupId'>\n",
+		"<input type='hidden' name='act' value='add'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",
@@ -181,8 +162,8 @@ if (!$submitted || @{$m->{formErrors}}) {
 			map("<option value='$_->[0]'>$_->[1]</option>\n", @$members),
 			"</select></label>\n",
 			$m->submitButton('grmRemB', 'remove'),
-			"<input type='hidden' name='gid' value='$groupId'/>\n",
-			"<input type='hidden' name='act' value='remove'/>\n",
+			"<input type='hidden' name='gid' value='$groupId'>\n",
+			"<input type='hidden' name='act' value='remove'>\n",
 			$m->stdFormFields(),
 			"</div>\n",
 			"</div>\n",

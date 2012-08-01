@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2012 Markus Wichitill
+#    Copyright © 1999-2012 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -14,10 +14,11 @@
 #------------------------------------------------------------------------------
 
 package MwfPlgEvent;
+use utf8;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine);
-our $VERSION = "2.25.1";
+our $VERSION = "2.27.0";
 
 #------------------------------------------------------------------------------
 # Hide a specific board for newly registered users

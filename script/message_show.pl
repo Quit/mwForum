@@ -37,12 +37,9 @@ $m->printHeader();
 my $msgId = $m->paramInt('mid');
 $msgId or $m->error('errParamMiss');
 
-# Print bar
+# Print page bar
 my @navLinks = ({ url => $m->url('message_list'), txt => 'comUp', ico => 'up' });
 $m->printPageBar(mainTitle => $lng->{mssTitle}, navLinks => \@navLinks);
-
-# Fake board
-my $board = { flat => 1 };
 
 # Get message
 my ($sent, $received) = $m->fetchArray("
@@ -104,7 +101,7 @@ my $userNameStr = "<a href='$infUrl'>$msg->{userName}</a>";
 $userNameStr .= " " . $m->formatUserTitle($msg->{userTitle}) 
 	if $msg->{userTitle} && $user->{showDeco};
 my $sendTimeStr = $m->formatTime($msg->{sendTime}, $user->{timezone});
-$m->dbToDisplay($board, $msg);
+$m->dbToDisplay({}, $msg);
 my $toFrom = $sent ? $lng->{mssTo} : $lng->{mssFrom};
 my $emptyPixel = "src='$cfg->{dataPath}/epx.png'";
 
@@ -112,7 +109,7 @@ my $emptyPixel = "src='$cfg->{dataPath}/epx.png'";
 print
 	"<div class='frm msg'>\n",
 	"<div class='hcl'>\n",
-	"<img $emptyPixel $imgAttr/>\n",
+	"<img $emptyPixel $imgAttr>\n",
 	"<span class='htt'>$toFrom</span> $userNameStr\n",
 	"<span class='htt'>$lng->{mssDate}</span> $sendTimeStr\n",
 	"<span class='htt'>$lng->{mssSubject}</span> $msg->{subject}\n",

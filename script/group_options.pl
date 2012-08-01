@@ -105,6 +105,9 @@ if (!$submitted || @{$m->{formErrors}}) {
 	my @navLinks = ({ url => $m->url('group_admin'), txt => 'comUp', ico => 'up' });
 	$m->printPageBar(mainTitle => "Group", subTitle => $group->{title}, navLinks => \@navLinks);
 
+	# Print hints and form errors
+	$m->printFormErrors();
+
 	# Get badges
 	my @badges = ();
 	for my $line (@{$cfg->{badges}}) {
@@ -119,15 +122,10 @@ if (!$submitted || @{$m->{formErrors}}) {
 	$open = $submitted ? $open : $group->{open};
 
 	# Determine checkbox, radiobutton and listbox states
-	my %state = (
-		"badge$badge" => "selected='selected'",
-		public => $public ? "checked='checked'" : undef,
-		open => $open ? "checked='checked'" : undef,
-	);
+	my $publicChk = $public ? 'checked' : "";
+	my $openChk = $open ? 'checked' : "";
+	my %state = ( "badge$badge" => 'selected' );
 
-	# Print hints and form errors
-	$m->printFormErrors();
-	
 	# Print options form
 	print
 		"<form action='group_options$m->{ext}' method='post'>\n",
@@ -136,8 +134,8 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='ccl'>\n",
 		"<fieldset>\n",
 		"<label class='lbw'>Title (50 chars)\n",
-		"<input type='text' class='fcs hwi' name='title' maxlength='50'",
-		" autofocus='autofocus' required='required' value='$titleEsc'/></label>\n",
+		"<input type='text' class='hwi' name='title' maxlength='50' value='$titleEsc'",
+		" autofocus required></label>\n",
 		"<label class='lbw'>Badge\n",
 		"<select name='badge' size='1'>\n",
 		"<option value=''>(none)</option>\n",
@@ -145,13 +143,13 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"</select></label>\n",
 		"</fieldset>\n",
 		"<fieldset>\n",
-		"<div><label><input type='checkbox' name='public' $state{public}/>",
+		"<div><label><input type='checkbox' name='public' $publicChk>",
 		" Public (non-members can see group info page)</label></div>\n",
-		"<div><label><input type='checkbox' name='open' $state{open}/>",
+		"<div><label><input type='checkbox' name='open' $openChk>",
 		" Open (users can join themselves)</label></div>\n",
 		"</fieldset>\n",
 		$m->submitButton("Change", 'admopt'),
-		"<input type='hidden' name='gid' value='$groupId'/>\n",
+		"<input type='hidden' name='gid' value='$groupId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

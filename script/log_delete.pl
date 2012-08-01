@@ -76,7 +76,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='ccl'>\n",
 		"<fieldset>\n",
 		"<label class='lbw'>Delete entries older than x days (0 = all)\n",
-		"<input type='number' name='maxAge' maxlength='4' value='0'/></label>\n",
+		"<input type='number' name='maxAge' value='7'></label>\n",
 		"</fieldset>\n",
 		$m->submitButton("Delete", 'delete'),
 		$m->stdFormFields(),

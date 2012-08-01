@@ -24,7 +24,7 @@ use MwfMain;
 #------------------------------------------------------------------------------
 
 # Init
-my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
+my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_, autocomplete => 1);
 $m->cacheUserStatus() if $userId;
 
 # Check if search is enabled
@@ -36,12 +36,7 @@ $cfg->{forumSearch} == 1 || $cfg->{forumSearch} == 2 && $userId
 my ($siteSearch) = $cfg->{baseUrl} =~ m!https?://(.+)!;
 $siteSearch .= $m->{env}{scriptUrlPath};
 $siteSearch = "rybkaforum.net/cgi-bin/rybkaforum" if $siteSearch =~ /mwforum\.org/;
-$m->printHeader(undef, {
-	http => $m->{http},
-	siteSearch => $siteSearch,
-	uaLangCode => $m->{uaLangCode},
-	cfg_seoRewrite => $cfg->{seoRewrite},
-});
+$m->printHeader(undef, { siteSearch => $siteSearch, uaLangCode => $m->{uaLangCode} });
 
 # Get CGI parameters
 my $page = $m->paramInt('pg') || 1;
@@ -57,7 +52,7 @@ my $submitted = $m->paramDefined('words') || $searchUserId || $userName;
 
 # Check HTTP method and request source authentication
 if ($cfg->{blockExtSearch} && $submitted && length($words)) {
-	$m->{env}{method} eq 'POST' || $m->paramDefined('pg') or $m->error('errNoAccess');
+	$m->{env}{method} eq 'POST' || $m->paramDefined('pg') or $m->error('errSearchLnk');
 	$m->checkSourceAuth() or $m->error('errNoAccess') if $cfg->{forumSearch} == 2;
 }
 
@@ -79,6 +74,7 @@ $maxAge = $cfg->{searchMaxAge}
 # Shortcuts
 my $mysqlFts = $cfg->{advSearch} && $field eq 'body' && $m->{mysql};
 my $pgsqlFts = $cfg->{advSearch} && $field eq 'body' && $m->{pgsql};
+my $fullyQuoted = $words =~ /^".+"\z/;
 
 # Using bound param for config would disable index use
 my $pgsqlFtsCfg = $cfg->{pgFtsConfig};
@@ -114,7 +110,7 @@ my @params = (words => $orgWords, user => $userName, min => $minAge, max => $max
 	board => $categBoardIdStr, field => $field, order => $order);
 
 # Get visible boards
-my $arcPfx = $m->{archive} ? 'arc_' : '';
+my $arcPfx = $m->{archive} ? 'arc_' : "";
 my $boards = $m->fetchAllHash("
 	SELECT boards.*, categories.title AS categTitle
 	FROM ${arcPfx}boards AS boards
@@ -188,6 +184,7 @@ if ($submitted && !($wordsChanged && !$words)) {
 	}
 
 	# Search words
+	my $like = $m->{pgsql} ? 'ILIKE' : 'LIKE';
 	my $wordStr = "";
 	my @wordValues = ();
 	if ($mysqlFts && $words) {
@@ -203,10 +200,13 @@ if ($submitted && !($wordsChanged && !$words)) {
 		# Search with PgSQL fulltext search
 		$wordStr = "AND to_tsvector('$pgsqlFtsCfg', posts.body) @@ plainto_tsquery(:word0)";
 		push @wordValues, 'word0' => $orgWords;
+		if ($fullyQuoted) {
+			$wordStr .= "\nAND posts.body $like :word1";
+			push @wordValues, 'word1' => "%" . $m->dbEscLike(substr($orgWords, 1, -1)) . "%";
+		}
 	}
 	elsif ($words) {
 		# Search with LIKE
-		my $like = $m->{pgsql} ? 'ILIKE' : 'LIKE';
 		my $wordsLike = $m->dbEscLike($words);
 		my $percent = $m->{sqlite} && $cfg->{sqliteLike} ? "" : "%";
 		@words = $wordsLike =~ /"[^"]+"|[^"\s]+/g;
@@ -281,12 +281,8 @@ my @pageLinks = $pageNum < 2 ? () : $m->pageLinks('forum_search', \@params, $pag
 my @navLinks = ({ url => $m->url('forum_show'), txt => 'comUp', ico => 'up' });
 $m->printPageBar(mainTitle => $lng->{seaTitle}, navLinks => \@navLinks, pageLinks => \@pageLinks);
 
-# Determine checkbox and listbox states
-my %state = (
-	$categBoardIdStr => "selected='selected'",
-	$field => "selected='selected'",
-	$order => "selected='selected'",
-);
+# Determine checkbox, radiobutton and listbox states
+my %state = ( $categBoardIdStr => 'selected', $field => 'selected', $order => 'selected' );
 
 # Display age 0 as empty string
 $minAge = $minAge ? $minAge : "";
@@ -308,15 +304,16 @@ if ($cfg->{forumSearch} == 1 || $cfg->{forumSearch} == 2 && $userId || $user->{a
 		!$cfg->{forumSearch} ? "<p>Forum search is currently only enabled for admins.</p>" : "",
 		"<div class='cli'>\n",
 		"<label>$lng->{seaWords}\n",
-		"<input type='text' class='fcs' name='words' size='25' maxlength='100'",
-		" autofocus='autofocus' value='$orgWordsEsc'/></label>\n",
+		"<input type='text' name='words' size='25' maxlength='100' value='$orgWordsEsc'",
+		" autofocus></label>\n",
 		"<label>$lng->{seaUser}\n",
-		"<input type='text' name='user' size='15' maxlength='$cfg->{maxUserNameLen}'",
-		" value='$userNameEsc'/></label>\n",
+		"<input type='text' class='acu acs' name='user' size='15' maxlength='$cfg->{maxUserNameLen}'",
+		" value='$userNameEsc'></label>\n",
 		"<label>$lng->{seaBoard}\n",
 		"<select name='board' size='1'>\n",
 		"<option value='0'>$lng->{seaBoardAll}</option>\n";
-	
+
+	# Print board list	
 	my $lastCategoryId = 0;
 	for my $board (@$boards) {
 		if ($lastCategoryId != $board->{categoryId}) {
@@ -338,10 +335,17 @@ if ($cfg->{forumSearch} == 1 || $cfg->{forumSearch} == 2 && $userId || $user->{a
 		$cfg->{rawBody} ? "<option value='raw' $state{raw}>$lng->{seaFieldRaw}</option>\n" : "",
 		"<option value='subject' $state{subject}>$lng->{seaFieldSubj}</option>\n",
 		"</select></label>\n",
+		"<datalist id='age'>\n",
+		"<option value='1'>\n",
+		"<option value='7'>\n",
+		"<option value='30'>\n",
+		"<option value='90'>\n",
+		"<option value='365'>\n",
+		"</datalist>\n",
 		"<label>$lng->{seaMinAge}\n",
-		"<input type='text' name='min' size='3' maxlength='4' value='$minAge'/></label>\n",
+		"<input type='text' name='min' size='3' maxlength='4' list='age' value='$minAge'></label>\n",
 		"<label>$lng->{seaMaxAge}\n",
-		"<input type='text' name='max' size='3' maxlength='4' value='$maxAge'/></label>\n",
+		"<input type='text' name='max' size='3' maxlength='4' list='age' value='$maxAge'></label>\n",
 		"<label>$lng->{seaOrder}\n",
 		"<select name='order' size='1'>\n",
 		"<option value='desc' $state{desc}>$lng->{seaOrderDesc}</option>\n",
@@ -349,9 +353,8 @@ if ($cfg->{forumSearch} == 1 || $cfg->{forumSearch} == 2 && $userId || $user->{a
 		"</select></label>\n",
 		$m->submitButton('seaB', 'search'),
 		"</div>\n",
-		$m->{archive} ? "<input type='hidden' name='arc' value='1'/>\n" : "",
-		$m->{sessionId} ? "<input type='hidden' name='sid' value='$m->{sessionId}'/>\n" : "",
-		$cfg->{blockExtSearch} ? "<input type='hidden' name='auth' value='$user->{sourceAuth}'/>\n" : "",
+		$m->{archive} ? "<input type='hidden' name='arc' value='1'>\n" : "",
+		$cfg->{blockExtSearch} ? "<input type='hidden' name='auth' value='$user->{sourceAuth}'>\n" : "",
 		"</div>\n",
 		"</div>\n",
 		"</form>\n\n";
@@ -359,22 +362,22 @@ if ($cfg->{forumSearch} == 1 || $cfg->{forumSearch} == 2 && $userId || $user->{a
 
 # Print hint
 $m->printHints([$m->formatStr($lng->{seaWordsFtsT}, { expr => $wordsEsc })])
-	if $wordsChanged && ($mysqlFts || $pgsqlFts);
+	if $wordsChanged && ($mysqlFts || $pgsqlFts && !$fullyQuoted);
 
 # Print Google search form
-my $autofocus = !$cfg->{forumSearch} ? "autofocus='autofocus'" : "";
+my $autofocus = !$cfg->{forumSearch} ? "autofocus" : "";
 if ($cfg->{googleSearch}) {
 	# Search with results on Google page
 	print
-		"<form action='$m->{http}://www.google.com/search' method='get'>\n",
+		"<form action='//www.google.com/search' method='get'>\n",
 		"<div class='frm'>\n",
 		"<div class='hcl'><span class='htt'>$lng->{seaGglTtl}</span></div>\n",
 		"<div class='ccl'>\n",
 		"<div class='cli'>\n",
-		"<input type='text' class='fcs' name='q' size='40' $autofocus/>\n",
+		"<input type='text' name='q' size='40' $autofocus>\n",
 		$m->submitButton('seaB', 'search'),
-		"<input type='hidden' name='num' value='100'/>\n",
-		"<input type='hidden' name='sitesearch' value='$siteSearch'/>\n",
+		"<input type='hidden' name='num' value='100'>\n",
+		"<input type='hidden' name='sitesearch' value='$siteSearch'>\n",
 		"</div>\n",
 		"</div>\n",
 		"</div>\n",

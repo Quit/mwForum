@@ -80,12 +80,8 @@ print
 	"</div>\n",
 	"</form>\n\n";
 
-# Determine listbox selections
-my %state = (
-	$sort => "selected='selected'",
-	$order => "selected='selected'",
-	"field$field" => "selected='selected'",
-);
+# Determine checkbox, radiobutton and listbox states
+my %state = ( $sort => 'selected', $order => 'selected', "field$field" => 'selected' );
 
 # Print board list form
 print
@@ -113,7 +109,6 @@ print
 	"</select></label>\n",
 	$m->submitButton("List", 'search'),
 	"</div>\n",
-	$m->{sessionId} ? "<input type='hidden' name='sid' value='$m->{sessionId}'/>\n" : "",
 	"</div>\n",
 	"</div>\n",
 	"</form>\n\n";

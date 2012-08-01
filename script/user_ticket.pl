@@ -27,11 +27,15 @@ use MwfMain;
 my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
 
 # Get CGI parameters
-my $ticketId = $m->paramStrId('t');
+my $ticketId = $m->paramStr('t');
 
 # Get ticket
+my $cs = 'BINARY';
+if ($m->{pgsql}) { $cs = 'TEXT' }
+elsif ($m->{sqlite}) { $cs = 'BLOB' }
 my $ticket = $m->fetchHash("
-	SELECT * FROM tickets WHERE id = ? AND issueTime > ? - 2 * 86400", $ticketId, $m->{now});
+	SELECT * FROM tickets WHERE id = CAST(? AS $cs) AND issueTime > ? - 2 * 86400", 
+	$ticketId, $m->{now});
 $ticket or $m->error('errTktNotFnd');
 
 # Get user
@@ -41,19 +45,7 @@ $dbUser or $m->error('errUsrNotFnd');
 # Login ticket (freshly registered)
 if ($ticket->{type} eq 'usrReg') {
 	# Set cookie
-	$m->setCookie('login', "$dbUser->{id}-$dbUser->{password}", $dbUser->{tempLogin});
-
-	# Delete old sessions
-	$m->dbDo("
-		DELETE FROM sessions WHERE lastOnTime < ? - ? * 60", $m->{now}, $cfg->{sessionTimeout});
-
-	# Insert session
-	if ($cfg->{urlSessions}) {
-		$m->{sessionId} = $m->randomId();
-		$m->dbDo("
-			INSERT INTO sessions (id, userId, lastOnTime, ip) VALUES (?, ?, ?, ?)",
-			$m->{sessionId}, $dbUser->{id}, $m->{now}, $m->{env}{userIp});
-	}
+	$m->setCookie('login', "$dbUser->{id}:$dbUser->{loginAuth}", $dbUser->{tempLogin});
 
 	# Delete user's login tickets
 	$m->dbDo("
@@ -66,19 +58,7 @@ if ($ticket->{type} eq 'usrReg') {
 # Login ticket (forgot password)
 elsif ($ticket->{type} eq 'fgtPwd') {
 	# Set cookies
-	$m->setCookie('login', "$dbUser->{id}-$dbUser->{password}", $dbUser->{tempLogin});
-
-	# Delete old sessions
-	$m->dbDo("
-		DELETE FROM sessions WHERE lastOnTime < ? - ? * 60", $m->{now}, $cfg->{sessionTimeout});
-
-	# Insert session
-	if ($cfg->{urlSessions}) {
-		$m->{sessionId} = $m->randomId();
-		$m->dbDo("
-			INSERT INTO sessions (id, userId, lastOnTime, ip) VALUES (?, ?, ?, ?)",
-			$m->{sessionId}, $dbUser->{id}, $m->{now}, $m->{env}{userIp});
-	}
+	$m->setCookie('login', "$dbUser->{id}:$dbUser->{loginAuth}", $dbUser->{tempLogin});
 
 	# Delete user's login tickets
 	$m->dbDo("

@@ -24,7 +24,7 @@ use MwfMain;
 #------------------------------------------------------------------------------
 
 # Init
-my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
+my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_, autocomplete => 1, );
 
 # Check if access should be denied
 $cfg->{messages} or $m->error('errNoAccess');
@@ -77,7 +77,7 @@ if ($recvNames) {
 	}
 	else {
 		# User/group names from form when multiple recipients are allowed
-		my @recvNames = split(/\s*;\s*/, $recvNames);
+		my @recvNames = split(/\s*[;,]\s*/, $recvNames);
 		@recvNames or $m->formError('errUsrNotFnd');
 		for my $name (@recvNames) {
 			if (substr($name, 0, 1) eq '!') {
@@ -172,14 +172,18 @@ if ($add) {
 			# Send notification email
 			my $recvUser = $m->getUser($id);
 			if ($recvUser->{msgNotify} && $recvUser->{email} && !$recvUser->{dontEmail}) {
-				$m->sendEmail($m->createEmail(
-					type     => 'msgNtf',
-					user     => $recvUser,
-					sendUser => $user,
-					board    => {},
-					msg      => $msg,
-					url      => "$cfg->{baseUrl}$m->{env}{scriptUrlPath}/$url",
-				));
+				$m->dbToEmail({}, $msg);
+				$lng = $m->setLanguage($recvUser->{language});
+				my $emailSubject = "$lng->{msaEmailSbPf} $user->{userName}: $msg->{subject}";
+				my $emailBody = $lng->{msaEmailT2} . "\n\n" . "-" x 70 . "\n\n"
+					. $lng->{subLink} . "$cfg->{baseUrl}$m->{env}{scriptUrlPath}/$url\n"
+					. $lng->{msaEmailTSbj} . $msg->{subject} . "\n"
+					. $lng->{subBy} . $user->{userName} . "\n"
+					. $lng->{subOn} . $m->formatTime($m->{now}, $recvUser->{timezone}) . "\n\n"
+					. $msg->{body} . "\n\n"
+					. "-" x 70 . "\n\n";
+				$lng = $m->setLanguage();
+				$m->sendEmail(user => $recvUser, subject => $emailSubject, body => $emailBody);
 			}
 		}
 		
@@ -202,39 +206,44 @@ if (!$add || @{$m->{formErrors}}) {
 	# Print page bar
 	my @navLinks = ({ url => $m->url('message_list'), txt => 'comUp', ico => 'up' });
 	$m->printPageBar(mainTitle => $lng->{msaTitle}, navLinks => \@navLinks);
+
+	# Print hints and form errors
+	$m->printFormErrors();
 	
 	# Quote message body
 	my $quote = undef;
 	if ($refMsg && $wantQuote && $cfg->{quote}) {
 		eval { require Text::Flowed } or $m->error("Text::Flowed module not available.");
 		$quote = $refMsg->{body};
-		$quote =~ s!<br/>!\n!g;  # Preserve linebreaks before removing tags
+		$quote =~ s!<br/?>!\n!g;  # Preserve linebreaks before removing tags
 		$quote =~ s!<.+?>!!g;  # Remove tags before quoting
 		$quote = $m->deescHtml($quote);
 		$quote = Text::Flowed::reformat($quote, { quote => 1, fixed => 1,
 			max_length => $cfg->{quoteCols}, opt_length => $cfg->{quoteCols} - 6 });
 	}
 
-	# Prepare preview body
+	# Prepare referenced message and preview body
+	$m->dbToDisplay({}, $refMsg) if $refMsg;
 	if ($preview) {
 		$preview = { isMessage => 1, body => $body };
 		$m->editToDb({}, $preview);
 		$m->dbToDisplay({}, $preview);
 	}
 
-	# Prepare other values
+	# Escape submitted values
+	my $recvNamesEsc = $m->escHtml($recvNames);
 	my $subjectEsc = $m->escHtml($subject);
 	$subjectEsc ||= $refSubject;
 	$body ||= $quote;
 	my $bodyEsc = $m->escHtml($body, 1);
-	$m->dbToDisplay({}, $refMsg) if $refMsg;
+
+	# Prepare values depending on recipient number
 	my $recptLabel = $cfg->{maxMsgRecv} > 1 
 		? $m->formatStr($lng->{msaSendRecvM}, { maxRcv => $cfg->{maxMsgRecv} }) 
 		: $lng->{msaSendRecv};
+	my $size = $cfg->{maxMsgRecv} > 1 ? 'hwi' : 'qwi';
+	my $ac = $cfg->{maxMsgRecv} > 1 ? 'acm' : 'acs';
 
-	# Print hints and form errors
-	$m->printFormErrors();
-	
 	# Print message form
 	print
 		"<form action='message_add$m->{ext}' method='post'>\n",
@@ -242,40 +251,21 @@ if (!$add || @{$m->{formErrors}}) {
 		"<div class='hcl'><span class='htt'>$lng->{msaSendTtl}</span></div>\n",
 		"<div class='ccl'>\n",
 		"<fieldset>\n",
-		"<label class='lbw'>$recptLabel\n";
-
-	my $userNum = $m->fetchArray("
-		SELECT COUNT(*) FROM users");
-	if ($userNum > $cfg->{maxListUsers} || $cfg->{maxMsgRecv} > 1) {
-		my $size = $cfg->{maxMsgRecv} > 1 ? 'hwi' : 'qwi';
-		my $recvNamesEsc = $m->escHtml($recvNames);
-		print 
-			"<input type='text' class='fcs $size' name='recvNames'",
-			" autofocus='autofocus' required='required' value='$recvNamesEsc'/></label>\n";
-	}
-	else {
-		my $users = $m->fetchAllArray("
-			SELECT id, userName FROM users ORDER BY userName");
-		my %sel = ( $recvNames => "selected='selected'" );
-		print 
-			"<select class='fcs' name='uid' size='1' autofocus='autofocus'>\n",
-			map("<option value='$_->[0]' $sel{$_->[1]}>$_->[1]</option>\n", @$users),
-			"</select></label>\n";
-	}
-	
-	print
+		"<label class='lbw'>$recptLabel\n",
+		"<input type='text' class='$size acu $ac' name='recvNames' value='$recvNamesEsc'",
+		" autofocus required></label>\n",
 		"<label class='lbw'>$lng->{msaSendSbj}\n",
 		"<input type='text' class='fwi' name='subject' maxlength='$cfg->{maxSubjectLen}'",
-		" required='required' value='$subjectEsc'/></label>\n",
+		" value='$subjectEsc' required></label>\n",
 		"</fieldset>\n",
 		"<fieldset>\n",
 		$m->tagButtons({ id => 0 }),
-		"<textarea class='tgi' name='body' rows='14' required='required'>$bodyEsc</textarea>\n",
+		"<textarea class='tgi' name='body' rows='14' required>$bodyEsc</textarea>\n",
 		$cfg->{captcha} >= 3 ? MwfCaptcha::captchaInputs($m, 'msgCpt') : "",
 		"</fieldset>\n",
 		$m->submitButton('msaSendB', 'write', 'add'),
 		$m->submitButton('msaSendPrvB', 'preview', 'preview'),
-		"<input type='hidden' name='mid' value='$refMsgId'/>\n",
+		"<input type='hidden' name='mid' value='$refMsgId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

@@ -65,15 +65,10 @@ my $prevTopicId = $m->fetchArray("
 	LIMIT 1",
 	{ boardId => $boardId, lastPostTime => $topic->{lastPostTime} });
 
-# Determine whether to trash or delete topic
-my $trash = $cfg->{trashBoardId} && $cfg->{trashBoardId} != $boardId;
-
 # Delete topic
+my $trash = $cfg->{trashBoardId} && $cfg->{trashBoardId} != $boardId;
 $m->deleteTopic($topicId, $trash);
-
-# Update board stats
-$m->recalcStats($boardId);
-$m->recalcStats($cfg->{trashBoardId}) if $trash;
+$m->recalcStats([ $boardId, $trash ? $cfg->{trashBoardId} : () ]);
 
 # Add notification message
 $m->addNote('tpcDel', $topic->{userId}, 'notTpcDel', tpcSbj => $topic->{subject}, reason => $reason) 

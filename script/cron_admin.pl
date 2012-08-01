@@ -30,7 +30,10 @@ my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
 $user->{admin} or $m->error('errNoAccess');
 
 # Get CGI parameters
-my $action = $m->paramStrId('act');
+my $main = $m->paramBool('main');
+my $subs = $m->paramBool('subs');
+my $bounce = $m->paramBool('bounce');
+my $rss = $m->paramBool('rss');
 my $submitted = $m->paramBool('subm');
 
 # Process form
@@ -41,10 +44,10 @@ if ($submitted) {
 	# If there's no error, finish action
 	if (!@{$m->{formErrors}}) {
 		# Spawn script
-		if ($action eq 'main') { $m->spawnScript('cron_jobs') }
-		elsif ($action eq 'subs') { $m->spawnScript('cron_subscriptions') }
-		elsif ($action eq 'bounce') { $m->spawnScript('cron_bounce') }
-		elsif ($action eq 'rss') { $m->spawnScript('cron_rss') }
+		if ($main) { $m->spawnScript('cron_jobs') }
+		elsif ($subs) { $m->spawnScript('cron_subscriptions') }
+		elsif ($bounce) { $m->spawnScript('cron_bounce') }
+		elsif ($rss) { $m->spawnScript('cron_rss') }
 		
 		# Redirect to cronjob admin page
 		$m->redirect('cron_admin');
@@ -61,10 +64,9 @@ if (!$submitted || @{$m->{formErrors}}) {
 	$m->printPageBar(mainTitle => "Cronjob Administration", navLinks => \@navLinks);
 
 	# Print hints and form errors
-	$m->printHints(["This method of manually starting cronjobs requires the".
-		" \$cfg-&gt;{scriptFsPath} and \$cfg-&gt;{perlBinary} options to be set up,".
-		" and may not work on some servers. If possible, start cronjobs using an actual".
-		" cron daemon resp. task scheduler."]);
+	$m->printHints(["This method of manually starting cronjobs requires the"
+		. " <code>\$cfg-&gt;{scriptFsPath}</code> and <code>\$cfg-&gt;{perlBinary}</code>"
+		. " options to be set up."]);
 	$m->printFormErrors();
 
 	# Print execution form
@@ -74,35 +76,16 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='ccl'>\n",
 		"<form action='cron_admin$m->{ext}' method='post'>\n",
 		"<div>\n",
-		$m->submitButton("Main Cronjob (cron_jobs)", 'cron'),
-		"<input type='hidden' name='act' value='main'/>\n",
-		$m->stdFormFields(),
-		"</div>\n",
-		"</form>\n",
-		"<form action='cron_admin$m->{ext}' method='post'>\n",
-		"<div>\n",
-		$m->submitButton("Digest Subscriptions (cron_subscriptions)", 'subscribe'),
-		"<input type='hidden' name='act' value='subs'/>\n",
-		$m->stdFormFields(),
-		"</div>\n",
-		"</form>\n",
-		"<form action='cron_admin$m->{ext}' method='post'>\n",
-		"<div>\n",
-		$m->submitButton("Bounce Handler (cron_bounce)", 'subscribe'),
-		"<input type='hidden' name='act' value='bounce'/>\n",
-		$m->stdFormFields(),
-		"</div>\n",
-		"</form>\n",
-		"<form action='cron_admin$m->{ext}' method='post'>\n",
-		"<div>\n",
-		$m->submitButton("Feed Writer (cron_rss)", 'feed'),
-		"<input type='hidden' name='act' value='rss'/>\n",
+		$m->submitButton("Main Cronjob (cron_jobs)", 'cron', 'main'), "<br>\n",
+		$m->submitButton("Digest Subscriptions (cron_subscriptions)", 'subscribe', 'subs'), "<br>\n",
+		$m->submitButton("Bounce Handler (cron_bounce)", 'subscribe', 'bounce'), "<br>\n",
+		$m->submitButton("Feed Writer (cron_rss)", 'feed', 'rss'),
 		$m->stdFormFields(),
 		"</div>\n",
 		"</form>\n",
 		"</div>\n",
-		"</div>\n";
-	
+		"</div>\n\n";
+
 	# Log action and finish
 	$m->logAction(3, 'cron', 'admin', $userId);
 	$m->printFooter();

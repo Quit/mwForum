@@ -8,31 +8,41 @@ var mwf = { p: $("#mwfjs").data("params") };
 
 $(document).on("ready", function () {
 	var script = mwf.p.env_script;
+	mwf.hideMsgParam();
+	if (mwf.p.checkCookie) { mwf.checkCookie(); }
 	if (mwf.p.cfg_boardJumpList) { mwf.initBoardList(); }
 	if (mwf.p.tagButtons) { mwf.initTagButtons(); }
+	if (mwf.p.autocomplete) { mwf.initAutocomplete(); }
 	if (script === "topic_show") {
 		mwf.initToggleBranch();
 		mwf.initMoveBranch();
 		mwf.initRevealPost();
-	}
-	else if (script === "topic_add" || script === "post_add" || script === "post_edit") {
-		mwf.initInsertRaw();
-	}
-	else if ((script === "user_login" || script === "user_openid") && !mwf.p.cfg_urlSessions) { 
-		mwf.initCheckCookie();
+		mwf.initTransferAttach();
 	}
 	else if (script === "post_attach") { mwf.initPostAttach(); }
 	else if (script === "attach_show") { mwf.initShowAttach(); }
 	else if (script === "user_profile") { mwf.initGeolocate(); }
 	else if (script === "user_info") { mwf.initGoogleMaps(); }
 	else if (script === "forum_activity") { mwf.initActivityGraph(); }
+	mwf.initReveal();
 	mwf.initDataVersion();
 });
 
 $(window).on("load", function () {
 	if (mwf.p.env_script === "topic_show") { mwf.initTopicNavigation(); }
-	else if (!("autofocus" in document.createElement("input"))) { $(".fcs:first").focus(); }
 });
+
+mwf.hideMsgParam = function () {
+	var url = window.location.href;
+	url = url.replace(/(msg=[\w\-]+[&;]*)+/, "").replace(/[\?&;]$/, "");
+	if (url !== window.location.href) { window.history.replaceState(null, "", url); }
+};
+
+mwf.checkCookie = function () {
+	$.get("ajax_checkcookie" + mwf.p.m_ext, {}, function (json) {
+		if (!json.ok) { $("#cookieError").slideDown(); }
+	});
+};
 
 mwf.navigate = function (href) {
 	if (mwf.navigating) { return; }
@@ -43,11 +53,10 @@ mwf.navigate = function (href) {
 mwf.initBoardList = function () {
 	$("form.bjp select").on("change", function () {
 		var ext = mwf.p.m_ext,
-			sid = mwf.p.m_sessionId ? "sid=" + mwf.p.m_sessionId : "",
 			id = this.options[this.selectedIndex].value;
-		if (id.indexOf("cid") === 0) { mwf.navigate("forum_show" + ext + "?" + sid + "#" + id); }
-		else if (id === 0) { mwf.navigate("forum_show" + ext + "?" + sid); }
-		else { mwf.navigate("board_show" + ext + "?" + "bid=" + id + ";" + sid); }
+		if (id.indexOf("cid") === 0) { mwf.navigate("forum_show" + ext + "#" + id); }
+		else if (id === 0) { mwf.navigate("forum_show" + ext); }
+		else { mwf.navigate("board_show" + ext + "?" + "bid=" + id); }
 	});
 };
 
@@ -90,6 +99,14 @@ mwf.initMoveBranch = function () {
 			mwf.navigate("branch_move" + mwf.p.m_ext + "?pid=" + postId +
 				";parent=" + this.id.substr(3) + ";auth=" + mwf.p.user_sourceAuth);
 		}
+	});
+};
+
+mwf.initReveal = function () {
+	$(".rvl").on("click", function () {
+		$(this).hide();
+		$($(this).data("rvlid")).slideDown();
+		return false;
 	});
 };
 
@@ -247,7 +264,7 @@ mwf.initTagButtons = function () {
 	});
 	$(".tbb").on("click", ".tbc", function () { mwf.insertTags(this.id.substr(4)); });
 	if (!dlOb) { return; }
-	html = "<option selected='selected' disabled='disabled'>" + mwf.p.lng_tbbInsSnip + "</option>";
+	html = "<option selected disabled>" + mwf.p.lng_tbbInsSnip + "</option>";
 	dlOb.children("dt").each(function () { html += "<option>" + $(this).text() + "</option>"; });
 	selOb = $("<select size='1'>" + html + "</select>").insertAfter(dlOb);
 	btnOb = $("<button type='button' class='snp'>+</button>").insertAfter(selOb);
@@ -267,13 +284,6 @@ mwf.initTagButtons = function () {
 			after = el.value.substring(end, el.textLength);
 			el.value = before + text + after;
 		}
-	});
-};
-
-mwf.initInsertRaw = function () {
-	$("#rawlnk").on("click", function () {
-		$(this).hide();
-		$("#rawfld").slideDown();
 	});
 };
 
@@ -351,12 +361,6 @@ mwf.initActivityGraph = function () {
 	}
 };
 
-mwf.initCheckCookie = function () {
-	$.get("ajax_checkcookie" + mwf.p.m_ext, {}, function (json) {
-		if (!json.ok) { $("#cookieError").slideDown(); }
-	});
-};
-
 mwf.initPostAttach = function () {
 	var dragLeaveTimer,
 		zoneOb = $("#dropZone"),
@@ -385,7 +389,7 @@ mwf.initPostAttach = function () {
 		return false;
 	});
 	zoneOb.on("drop", function (ev) {
-		var i, file, files, size;
+		var i, file, files, size, okNum = 0;
 		zoneOb.removeClass("drp");
 		if (ev.originalEvent) { files = ev.originalEvent.dataTransfer.files; }
 		else { files = fileOb[0].files; }
@@ -408,7 +412,9 @@ mwf.initPostAttach = function () {
 			}
 			if (index >= files.length) {
 				setTimeout(function () {
-					mwf.navigate("post_attach" + mwf.p.m_ext + "?pid=" + mwf.p.postId); }, 1000);
+					mwf.navigate("post_attach" + mwf.p.m_ext + "?pid=" + mwf.p.postId +
+						(okNum ? ";msg=PstAttach" : "")); 
+				}, 1500);
 				return;
 			}
 			if (!file.size || file.size > mwf.p.maxAttachLen) {
@@ -425,8 +431,9 @@ mwf.initPostAttach = function () {
 			xhr.addEventListener("load", function () {
 				var json;
 				try { json = $.parseJSON(xhr.responseText); } catch (x) {}
-				if (json) { 
-					spanOb.html(", " + (json.ok ? "100%" : "<em>" + json.error + "</em>")); 
+				if (json) {
+					if (json.ok) { okNum += 1; }
+					spanOb.html(", " + (json.ok ? "100%" : "<em>" + json.error + "</em>"));
 					nextFile(index + 1);
 				}
 				else { error(); }
@@ -442,9 +449,25 @@ mwf.initPostAttach = function () {
 };
 
 mwf.initShowAttach = function () {
-	var imgOb = $("p.ims img");
-	imgOb.on("click", function () {
-		if (imgOb[0].style.width !== "100%") { imgOb.width("100%"); }
-		else { imgOb.width("auto"); }
+	$(".ims img").on("click", function () {
+		this.style.width = this.style.width !== "100%" ? "100%" : "auto";
 	});
+};
+
+mwf.initTransferAttach = function () {
+	if (!mwf.p.boardAdmin) { return; }
+	$("body").on("click", "img.emi", function (ev) {
+		var ob = $(this);
+		if (!ev.ctrlKey || ob.parent().is("a")) { return; }
+		mwf.navigate("attach_transfer" + mwf.p.m_ext +
+			"?pid=" + ob.closest(".pst").attr("id").substr(3) + ";auth=" + mwf.p.user_sourceAuth +
+			";url=" + encodeURIComponent(ob.attr("src")));
+	});
+};
+
+mwf.initAutocomplete = function () {
+	var params = { url: "ajax_usernames" + mwf.p.m_ext,
+		matchInside: false, sortResults: false, preventDefaultTab: true, selectOnly: true };
+	$(".acu.acs").autocomplete(params);
+	$(".acu.acm").autocomplete($.extend({}, params, { useDelimiter: true, delimiterChar: ";" }));
 };

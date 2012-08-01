@@ -46,7 +46,7 @@ if ($submitted) {
 			or $m->formError('errNamSize');
 		$userName =~ /$cfg->{userNameRegExp}/ or $m->formError('errNamChar');
 		$userName !~ /  / or $m->formError('errNamChar');
-		$userName !~ /https?:/ or $m->formError('errNamChar');
+		$userName !~ /https?:/ or $m->formError('errNamResrvd');
 		index(lc($userName), lc($_)) < 0 or $m->formError('errNamResrvd')
 			for @{$cfg->{reservedNames}};
 	}
@@ -57,7 +57,8 @@ if ($submitted) {
 		or $m->formError('errNamGone');
 
 	# Track old usernames
-	my $oldNames = join(", ", $user->{userName}, $user->{oldNames} ? $user->{oldNames} : ());
+	my $oldNames = length($user->{userName}) > 20 && $user->{openId} =~ /$user->{userName}/
+		? "" : join(", ", $user->{userName}, $user->{oldNames} || ());
 	
 	# If there's no error, finish action
 	if (!@{$m->{formErrors}}) {
@@ -87,12 +88,12 @@ if (!$submitted || @{$m->{formErrors}}) {
 	$m->printPageBar(mainTitle => $lng->{namTitle}, subTitle => $user->{userName}, 
 		navLinks => \@navLinks);
 
-	# Set submitted or database values
-	my $userNameEsc = $submitted ? $m->escHtml($userName) : $user->{userName};
-	
 	# Print hints and form errors
 	$m->printHints(['namChgT']);
 	$m->printFormErrors();
+
+	# Prepare values
+	my $userNameEsc = $submitted ? $m->escHtml($userName) : $user->{userName};
 
 	# Print profile options
 	print
@@ -102,8 +103,8 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='ccl'>\n",
 		"<p>", $m->formatStr($lng->{namChgT2}, { times => $user->{renamesLeft} }), "</p>\n",
 		"<label class='lbw'>$lng->{namChgName}\n",
-		"<input type='text' class='fcs qwi' name='name' maxlength='$cfg->{maxUserNameLen}'",
-		" autofocus='autofocus' required='required' value='$userNameEsc'/></label>\n",
+		"<input type='text' class='qwi' name='name' maxlength='$cfg->{maxUserNameLen}'",
+		" value='$userNameEsc' autofocus required></label>\n",
 		$m->submitButton('namChgB', 'name'),
 		$m->stdFormFields(),
 		"</div>\n",
@@ -111,7 +112,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"</form>\n\n";
 
 	# Log action and finish
-	$m->logAction(3, 'user', 'passwd', $userId, 0, 0, 0, $userId);
+	$m->logAction(3, 'user', 'name', $userId, 0, 0, 0, $userId);
 	$m->printFooter();
 }
 $m->finish();

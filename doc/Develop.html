@@ -53,8 +53,6 @@ require MwfEnglish;
 
 <p>Language modules need to be encoded in Unicode/UTF-8 for mwForum 2.15.0 and later. I can't really provide simple instructions on how to handle that, as there are too many different text editors out there, which in turn have different options for handling Unicode. If you want to upgrade an existing module to UTF-8, also check the instructions in Upgrade.html. Do not write accented characters etc. as HTML entities (e.g. <code>&amp;auml;</code>) instead of using UTF-8, as in some cases that will lead to trouble.</p>
 
-<p>To support XHTML mode, all markup must be well-formed XML and preferably valid XHTML 1.1.</p>
-
 <p>To update your translation for future versions, you'll probably want to use some sort of "diff" utility on the old and new English modules to get a list of additions and changes to the string table. Not all of my changes have to be integrated into your translation, sometimes I just make small changes to the wording which aren't that important.</p>
 
 <p>If someone uses your older translation with a newer version of mwForum which adds new strings, the software will fall back to the English original strings for missing translated strings (provided that you added the code above), but some strings might have changed their meaning completely, thus it's not always safe to use an outdated translation.</p>
@@ -158,7 +156,7 @@ require MwfEnglish;
 
 <p>Some admins want to do more message text filtering/transforming/replacing than is done by default, usually to add more formatting, emoticons and such. An enabled message display plugin is called every time a text with markup is displayed (public posts and private messages, as well as some other texts like reports).</p>
 
-<p>The plugin is called at the start of MwfMain::dbToDisplay(). If the plugin returns 0, the rest of dbToDisplay() will run normally after that, if it returns 1 dbToDisplay() will end without further processing, and if it returns 2, dbToDisplay() will only do the processing that's likely to be safe and not interfere with whatever the plugin is doing (at the time of this writing that means adding attachments, signatures and sessions IDs). If you chose to end or limit the processing in dbToDisplay() by returning 1 or 2, you might have to copy part of the code in dbToDisplay() to your plugin, possibly modified in some way that prevents interference with your own markup and code.</p>
+<p>The plugin is called at the start of MwfMain::dbToDisplay(). If the plugin returns 0, the rest of dbToDisplay() will run normally after that, if it returns 1 dbToDisplay() will end without further processing, and if it returns 2, dbToDisplay() will only do the processing that's likely to be safe and not interfere with whatever the plugin is doing (at the time of this writing that means adding attachments and signatures). If you chose to end or limit the processing in dbToDisplay() by returning 1 or 2, you might have to copy part of the code in dbToDisplay() to your plugin, possibly modified in some way that prevents interference with your own markup and code.</p>
 
 <p>The examples in example/MwfPlgMsgDisplay.pm add another smiley and video tags and then let MwfMain::dbToDisplay() continue to do the rest of the work.</p>
 
@@ -187,7 +185,7 @@ require MwfEnglish;
 <p>Login authentication plugin details:</p>
 <ul>
 <li>Parameters: plugin gets the username and password fields from the login page.</li>
-<li>Normal mwForum login page and cookies/sessions are used.</li>
+<li>Normal mwForum login page and cookies are used.</li>
 <li>Normal mwForum user_register and user_password pages are not used.</li>
 <li>Once a mwForum user is created, the plugin itself cannot reliably revoke access.</li>
 </ul>

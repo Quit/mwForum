@@ -78,26 +78,30 @@ print
 	"<div class='ccl'>\n",
 	"<p>$question</p>\n";
 	
-my $checked = $cfg->{noteDefMod} ? "checked='checked'" : "";
+# Print notification section
+my $noteChk = $cfg->{noteDefMod} ? 'checked' : "";
 print
 	"<fieldset>\n",
-	"<div><label><input type='checkbox' class='fcs' name='notify'",
-	" autofocus='autofocus' $checked/>$lng->{notNotify}</label></div>\n",
-	"<input type='text' class='fwi' name='reason'/>\n",
+	"<div><label><input type='checkbox' name='notify' autofocus $noteChk>",
+	"$lng->{notNotify}</label></div>\n",
+	"<datalist id='reasons'>\n",
+	map("<option value='$_'>\n", @{$cfg->{modReasons}}),
+	"</datalist>\n",
+	"<input type='text' class='fwi' name='reason' list='reasons'>\n",
 	"</fieldset>\n"
 	if $notify;
 	
 print
 	$m->submitButton('cnfDeleteB', 'delete'),
-	"<input type='hidden' name='act' value='$act'/>\n",
-	"<input type='hidden' name='uid' value='$uid'/>\n",
-	"<input type='hidden' name='gid' value='$gid'/>\n",
-	"<input type='hidden' name='cid' value='$cid'/>\n",
-	"<input type='hidden' name='bid' value='$bid'/>\n",
-	"<input type='hidden' name='tid' value='$tid'/>\n",
-	"<input type='hidden' name='pid' value='$pid'/>\n",
-	"<input type='hidden' name='mid' value='$mid'/>\n",
-	"<input type='hidden' name='pollId' value='$pollId'/>\n",
+	"<input type='hidden' name='act' value='$act'>\n",
+	"<input type='hidden' name='uid' value='$uid'>\n",
+	"<input type='hidden' name='gid' value='$gid'>\n",
+	"<input type='hidden' name='cid' value='$cid'>\n",
+	"<input type='hidden' name='bid' value='$bid'>\n",
+	"<input type='hidden' name='tid' value='$tid'>\n",
+	"<input type='hidden' name='pid' value='$pid'>\n",
+	"<input type='hidden' name='mid' value='$mid'>\n",
+	"<input type='hidden' name='pollId' value='$pollId'>\n",
 	$m->stdFormFields(),
 	"</div>\n",
 	"</div>\n",

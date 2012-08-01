@@ -37,7 +37,7 @@ $m->redirect('forum_show') if $boardId eq '0';
 $boardId = int($boardId || 0);
 
 # Get boardId and stickyness from topic
-my $arcPfx = $m->{archive} ? 'arc_' : '';
+my $arcPfx = $m->{archive} ? 'arc_' : "";
 my $jumpTopicSticky = 0;
 ($boardId, $jumpTopicSticky) = $m->fetchArray("
 	SELECT boardId, sticky FROM ${arcPfx}topics WHERE id = ?", $jumpTopicId)
@@ -149,18 +149,7 @@ my $topicNum = $m->fetchArray("
 my $pageNum = int($topicNum / $topicsPP) + ($topicNum % $topicsPP != 0);
 my @pageLinks = $pageNum < 2 ? ()
 	: $m->pageLinks('board_show', [ bid => $boardId ], $page, $pageNum);
-$pageLinks[-1] = { url => "board_${boardId}_" . ($page + 1) . ".html", 
-	txt => 'comPgNext', dsb => $page == $pageNum }
-	if @pageLinks && $cfg->{seoRewrite} && !$userId;
 
-# Navigation button links
-my @navLinks = ();
-push @navLinks, { url => $m->url('prevnext', bid => $boardId, dir => 'prev'), 
-	txt => 'brdPrev', ico => 'prev' };
-push @navLinks, { url => $m->url('prevnext', bid => $boardId, dir => 'next'), 
-	txt => 'brdNext', ico => 'next' };
-push @navLinks, { url => $m->url('forum_show', tgt => "bid$boardId"), txt =>'comUp', ico => 'up' };
-	
 # User button links
 my @userLinks = ();
 if (!$m->{archive}) {
@@ -201,8 +190,9 @@ if ($boardAdmin && !$m->{archive}) {
 }
 
 # Print page bar
-my $url = $m->url('forum_show', tgt => "bid$boardId");
-my $categStr = "<a href='$url'>$board->{categTitle}</a> / ";
+my $categUrl = $m->url('forum_show', tgt => "bid$boardId");
+my $categStr = "<a href='$categUrl'>$board->{categTitle}</a> / ";
+my @navLinks = ({ url => $m->url('forum_show', tgt => "bid$boardId"), txt =>'comUp', ico => 'up' });
 $m->printPageBar(mainTitle => $lng->{brdTitle}, subTitle => $categStr . $board->{title}, 
 	navLinks => \@navLinks, pageLinks => \@pageLinks, userLinks => \@userLinks, 
 	adminLinks => \@adminLinks);
@@ -226,19 +216,20 @@ my $emptyPixel = "src='$cfg->{dataPath}/epx.png'";
 for my $topic (@$topics) {
 	# Format output
 	my $topicId = $topic->{id};
+	my $topicUrl = $m->url('topic_show', tid => $topicId);
 	my $lastPostTimeStr = $m->formatTime($topic->{lastPostTime}, $user->{timezone});
 	my $userNameStr = $topic->{userName} || $topic->{userNameBak} || " - ";
-	my $url = $m->url('user_info', uid => $topic->{userId});
-	$userNameStr = "<a href='$url'>$userNameStr</a>" if $topic->{userId} > 0;
+	my $userUrl = $m->url('user_info', uid => $topic->{userId});
+	$userNameStr = "<a href='$userUrl'>$userNameStr</a>" if $topic->{userId} > 0;
 	my $subject = $topic->{sticky} ? "<span class='stk'>$topic->{subject}</span>" : $topic->{subject};
-	$url = $m->url('forum_overview', act => 'new', tid => $topicId);
-	my $newNumStr = $topic->{newNum} ? "<a href='$url'>($topic->{newNum} $lng->{brdNew})</a>" : "";
+	my $ovwUrl = $m->url('forum_overview', act => 'new', tid => $topicId);
+	my $newNumStr = $topic->{newNum} ? "<a href='$ovwUrl'>($topic->{newNum} $lng->{brdNew})</a>" : "";
 	my $lockImg = $topic->{locked} ? " <img class='sic sic_topic_l' $emptyPixel"
-		. " title='$lng->{brdLockedTT}' alt='$lng->{brdLocked}'/>" : "";
+		. " title='$lng->{brdLockedTT}' alt='$lng->{brdLocked}'>" : "";
 	my $invisImg = !$topic->{approved} ? " <img class='sic sic_post_i' $emptyPixel"
-		. " title='$lng->{brdInvisTT}' alt='$lng->{brdInvis}'/>" : "";
+		. " title='$lng->{brdInvisTT}' alt='$lng->{brdInvis}'>" : "";
 	my $pollImg = $topic->{pollId} ? " <img class='sic sic_topic_poll' $emptyPixel"
-		. " title='$lng->{brdPollTT}' alt='$lng->{brdPoll}'/>" : "";
+		. " title='$lng->{brdPollTT}' alt='$lng->{brdPoll}'>" : "";
 	my $tag = $topic->{tag} && $cfg->{allowTopicTags} && $user->{showDeco} 
 		? " " . $m->formatTopicTag($topic->{tag}) : "";
 	my $tpcClasses = "crw tpc";
@@ -273,13 +264,11 @@ for my $topic (@$topics) {
 	my $imgAttr = "class='sic sic_$imgName' title='$imgTitle' alt='$imgAlt'";
 
 	# Print topic
-	$url = $cfg->{seoRewrite} && !$userId 
-		? "topic_${topicId}_1.html" : $m->url('topic_show', tid => $topicId);
 	print 
 		"<tr class='$tpcClasses'>\n",
 		"<td>\n",
-		"<a id='tid$topicId' href='$url'>\n",
-		"<img $emptyPixel $imgAttr/>$lockImg$invisImg$pollImg\n",
+		"<a id='tid$topicId' href='$topicUrl'>\n",
+		"<img $emptyPixel $imgAttr>$lockImg$invisImg$pollImg\n",
 		"$subject</a>$tag\n",
 		"</td>\n",
 		"<td class='shr'>$userNameStr</td>\n",

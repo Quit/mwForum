@@ -17,7 +17,7 @@ package MwfCaptcha;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine);
-our $VERSION = "2.25.1";
+our $VERSION = "2.27.0";
 
 #------------------------------------------------------------------------------
 # Return captcha input elements
@@ -33,14 +33,14 @@ sub captchaInputs
 
 	if ($cfg->{captchaMethod} == 0) {
 		# Invisible honeypot field
-		return "<div class='ihf'><input type='text' name='url'/></div>\n";
+		return "<div class='ihf'><input type='text' name='url'></div>\n";
 	}
 	elsif ($cfg->{captchaMethod} == 1) {
 		# Topic-specific question and answer
 		return
 			"<fieldset>\n",
 			"<label class='lbw'>$cfg->{captchaQuestn}\n",
-			"<input type='text' class='qwi' name='captchaAnswer' required='required'/></label>\n",
+			"<input type='text' class='qwi' name='captchaAnswer' required></label>\n",
 			"</fieldset>\n";
 	}
 	elsif ($cfg->{captchaMethod} == 2) {
@@ -49,11 +49,11 @@ sub captchaInputs
 		return
 			"<fieldset>\n",
 			"<label class='lbw'>$lng->{comCaptcha}\n",
-			"<input type='text' class='qwi' name='captchaCode' maxlength='6' required='required'/>",
+			"<input type='text' class='qwi' name='captchaCode' maxlength='6' required>",
 			"</label>\n",
-			"<input type='hidden' name='captchaTicketId' value='$captchaTicketId'/>\n",
+			"<input type='hidden' name='captchaTicketId' value='$captchaTicketId'>\n",
 			"<div><img class='cpt' src='$cfg->{attachUrlPath}/captchas/$captchaTicketId.png'",
-			" alt=''/></div>\n",
+			" alt=''></div>\n",
 			"</fieldset>\n";
 	}
 	elsif ($cfg->{captchaMethod} == 3) {
@@ -96,7 +96,7 @@ sub checkCaptcha
 	}
 	elsif ($cfg->{captchaMethod} == 2) {
 		# GD::SecurityImage
-		my $ticketId = $m->paramStrId('captchaTicketId');
+		my $ticketId = $m->paramStr('captchaTicketId');
 		my $code = $m->paramStr('captchaCode');
 
 		# Delete old captcha tickets and files
@@ -107,8 +107,11 @@ sub checkCaptcha
 		unlink grep((stat($_))[9] < $m->{now} - $timeout, glob("$cfg->{attachFsPath}/captchas/*"));
 		
 		# Get and delete current captcha ticket
-		my $realCode = $m->fetchArray("
-			SELECT data FROM tickets WHERE id = ?", $ticketId);
+		my $cs = 'BINARY';
+		if ($m->{pgsql}) { $cs = 'TEXT' }
+		elsif ($m->{sqlite}) { $cs = 'BLOB' }
+		my ($id, $realCode) = $m->fetchArray("
+			SELECT id, data FROM tickets WHERE id = CAST(? AS $cs)", $ticketId);
 		$m->dbDo("
 			DELETE FROM tickets WHERE id = ?", $ticketId) 
 			if $realCode;
@@ -210,10 +213,7 @@ sub addGdCaptcha
 	my ($imgData) = $img->out(force => 'png');
 	my $ticketId = $m->randomId();
 	my $captchaFsPath = "$cfg->{attachFsPath}/captchas";
-	if (!-d $captchaFsPath) {
-		mkdir $captchaFsPath or $m->error("Captcha directory creation failed. ($!)");
-		$m->setMode($captchaFsPath, 'dir');
-	}
+	$m->createDirectories($captchaFsPath);
 	my $file = "$captchaFsPath/$ticketId.png";
 	open my $fh, ">:raw", $file or $m->error("Image storing failed. ($!)");
 	print $fh $imgData;

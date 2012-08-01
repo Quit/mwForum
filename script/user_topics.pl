@@ -57,21 +57,24 @@ if ($submitted) {
 
 	# If there's no error, finish action
 	if (!@{$m->{formErrors}}) {
-		# Delete subscriptions
-		$m->dbDo("
-			DELETE FROM topicSubscriptions WHERE userId = ?", $optUserId);
-
 		for my $topic (@$topics) {
-			# Insert subscriptions
+			# Update subscriptions
 			my $topicId = $topic->{id};
 			my $subscribe = $m->paramInt("subscribe_$topicId");
 			$subscribe = 0 if !$optUser->{email} || $optUser->{dontEmail}
 				|| ($subscribe == 2 && !$cfg->{subsInstant}) || ($subscribe == 1 && !$cfg->{subsDigest});
 			my $instant = $subscribe == 2 ? 1 : 0;
-			$m->dbDo("
-				INSERT INTO topicSubscriptions (userId, topicId, instant) VALUES (?, ?, ?)", 
-				$optUserId, $topicId, $instant)
-				if $subscribe;
+			my $subscribed = $m->fetchArray("
+				SELECT 1 FROM topicSubscriptions WHERE userId = ? AND topicId = ?", $optUserId, $topicId);
+			if ($subscribe && !$subscribed) {
+				$m->dbDo("
+					INSERT INTO topicSubscriptions (userId, topicId, instant, unsubAuth) VALUES (?, ?, ?, ?)",
+					$optUserId, $topicId, $instant, $m->randomId());
+			}
+			elsif (!$subscribe && $subscribed) {
+				$m->dbDo("
+					DELETE FROM topicSubscriptions WHERE userId = ? AND topicId = ?", $optUserId, $topicId);
+			}
 		}
 		
 		# Log action and finish
@@ -94,7 +97,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 	# Print hints and form errors
 	$m->printFormErrors();
 
-	# Print topic subscription table
+	# Print topic option table
 	print 
 		"<form action='user_topics$m->{ext}' method='post'>\n",
 		"<table class='tbl'>\n",
@@ -102,22 +105,23 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<th>$lng->{utpTpcStTtl}</th>\n",
 		"<th>$lng->{utpTpcStSubs}</th>\n",
 		"</tr>\n";
-		
+
+	# Print topic list		
 	for my $topic (@$topics) {
 		my $topicId = $topic->{id};
-		my $instantDisbl = !$cfg->{subsInstant} ? "disabled='disabled'" : "";
-		my $digestDisbl = !$cfg->{subsDigest} ? "disabled='disabled'" : "";
-		my $instantChk = $topic->{instant} ? "checked='checked'" : "";
-		my $digestChk = !$topic->{instant} ? "checked='checked'" : "";
+		my $instantDsb = !$cfg->{subsInstant} ? 'disabled' : "";
+		my $digestDsb = !$cfg->{subsDigest} ? 'disabled' : "";
+		my $instantChk = $topic->{instant} ? 'checked' : "";
+		my $digestChk = !$topic->{instant} ? 'checked' : "";
 		print
 			"<tr class='crw'>\n",
 			"<td>$topic->{subject}</td>\n",
 			"<td class='shr'>",
-			"<label><input type='radio' name='subscribe_$topicId' value='2' $instantChk $instantDisbl/>",
+			"<label><input type='radio' name='subscribe_$topicId' value='2' $instantChk $instantDsb>",
 			" $lng->{ubdTpcStInst}</label>\n",
-			"<label><input type='radio' name='subscribe_$topicId' value='1' $digestChk $digestDisbl/>",
+			"<label><input type='radio' name='subscribe_$topicId' value='1' $digestChk $digestDsb>",
 			" $lng->{ubdTpcStDig}</label>\n",
-			"<label><input type='radio' name='subscribe_$topicId' value='0'/>",
+			"<label><input type='radio' name='subscribe_$topicId' value='0'>",
 			" $lng->{ubdTpcStOff}</label>\n",
 			"</td>\n",
 			"</tr>\n";
@@ -133,7 +137,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='hcl'><span class='htt'>$lng->{utpSubmitTtl}</span></div>\n",
 		"<div class='ccl'>\n",
 		$m->submitButton('utpChgB', 'topic'),
-		"<input type='hidden' name='uid' value='$optUserId'/>\n",
+		"<input type='hidden' name='uid' value='$optUserId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

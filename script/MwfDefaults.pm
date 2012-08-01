@@ -16,7 +16,7 @@
 package MwfDefaults;
 use strict;
 use warnings;
-our $VERSION = "2.25.2";
+our $VERSION = "2.27.2";
 
 #-----------------------------------------------------------------------------
 # Configuration option defaults. Don't change.
@@ -87,7 +87,7 @@ our $options = [
 	name     => 'subsInstant',
 	type     => 'checkbox',
 	title    => "Enable instant subscriptions of boards and topics?",
-	help     => "Instant subscription emails are sent out by a forked process when a post gets submitted. Requires the <var>\$cfg-&gt;{scriptFsPath}</var> and <var>\$cfg-&gt;{perlBinary}</var> options to be set up, and may not work on some servers.",
+	help     => "Instant subscription emails are sent out by a forked process when a post gets submitted. Requires the <var>\$cfg-&gt;{scriptFsPath}</var> and <var>\$cfg-&gt;{perlBinary}</var> options to be set up.",
 	default  => 0,
 },
 {
@@ -438,12 +438,6 @@ our $options = [
 	default  => 0,
 },
 {
-	name     => 'urlSessions',
-	type     => 'checkbox',
-	title    => "Fall back to URL-based login session if cookies are disabled?",
-	default  => 0,
-},
-{
 	name     => 'adminUserReg',
 	type     => 'checkbox',
 	title    => "Hide user registration page and allow registration only by admins?",
@@ -612,30 +606,30 @@ our $options = [
 	name     => 'tags',
 	type     => 'textarea',
 	parse    => 'hash',
-	title    => "Replace :tags: in colons with text or (X)HTML",
+	title    => "Replace :tags: in colons with text or HTML",
 	help     => "One tag=value pair per line. If a value starts with \"?\", no insertion button will be shown for that tag. If it starts with \"!\", it will not be replaced for users with the show-decoration user option disabled. \"[[dataPath]]\" will be replaced with the configured data path value.",
-	example  => [ "readfaq=?&lt;img src='/img/readfaq.png' alt='Read the FAQ'/&gt;", "eek=&lt;img class='fsm fsm_eek' src='[[dataPath]]/epx.png' title='eek' alt=':eek:'/&gt;" ],
+	example  => [ "readfaq=?&lt;img src='/img/readfaq.png' alt='Read the FAQ'&gt;", "eek=&lt;img class='fsm fsm_eek' src='[[dataPath]]/epx.png' title='eek' alt=':eek:'&gt;" ],
 	default  => {
-		confused => "<img class='fsm fsm_confused' src='[[dataPath]]/epx.png' title='confused' alt=':confused:'/>",
-		cool => "<img class='fsm fsm_cool' src='[[dataPath]]/epx.png' title='cool' alt=':cool:'/>",
-		cry => "<img class='fsm fsm_cry' src='[[dataPath]]/epx.png' title='cry' alt=':cry:'/>",
-		eek => "<img class='fsm fsm_eek' src='[[dataPath]]/epx.png' title='eek' alt=':eek:'/>",
-		evil => "<img class='fsm fsm_evil' src='[[dataPath]]/epx.png' title='evil' alt=':evil:'/>",
-		fat => "<img class='fsm fsm_fat' src='[[dataPath]]/epx.png' title='fat' alt=':fat:'/>",
-		grin => "<img class='fsm fsm_grin' src='[[dataPath]]/epx.png' title='grin' alt=':grin:'/>",
-		lol => "<img class='fsm fsm_lol' src='[[dataPath]]/epx.png' title='lol' alt=':lol:'/>",
-		mad => "<img class='fsm fsm_mad' src='[[dataPath]]/epx.png' title='mad' alt=':mad:'/>",
-		neutral => "<img class='fsm fsm_neutral' src='[[dataPath]]/epx.png' title='neutral' alt=':neutral:'/>",
-		razz => "<img class='fsm fsm_razz' src='[[dataPath]]/epx.png' title='razz' alt=':razz:'/>",
-		red => "<img class='fsm fsm_red' src='[[dataPath]]/epx.png' title='red' alt=':red:'/>",
-		roll => "<img class='fsm fsm_roll' src='[[dataPath]]/epx.png' title='roll' alt=':roll:'/>",
-		sad => "<img class='fsm fsm_sad' src='[[dataPath]]/epx.png' title='sad' alt=':sad:'/>",
-		slim => "<img class='fsm fsm_slim' src='[[dataPath]]/epx.png' title='slim' alt=':slim:'/>",
-		smile => "<img class='fsm fsm_smile' src='[[dataPath]]/epx.png' title='smile' alt=':smile:'/>",
-		surprised => "<img class='fsm fsm_surprised' src='[[dataPath]]/epx.png' title='surprised' alt=':surprised:'/>",
-		twisted => "<img class='fsm fsm_twisted' src='[[dataPath]]/epx.png' title='twisted' alt=':twisted:'/>",
-		wink => "<img class='fsm fsm_wink' src='[[dataPath]]/epx.png' title='wink' alt=':wink:'/>",
-		yell => "<img class='fsm fsm_yell' src='[[dataPath]]/epx.png' title='yell' alt=':yell:'/>",
+		confused => "<img class='fsm fsm_confused' src='[[dataPath]]/epx.png' title='confused' alt=':confused:'>",
+		cool => "<img class='fsm fsm_cool' src='[[dataPath]]/epx.png' title='cool' alt=':cool:'>",
+		cry => "<img class='fsm fsm_cry' src='[[dataPath]]/epx.png' title='cry' alt=':cry:'>",
+		eek => "<img class='fsm fsm_eek' src='[[dataPath]]/epx.png' title='eek' alt=':eek:'>",
+		evil => "<img class='fsm fsm_evil' src='[[dataPath]]/epx.png' title='evil' alt=':evil:'>",
+		fat => "<img class='fsm fsm_fat' src='[[dataPath]]/epx.png' title='fat' alt=':fat:'>",
+		grin => "<img class='fsm fsm_grin' src='[[dataPath]]/epx.png' title='grin' alt=':grin:'>",
+		lol => "<img class='fsm fsm_lol' src='[[dataPath]]/epx.png' title='lol' alt=':lol:'>",
+		mad => "<img class='fsm fsm_mad' src='[[dataPath]]/epx.png' title='mad' alt=':mad:'>",
+		neutral => "<img class='fsm fsm_neutral' src='[[dataPath]]/epx.png' title='neutral' alt=':neutral:'>",
+		razz => "<img class='fsm fsm_razz' src='[[dataPath]]/epx.png' title='razz' alt=':razz:'>",
+		red => "<img class='fsm fsm_red' src='[[dataPath]]/epx.png' title='red' alt=':red:'>",
+		roll => "<img class='fsm fsm_roll' src='[[dataPath]]/epx.png' title='roll' alt=':roll:'>",
+		sad => "<img class='fsm fsm_sad' src='[[dataPath]]/epx.png' title='sad' alt=':sad:'>",
+		slim => "<img class='fsm fsm_slim' src='[[dataPath]]/epx.png' title='slim' alt=':slim:'>",
+		smile => "<img class='fsm fsm_smile' src='[[dataPath]]/epx.png' title='smile' alt=':smile:'>",
+		surprised => "<img class='fsm fsm_surprised' src='[[dataPath]]/epx.png' title='surprised' alt=':surprised:'>",
+		twisted => "<img class='fsm fsm_twisted' src='[[dataPath]]/epx.png' title='twisted' alt=':twisted:'>",
+		wink => "<img class='fsm fsm_wink' src='[[dataPath]]/epx.png' title='wink' alt=':wink:'>",
+		yell => "<img class='fsm fsm_yell' src='[[dataPath]]/epx.png' title='yell' alt=':yell:'>",
 	},
 },
 {
@@ -781,7 +775,7 @@ our $options = [
 	name     => 'cronEmu',
 	type     => 'checkbox',
 	title    => "Enable cron emulation?",
-	help     => "Starts the main cronjob on the first page request of every day. Requires the <var>\$cfg-&gt;{scriptFsPath}</var> and <var>\$cfg-&gt;{perlBinary}</var> options to be set up, and may not work on some servers.",
+	help     => "Starts the main cronjob on the first page request of every day. Requires the <var>\$cfg-&gt;{scriptFsPath}</var> and <var>\$cfg-&gt;{perlBinary}</var> options to be set up.",
 	default  => 0,
 },
 {
@@ -863,12 +857,6 @@ our $options = [
 {
 	section  => "Default User Options",
 	id       => "user",
-},
-{
-	name     => 'hideEmail',
-	type     => 'checkbox',
-	title    => "Hide email address?",
-	default  => 1,
 },
 {
 	name     => 'privacy',
@@ -1125,7 +1113,7 @@ our $options = [
 	name     => 'bouncePopAuth',
 	type     => 'text',
 	title    => "POP3 authentication method",
-	default  => "PASS",
+	default  => "BEST",
 },
 {
 	name     => 'bouncePopPort',
@@ -1148,7 +1136,7 @@ our $options = [
 {
 	name     => 'bouncePopDbg',
 	type     => 'checkbox',
-	title    => "Enable POP3 debug log",
+	title    => "Enable POP3 debug logging to stderr",
 	default  => 0,
 },
 {
@@ -1321,13 +1309,6 @@ our $options = [
 	default  => 500,
 },
 {
-	name     => 'maxListUsers',
-	type     => 'number',
-	title    => "Max. number of usernames in listboxes",
-	help     => "If there are more users, usernames have to be typed in manually.",
-	default  => 250,
-},
-{
 	name     => 'maxMsgRecv',
 	type     => 'number',
 	title    => "Max. number of recipients for private messages",
@@ -1352,13 +1333,6 @@ our $options = [
 	title    => "Limit editing of posts to x seconds after posting",
 	help     => "0 = don't limit",
 	default  => 0,
-},
-{
-	name     => 'sessionTimeout',
-	type     => 'number',
-	title    => "Sessions time out after x minutes",
-	help     => "Only affects users that don't accept cookies and fall back to URL-based sessions.",
-	default  => 30,
 },
 {
 	name     => 'maxUnreadDays',
@@ -1508,7 +1482,7 @@ our $options = [
 	name     => 'reports',
 	type     => 'checkbox',
 	title    => "Enable reporting of posts for rule violations?",
-	help     => "Generally a good feature to have for legal reasons, but users mistaking it for a reply function despite all the warnings can get annoying.",
+	help     => "Generally a good feature to enable for legal reasons.",
 	default  => 1,
 },
 {
@@ -1528,13 +1502,6 @@ our $options = [
 {
 	section  => "Expert Options",
 	id       => "exp",
-},
-{
-	name     => 'xhtml',
-	type     => 'checkbox',
-	title    => "Send real XHTML (application/xhtml+xml) to browsers that accept it?",
-	help     => "Only use if all your custom markup (included via options, language modules, include plugins, code modifications etc.) is well-formed XML and valid XHTML5.",
-	default  => 0,
 },
 {
 	name     => 'logLevel',
@@ -1570,20 +1537,6 @@ our $options = [
 	default  => 0,
 },
 {
-	name     => 'relRedir',
-	type     => 'checkbox',
-	title    => "Use relative Location headers for redirection?",
-	help     => "Violates the HTTP spec, but usually works fine and solves problems with some advanced setups involving SSL and reverse proxies.",
-	default  => 0,
-},
-{
-	name     => 'seoRewrite',
-	type     => 'checkbox',
-	title    => "Rewrite URLs for SEO purposes?",
-	help     => "See FAQ.html for details.",
-	default  => 0,
-},
-{
 	name     => 'fileMode',
 	type     => 'text',
 	title    => "File access mode for attachments and other mwForum-created files",
@@ -1605,6 +1558,37 @@ our $options = [
 	title    => "Version number added to dataPath to force reloading of files",
 	help     => "See FAQ.html for details, otherwise leave at 0.",
 	default  => 0,
+},
+{
+	section  => "Autocompletion Options",
+	id       => "autocomplete",
+},
+{
+	name     => 'fontFaces',
+	type     => 'textarea',
+	parse    => 'array',
+	title    => "Font faces listed on user options page",
+	help     => "Autocompletions listed here use HTML5 and don't work with all browsers yet.",
+	default  => [ 
+		"Arial", "Calibri", "Cambria", "Candara", "Corbel", "Georgia",
+		"Tahoma", "Times New Roman", "Trebuchet MS", "Verdana",
+	],
+},
+{
+	name     => 'modReasons',
+	type     => 'textarea',
+	parse    => 'array',
+	title    => "Reasons for moderation actions (post edit/delete, topic move/delete etc.)",
+	example  => [ "ToS violation", "Double post" ],
+	default  => [],
+},
+{
+	name     => 'banReasons',
+	type     => 'textarea',
+	parse    => 'array',
+	title    => "Reasons for user banning",
+	example  => [ "Spam", "Trolling" ],
+	default  => [],
 },
 {
 	section  => "Include Options",
@@ -1718,7 +1702,6 @@ our @tables = qw(
 	pollVotes 
 	postReports 
 	posts 
-	sessions 
 	tickets 
 	topicReadTimes 
 	topics 

@@ -76,12 +76,6 @@ if (!$submitted || @{$m->{formErrors}}) {
 	# Print hints and form errors
 	$m->printFormErrors();
 
-	# Print board status table
-	print 
-		"<form action='board_groups$m->{ext}' method='post'>\n",
-		"<table class='tbl'>\n",
-		"<tr class='hrw'><th colspan='3'>$lng->{bgrPermTtl}</th></tr>\n";
-		
 	# Get groups including board status
 	my $groups = $m->fetchAllHash("
 		SELECT groups.id, groups.title,
@@ -97,10 +91,16 @@ if (!$submitted || @{$m->{formErrors}}) {
 		ORDER BY groups.title",
 		{ boardId => $boardId });
 
+	# Print board status table
+	print 
+		"<form action='board_groups$m->{ext}' method='post'>\n",
+		"<table class='tbl'>\n",
+		"<tr class='hrw'><th colspan='3'>$lng->{bgrPermTtl}</th></tr>\n";
+		
 	# Print group list
 	for my $group (@$groups) {
-		my $admin = $group->{admin} ? "checked='checked'" : "";
-		my $member = $group->{member} ? "checked='checked'" : "";
+		my $adminChk = $group->{admin} ? 'checked' : "";
+		my $memberChk = $group->{member} ? 'checked' : "";
 		my $url = $m->url('group_info', gid => $group->{id});
 		print
 			"<tr class='crw'>\n",
@@ -108,13 +108,13 @@ if (!$submitted || @{$m->{formErrors}}) {
 
 		print
 			"<td class='shr'><label>",
-			"<input type='checkbox' name='admin_$group->{id}' $admin/>$lng->{bgrModerator}",
+			"<input type='checkbox' name='admin_$group->{id}' $adminChk>$lng->{bgrModerator}",
 			"</label></td>\n"
 			if $user->{admin};
 
 		print
 			"<td class='shr'><label>",
-			"<input type='checkbox' name='member_$group->{id}' $member/>$lng->{bgrMember}",
+			"<input type='checkbox' name='member_$group->{id}' $memberChk>$lng->{bgrMember}",
 			"</label></td>\n",
 			"</tr>\n";
 	}
@@ -127,7 +127,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='hcl'><span class='htt'>$lng->{bgrChangeTtl}</span></div>\n",
 		"<div class='ccl'>\n",
 		$m->submitButton('bgrChangeB', 'group'),
-		"<input type='hidden' name='bid' value='$boardId'/>\n",
+		"<input type='hidden' name='bid' value='$boardId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",

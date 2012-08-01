@@ -131,14 +131,14 @@ if (!$submitted || @{$m->{formErrors}}) {
 	# Print page bar
 	my @navLinks = ({ url => $m->url('user_info', uid => $banUserId), txt => 'comUp', ico => 'up' });
 	$m->printPageBar(mainTitle => "User", subTitle => $banUser->{userName}, navLinks => \@navLinks);
+
+	# Print hints and form errors
+	$m->printFormErrors();
 	
 	# Check if user is already banned
 	my $ban = $m->fetchHash("
 		SELECT * FROM userBans WHERE userId = ?", $banUserId);
 
-	# Print hints and form errors
-	$m->printFormErrors();
-	
 	if ($ban) {
 		# Print unban form
 		print
@@ -150,8 +150,8 @@ if (!$submitted || @{$m->{formErrors}}) {
 			"<p>Public reason: $ban->{reason}</p>\n",
 			"<p>Internal reason: $ban->{intReason}</p>\n",
 			$m->submitButton("Unban", 'remove'),
-			"<input type='hidden' name='uid' value='$banUserId'/>\n",
-			"<input type='hidden' name='act' value='unban'/>\n",
+			"<input type='hidden' name='uid' value='$banUserId'>\n",
+			"<input type='hidden' name='act' value='unban'>\n",
 			$m->stdFormFields(),
 			"</div>\n",
 			"</div>\n",
@@ -162,13 +162,10 @@ if (!$submitted || @{$m->{formErrors}}) {
 		my $reasonEsc = $m->escHtml($reason);
 		my $intReasonEsc = $m->escHtml($intReason);
 
-		# Determine checkbox states
-		my $checked = "checked='checked'";
-		my %state = (
-			resetEmail => $resetEmail ? $checked : undef,
-			deleteMsgs => $deleteMsgs ? $checked : undef,
-		);
-			
+		# Determine checkbox, radiobutton and listbox states
+		my $resetEmailChk = $resetEmail ? 'checked' : "";
+		my $deleteMsgsChk = $deleteMsgs ? 'checked' : "";
+
 		# Print ban form
 		print
 			"<form action='user_ban$m->{ext}' method='post'>\n",
@@ -177,23 +174,27 @@ if (!$submitted || @{$m->{formErrors}}) {
 			"<div class='ccl'>\n",
 			"<p>Banned users are locked out from any functionality except logging out.</p>\n",
 			"<fieldset>\n",
-			"<label class='lbw'>Reason (shown to banned user only)\n",
-			"<input type='text' class='fcs fwi' name='reason'",
-			" autofocus='autofocus' value='$reasonEsc'/></label>\n",
+			"<datalist id='reasons'>\n",
+			map("<option value='$_'>\n", @{$cfg->{banReasons}}),
+			"</datalist>\n",
+			"<label class='lbw'>Reason (shown to banned user)\n",
+			"<input type='text' class='fwi' name='reason' list='reasons'",
+			" value='$reasonEsc' autofocus></label>\n",
 			"<label class='lbw'>Internal Reason (shown to admins only)\n",
-			"<input type='text' class='fwi' name='intReason' value='$intReasonEsc'/></label>\n",
+			"<input type='text' class='fwi' name='intReason' list='reasons'",
+			" value='$intReasonEsc'></label>\n",
 			"<label class='lbw'>Duration (in days, 0 = unlimited)\n",
-			"<input type='number' name='duration' value='$duration'/></label>\n",
+			"<input type='number' name='duration' value='$duration'></label>\n",
 			"</fieldset>\n",
 			"<fieldset>\n",
-			"<div><label><input type='checkbox' name='resetEmail' $state{resetEmail}/>",
+			"<div><label><input type='checkbox' name='resetEmail' $resetEmailChk>",
 			" Reset email subscriptions and notifications</label></div>\n",
-			"<div><label><input type='checkbox' name='deleteMsgs' $state{deleteMsgs}/>",
+			"<div><label><input type='checkbox' name='deleteMsgs' $deleteMsgsChk>",
 			" Delete sent private messages</label></div>\n",
 			"</fieldset>\n",
 			$m->submitButton("Ban", 'ban'),
-			"<input type='hidden' name='uid' value='$banUserId'/>\n",
-			"<input type='hidden' name='act' value='ban'/>\n",
+			"<input type='hidden' name='uid' value='$banUserId'>\n",
+			"<input type='hidden' name='act' value='ban'>\n",
 			$m->stdFormFields(),
 			"</div>\n",
 			"</div>\n",

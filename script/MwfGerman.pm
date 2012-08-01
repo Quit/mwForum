@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2012 Markus Wichitill
+#    Copyright © 1999-2012 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 package MwfGerman;
 use utf8;
 use strict;
-our $VERSION = "2.26.0";
+our $VERSION = "2.27.3";
 our $lng = {};
 
 #------------------------------------------------------------------------------
@@ -35,14 +35,10 @@ $lng->{author}       = "Markus Wichitill";
 # Common strings
 $lng->{comUp}        = "Hoch";
 $lng->{comUpTT}      = "Zu höherer Ebene gehen";
-$lng->{comPgTtl}     = "Seite";
 $lng->{comPgPrev}    = "Zurück";
 $lng->{comPgPrevTT}  = "Zu vorheriger Seite gehen";
 $lng->{comPgNext}    = "Vor";
 $lng->{comPgNextTT}  = "Zu nächster Seite gehen";
-$lng->{comEnabled}   = "aktiviert";
-$lng->{comDisabled}  = "deaktiviert";
-$lng->{comHidden}    = "(versteckt)";
 $lng->{comBoardList} = "Forum";
 $lng->{comNew}       = "N";
 $lng->{comNewTT}     = "Neu";
@@ -182,10 +178,6 @@ $lng->{brdInfo}      = "Info";
 $lng->{brdInfoTT}    = "Brettinfo anzeigen";
 $lng->{brdMarkRd}    = "Alles gelesen";
 $lng->{brdMarkRdTT}  = "Alle Nachrichten des Brettes als gelesen markieren";
-$lng->{brdPrev}      = "Zurück";
-$lng->{brdPrevTT}    = "Zu vorherigem Brett gehen";
-$lng->{brdNext}      = "Vor";
-$lng->{brdNextTT}    = "Zu nächstem Brett gehen";
 $lng->{brdTopic}     = "Thema";
 $lng->{brdPoster}    = "Benutzer";
 $lng->{brdPosts}     = "Nachrichten";
@@ -198,8 +190,8 @@ $lng->{brdPoll}      = "P";
 $lng->{brdPollTT}    = "Umfrage";
 $lng->{brdNew}       = "neu";
 $lng->{brdAdmin}     = "Administration";
-$lng->{brdAdmRep}    = "Beschwerden";
-$lng->{brdAdmRepTT}  = "Beschwerden über Nachrichten anzeigen";
+$lng->{brdAdmRep}    = "Meldungen";
+$lng->{brdAdmRepTT}  = "Meldungen von Nachrichten anzeigen";
 $lng->{brdAdmGrp}    = "Gruppen";
 $lng->{brdAdmGrpTT}  = "Gruppenbefugnisse editieren";
 $lng->{brdAdmSpl}    = "Aufteilen";
@@ -261,18 +253,14 @@ $lng->{tpcPolShwRes} = "Ergebnis anzeigen";
 $lng->{tpcHidTtl}    = "Unsichtbare Nachricht";
 $lng->{tpcHidIgnore} = "(ignoriert) ";
 $lng->{tpcHidUnappr} = "(unbestätigt) ";
-$lng->{tpcPrev}      = "Zurück";
-$lng->{tpcPrevTT}    = "Zu vorherigem Thema gehen";
-$lng->{tpcNext}      = "Vor";
-$lng->{tpcNextTT}    = "Zu nächstem Thema gehen";
 $lng->{tpcApprv}     = "Bestätigen";
 $lng->{tpcApprvTT}   = "Nachricht für alle sichtbar machen";
 $lng->{tpcLock}      = "Sperren";
 $lng->{tpcLockTT}    = "Nachricht sperren um Editieren und Antworten zu verhindern";
 $lng->{tpcUnlock}    = "Entsperren";
 $lng->{tpcUnlockTT}  = "Nachricht entsperren um Editieren und Antworten zu ermöglichen";
-$lng->{tpcReport}    = "Beschweren";
-$lng->{tpcReportTT}  = "Nachricht auf Beschwerdeliste setzen";
+$lng->{tpcReport}    = "Hinweisen";
+$lng->{tpcReportTT}  = "Benutzer oder Moderatoren auf Nachricht hinweisen";
 $lng->{tpcBranch}    = "Zweig";
 $lng->{tpcBranchTT}  = "Zweig umwandeln/verschieben/sperren/löschen";
 $lng->{tpcEdit}      = "Ändern";
@@ -328,24 +316,30 @@ $lng->{aplPollAddB}  = "Hinzufügen";
 
 # Add report page
 $lng->{arpTitle}     = "Nachricht";
-$lng->{arpRepTtl}    = "Nachricht auf Beschwerdeliste setzen";
-$lng->{arpRepT}      = "Falls eine Nachricht gegen Gesetze oder die Regeln des Forums verstößt, können Sie sie auf eine Beschwerdeliste setzen, die von den Administratoren und Moderatoren eingesehen werden kann.";
-$lng->{arpRepOrly}   = "Sind Sie sicher, dass Sie die gewählte Nachricht auf die Beschwerdeliste setzen wollen? Dies ist keine Antwortfunktion!";
-$lng->{arpRepYarly}  = "Ja, ich möchte die Nachricht auf die Beschwerdeliste setzen, und nicht etwa antworten";
-$lng->{arpRepReason} = "Begründung:";
-$lng->{arpRepB}      = "Beschweren";
-$lng->{arpThrTtl}    = "Baumstruktur-Benachrichtigung senden";
-$lng->{arpThrT}      = "Falls ein Benutzer auf die falsche Nachricht geantwortet hat, kann hiermit eine Benachrichtigung abgesendet werden, die den Benutzer bittet, auf die richtigen Nachrichten zu antworten, um die Baumstruktur der Themen zu bewahren. Dies ist im allgemeinen öffentlichen Hinweisnachrichten vorzuziehen. Kann nur von Admins/Mods, innerhalb von 24 Stunden und nur einmal pro Empfänger genutzt werden, um eine Benachrichtigungs-Überflutung zu vermeiden.";
-$lng->{arpThrB}      = "Benachrichtigen";
+$lng->{arpPngTtl}    = "Benutzer auf Nachricht hinweisen";
+$lng->{arpPngT}      = "Sendet einen Hinweis auf diese Nachricht an die Benachrichtigungsliste eines Benutzers und optional per Email.";
+$lng->{arpPngUser}   = "Empfänger";
+$lng->{arpPngEmail}  = "Auch per Email senden";
+$lng->{arpPngB}      = "Hinweisen";
+$lng->{arpPngMlSbPf} = "Hinweis von";
+$lng->{arpPngMlT}    = "Dies ist eine Hinweis-Benachrichtigung der Forumssoftware.\nBitte antworten Sie nicht auf diese Email.";
+$lng->{arpRepTtl}    = "Nachricht den Moderatoren melden";
+$lng->{arpRepT}      = "Falls eine Nachricht gegen Gesetze oder die Regeln des Forums verstößt, kann sie den Moderatoren und Administratoren gemeldet werden.";
+$lng->{arpRepYarly}  = "Ich möchte die Nachricht melden, und nicht etwa antworten";
+$lng->{arpRepReason} = "Begründung";
+$lng->{arpRepB}      = "Melden";
+$lng->{arpThrTtl}    = "Baumstruktur-Belehrung senden";
+$lng->{arpThrT}      = "Falls ein Benutzer auf die falsche Nachricht geantwortet hat, kann hiermit eine Benachrichtigung gesendet werden, die den Benutzer bittet, auf die richtigen Nachrichten zu antworten, um die Baumstruktur der Themen zu bewahren. Dies ist im allgemeinen öffentlichen Hinweisnachrichten vorzuziehen. Kann nur von Admins/Mods, innerhalb von 24 Stunden und nur einmal pro Empfänger genutzt werden, um eine Überflutung zu vermeiden.";
+$lng->{arpThrB}      = "Belehren";
 
 # Report list page
-$lng->{repTitle}     = "Beschwerdeliste";
-$lng->{repBy}        = "Beschwerde von";
+$lng->{repTitle}     = "Meldungen";
+$lng->{repBy}        = "Meldung von";
 $lng->{repTopic}     = "Thema";
 $lng->{repPoster}    = "Benutzer";
 $lng->{repPosted}    = "Datum";
-$lng->{repDeleteB}   = "Beschwerde entfernen";
-$lng->{repEmpty}     = "Keine Nachrichten auf der Beschwerdeliste.";
+$lng->{repDeleteB}   = "Meldung entfernen";
+$lng->{repEmpty}     = "Keine Meldungen vorhanden.";
 
 # Tag button bar
 $lng->{tbbMod}       = "Mod";
@@ -369,12 +363,8 @@ $lng->{rplReplyResp} = "Auf Nachricht von";
 $lng->{rplReplyB}    = "Schreiben";
 $lng->{rplReplyPrvB} = "Vorschau";
 $lng->{rplPrvTtl}    = "Vorschau";
-$lng->{rplEmailFrm}  = "Forum: ";
-$lng->{rplEmailBrd}  = "Brett: ";
-$lng->{rplEmailTpc}  = "Thema: ";
-$lng->{rplEmailUsr}  = "Benutzer: ";
-$lng->{rplEmailUrl}  = "Link: ";
-$lng->{rplEmailT2}   = "Dies ist eine automatische Benachrichtigung der Forumssoftware.\nBitte antworten Sie nicht auf diese Email, sondern im Forum.";
+$lng->{rplEmailSbPf} = "Antwort von";
+$lng->{rplEmailT2}   = "Dies ist eine Antwort-Benachrichtigung der Forumssoftware.\nBitte antworten Sie nicht auf diese Email.";
 $lng->{rplAgeOrly}   = "Die Nachricht, auf die Sie antworten wollen, ist bereits [[age]] Tage alt. Sind Sie sicher, dass Sie wirklich auf eine so alte Nachricht antworten wollen?";
 $lng->{rplAgeYarly}  = "Ja, ich habe einen guten Grund dafür";
 
@@ -406,6 +396,7 @@ $lng->{attTitle}     = "Dateianhänge";
 $lng->{attDelAll}    = "Alle Löschen";
 $lng->{attDelAllTT}  = "Alle Dateianhänge löschen";
 $lng->{attDropNote}  = "Sie können Dateien auch durch Drag &amp; Drop auf das Formular hochladen.";
+$lng->{attGoPostT}   = "Das Aufwärtspfeil-Icon bringt Sie zurück zur Nachricht.";
 $lng->{attUplTtl}    = "Hochladen";
 $lng->{attUplFiles}  = "Datei(en) (max. Dateigröße [[size]])";
 $lng->{attUplCapt}   = "Beschriftung";
@@ -430,13 +421,12 @@ $lng->{uifProfUName} = "Benutzername";
 $lng->{uifProfOName} = "Alte Namen";
 $lng->{uifProfRName} = "Realname";
 $lng->{uifProfBdate} = "Geburtstag";
-$lng->{uifProfEml}   = "Emailadresse";
 $lng->{uifProfPage}  = "Website";
 $lng->{uifProfOccup} = "Tätigkeit";
 $lng->{uifProfHobby} = "Hobbies";
 $lng->{uifProfLocat} = "Ort";
 $lng->{uifProfGeoIp} = "Ort (IP-basiert)";
-$lng->{uifProfIcq}   = "Messenger";
+$lng->{uifProfIcq}   = "Email/Messenger";
 $lng->{uifProfSig}   = "Signatur";
 $lng->{uifProfBlurb} = "Sonstiges";
 $lng->{uifProfAvat}  = "Avatar";
@@ -446,6 +436,8 @@ $lng->{uifBrdSubTtl} = "Brettabonnements";
 $lng->{uifStatTtl}   = "Statistik";
 $lng->{uifStatRank}  = "Rang";
 $lng->{uifStatPNum}  = "Nachrichten";
+$lng->{uifStatPONum} = "geschrieben";
+$lng->{uifStatPENum} = "vorhanden";
 $lng->{uifStatRegTm} = "Registriert";
 $lng->{uifStatLOTm}  = "Zuletzt online";
 $lng->{uifStatLRTm}  = "Vorher online";
@@ -472,13 +464,14 @@ $lng->{uliLstName}   = "Benutzername";
 # User login page
 $lng->{lgiTitle}     = "Benutzer";
 $lng->{lgiLoginTtl}  = "Anmelden";
-$lng->{lgiLoginT}    = "Falls Sie noch kein Benutzerkonto besitzen, können Sie eines <a href='[[regUrl]]'>registrieren</a>. Falls Sie gerade ein Konto registriert haben, sollte das Passwort per Email kommen (bitte auch im Spam-Ordner nachschauen).";
+$lng->{lgiLoginT}    = "Falls Sie noch kein Benutzerkonto besitzen, können Sie eines <a href='[[regUrl]]'>registrieren</a>. Falls Sie gerade ein Konto registriert haben, sollte das Passwort per Email kommen (kann im Spam-Ordner landen).";
 $lng->{lgiLoginName} = "Benutzername (oder Emailadresse)";
 $lng->{lgiLoginPwd}  = "Passwort";
 $lng->{lgiLoginRmbr} = "Auf diesem Computer merken";
 $lng->{lgiLoginB}    = "Anmelden";
 $lng->{lgiFpwTtl}    = "Passwort vergessen";
-$lng->{lgiFpwT}      = "Falls Sie Ihr Passwort verloren haben, benutzen Sie das folgende Formular, um eine Email mit einem Anmeldungs-Ticket-Link an Ihre registrierte Emailadresse geschickt zu bekommen.";
+$lng->{lgiFpwT}      = "Falls Sie Ihr Passwort verloren haben, können Sie Sich einen Anmeldungs-Ticket-Link an Ihre registrierte Emailadresse zusenden lassen.";
+$lng->{lgiFpwEmail}  = "Emailadresse";
 $lng->{lgiFpwB}      = "Zusenden";
 $lng->{lgiFpwMlSbj}  = "Passwort vergessen";
 $lng->{lgiFpwMlT}    = "Besuchen Sie bitte den folgenden Ticket-Link, um sich ohne Passwort anzumelden. Sie können dann ein neues Passwort eingeben.\n\nAus Sicherheitsgründen ist der Ticket-Link nur einmal und nur für eine begrenzte Zeit gültig. Außerdem gilt nur der zuletzt zugesandte Ticket-Link, falls Sie sich mehrere haben zuschicken lassen.";
@@ -499,6 +492,7 @@ $lng->{regRegName}   = "Benutzername";
 $lng->{regRegEmail}  = "Emailadresse (Anmeldungs-Passwort wird an diese Adresse gesendet)";
 $lng->{regRegEmailV} = "Emailadresse wiederholen";
 $lng->{regRegPwd}    = "Passwort";
+$lng->{regRegPwdFmt} = "min. 8 Zeichen";
 $lng->{regRegPwdV}   = "Passwort wiederholen";
 $lng->{regRegB}      = "Registrieren";
 $lng->{regMailSubj}  = "Registrierung";
@@ -541,12 +535,11 @@ $lng->{uopProfOccup} = "Tätigkeit";
 $lng->{uopProfHobby} = "Hobbies";
 $lng->{uopProfLocat} = "Ort";
 $lng->{uopProfLocIn} = "[Einfügen]";
-$lng->{uopProfIcq}   = "Instant Messenger IDs";
+$lng->{uopProfIcq}   = "Email/Messenger";
 $lng->{uopProfSig}   = "Signatur";
 $lng->{uopProfSigLt} = "(max. 100 Zeichen auf 2 Zeilen)";
 $lng->{uopProfBlurb} = "Sonstiges";
 $lng->{uopOptTtl}    = "Optionen";
-$lng->{uopPrefHdEml} = "Emailadresse verstecken (wird auch sonst nur registrierten Benutzern angezeigt)";
 $lng->{uopPrefPrivc} = "Datenschutz (Online-Status und IP-basierte Ortsinfo verstecken, Infoseite nur reg. Benutzern anzeigen)";
 $lng->{uopPrefNtMsg} = "Benachrichtigungen über Antworten und private Nachrichten auch per Email empfangen";
 $lng->{uopPrefNt}    = "Benachrichtigungen über Antworten empfangen";
@@ -572,6 +565,7 @@ $lng->{pwdTitle}     = "Benutzer";
 $lng->{pwdChgTtl}    = "Passwort ändern";
 $lng->{pwdChgT}      = "Benutzen Sie bitte niemals dasselbe Passwort für verschiedene Konten.";
 $lng->{pwdChgPwd}    = "Passwort";
+$lng->{pwdChgPwdFmt} = "min. 8 Zeichen";
 $lng->{pwdChgPwdV}   = "Passwort wiederholen";
 $lng->{pwdChgB}      = "Ändern";
 
@@ -787,17 +781,16 @@ $lng->{mslExpire}    = "Private Nachrichten werden nach [[days]] Tagen gelöscht
 $lng->{msaTitle}     = "Private Nachricht";
 $lng->{msaSendTtl}   = "Private Nachricht senden";
 $lng->{msaSendRecv}  = "Empfänger";
-$lng->{msaSendRecvM} = "Empfänger (bis zu [[maxRcv]] Namen mit Semikolons trennen)";
+$lng->{msaSendRecvM} = "Empfänger (bis zu [[maxRcv]] Namen mit Semikolon trennen)";
 $lng->{msaSendSbj}   = "Betreff";
 $lng->{msaSendTxt}   = "Text";
 $lng->{msaSendB}     = "Absenden";
 $lng->{msaSendPrvB}  = "Vorschau";
 $lng->{msaPrvTtl}    = "Vorschau";
 $lng->{msaRefTtl}    = "Antwort auf Nachricht von";
+$lng->{msaEmailSbPf} = "Nachricht von";
 $lng->{msaEmailTSbj} = "Betreff: ";
-$lng->{msaEmailUsr}  = "Absender: ";
-$lng->{msaEmailUrl}  = "Link: ";
-$lng->{msaEmailT2}   = "Dies ist eine automatische Benachrichtigung der Forumssoftware.\nBitte nicht auf diese Email antworten, sondern im Forum.";
+$lng->{msaEmailT2}   = "Dies ist eine Private Nachricht-Benachrichtigung der Forumssoftware.\nBitte antworten Sie nicht auf diese Email.";
 
 # Message page
 $lng->{mssTitle}     = "Private Nachricht";
@@ -849,17 +842,21 @@ $lng->{fedTitle}     = "Feeds";
 $lng->{fedAllBoards} = "Alle öffentlichen Bretter";
 
 # Email subscriptions
-$lng->{subSubjBrdIn} = "Brett Sofort-Abo";
-$lng->{subSubjTpcIn} = "Thema Sofort-Abo";
-$lng->{subSubjBrdDg} = "Brett Sammel-Abo";
-$lng->{subSubjTpcDg} = "Thema Sammel-Abo";
-$lng->{subNoReply}   = "Dies ist eine automatische Abonnements-Email der Forumssoftware.\nBitte antworten Sie nicht auf diese Email, sondern im Forum.";
+$lng->{subSubjBrdIn} = "Sofort-Abo Brett";
+$lng->{subSubjTpcIn} = "Sofort-Abo Thema";
+$lng->{subSubjBrdDg} = "Sammel-Abo Brett";
+$lng->{subSubjTpcDg} = "Sammel-Abo Thema";
+$lng->{subNoReply}   = "Dies ist eine Abonnements-Email der Forumssoftware.\nBitte antworten Sie nicht auf diese Email.";
+$lng->{subLink}      = "Link: ";
+$lng->{subBoard}     = "Brett: ";
 $lng->{subTopic}     = "Thema: ";
-$lng->{subBy}        = "Von: ";
+$lng->{subBy}        = "Schreiber: ";
 $lng->{subOn}        = "Datum: ";
+$lng->{subUnsubBrd}  = "Dieses Brett abbestellen:";
+$lng->{subUnsubTpc}  = "Dieses Thema abbestellen:";
 
 # Bounce detection
-$lng->{bncWarning}   = "Warnung: Ihr Emailkonto verweigert die Annahme von Emails dieses Forums oder existiert nicht mehr. Bitte korrigieren Sie die Situation, da das Forum sonst evtl. die Zusendung von Emails an Sie einstellen muss.";
+$lng->{bncWarning}   = "Warnung: entweder existiert Ihr Emailkonto nicht mehr, verweigert die Annahme von Emails, oder spammt mit automatischen Antworten. Bitte korrigieren Sie die Situation, da das Forum sonst evtl. die Zusendung von Emails an Sie einstellen muss.";
 
 # Confirmation
 $lng->{cnfTitle}     = "Bestätigung";
@@ -883,6 +880,7 @@ $lng->{notNotify}    = "Benutzer benachrichtigen (optional Grund angeben)";
 $lng->{notReason}    = "Grund:";
 $lng->{notMsgAdd}    = "[[usrNam]] hat eine private <a href='[[msgUrl]]'>Nachricht</a> gesendet.";
 $lng->{notPstAdd}    = "[[usrNam]] hat auf eine <a href='[[pstUrl]]'>Nachricht</a> geantwortet.";
+$lng->{notPstPng}    = "[[usrNam]] hat auf eine <a href='[[pstUrl]]'>Nachricht</a> hingewiesen.";
 $lng->{notPstEdt}    = "Ein Moderator hat eine <a href='[[pstUrl]]'>Nachricht</a> geändert.";
 $lng->{notPstDel}    = "Ein Moderator hat eine <a href='[[tpcUrl]]'>Nachricht</a> gelöscht.";
 $lng->{notTpcMov}    = "Ein Moderator hat ein <a href='[[tpcUrl]]'>Thema</a> verschoben.";
@@ -915,7 +913,7 @@ $lng->{msgGrpChange} = "Gruppenmitgliedschaft geändert";
 $lng->{msgBrdChange} = "Brettoptionen geändert";
 $lng->{msgTpcChange} = "Themenoptionen geändert";
 $lng->{msgAccntReg}  = "Konto registriert";
-$lng->{msgAccntRegM} = "Konto registriert. Bitte warten Sie auf die Email mit Ihrem Passwort, bevor Sie sich anmelden. Beachten Sie auch, dass die Email möglicherweise in Ihrem Spam-Ordner landet, oder durch Anti-Spam-Maßnahmen verzögert ankommen kann.";
+$lng->{msgAccntRegM} = "Konto registriert. Bitte warten Sie auf die Email mit Ihrem Passwort, bevor Sie sich anmelden. Die Email landet möglicherweise in Ihrem Spam-Ordner, und kann durch Anti-Spam-Maßnahmen verzögert ankommen.";
 $lng->{msgMemberAdd} = "Mitglied(er) hinzugefügt";
 $lng->{msgMemberRem} = "Mitglied(er) entfernt";
 $lng->{msgTpcDelete} = "Thema gelöscht";
@@ -928,8 +926,8 @@ $lng->{msgTpcMerge}  = "Themen zusammengelegt";
 $lng->{msgBrnPromo}  = "Zweig befördert";
 $lng->{msgBrnMove}   = "Zweig verschoben";
 $lng->{msgBrnDelete} = "Zweig gelöscht";
-$lng->{msgPstAddRep} = "Beschwerde eingelegt";
-$lng->{msgPstRemRep} = "Beschwerde gelöscht";
+$lng->{msgPstAddRep} = "Nachricht gemeldet";
+$lng->{msgPstRemRep} = "Meldung gelöscht";
 $lng->{msgMarkOld}   = "Nachrichten als alt markiert";
 $lng->{msgMarkRead}  = "Nachrichten als gelesen markiert";
 $lng->{msgPollAdd}   = "Umfrage hinzugefügt";
@@ -946,32 +944,31 @@ $lng->{msgWatWrdAdd} = "Überwachtes Wort hinzugefügt";
 $lng->{msgWatWrdRem} = "Überwachtes Wort entfernt";
 $lng->{msgWatUsrAdd} = "Überwachten Benutzer hinzugefügt";
 $lng->{msgWatUsrRem} = "Überwachten Benutzer entfernt";
-$lng->{msgEolTpc}    = "Keine weiteren Themen in dieser Richtung";
 $lng->{msgTksFgtPwd} = "Email zugesendet";
 $lng->{msgTkaFgtPwd} = "Erfolgreich angemeldet. Sie können jetzt Ihr Passwort ändern.";
 $lng->{msgTkaEmlChg} = "Emailadresse geändert";
 $lng->{msgTpcTag}    = "Thema getaggt";
 $lng->{msgTpcSub}    = "Thema abonniert";
 $lng->{msgTpcUnsub}  = "Thema abbestellt";
-$lng->{msgTpcUnsAll} = "Alle Themen abbestellt";
+$lng->{msgBrdUnsub}  = "Brett abbestellt";
 $lng->{msgNotesDel}  = "Benachrichtigungen entfernt";
 $lng->{msgPstLock}   = "Nachricht gesperrt";
 $lng->{msgPstUnlock} = "Nachricht entsperrt";
+$lng->{msgPstPing}   = "Hinweis gesendet";
 
 # Error messages
 $lng->{errDefault}   = "[Fehlertext fehlt]";
-$lng->{errGeneric}   = "Fehler";
-$lng->{errForm}      = "Formularfehler";
 $lng->{errParamMiss} = "Nötiger Parameter fehlt.";
-$lng->{errCatNotFnd} = "Kategorie nicht vorhanden.";
-$lng->{errBrdNotFnd} = "Brett nicht vorhanden.";
-$lng->{errTpcNotFnd} = "Thema nicht vorhanden.";
-$lng->{errPstNotFnd} = "Nachricht nicht vorhanden.";
-$lng->{errAttNotFnd} = "Dateianhang nicht vorhanden.";
-$lng->{errMsgNotFnd} = "Private Nachricht nicht vorhanden.";
-$lng->{errUsrNotFnd} = "Benutzer nicht vorhanden.";
-$lng->{errGrpNotFnd} = "Gruppe nicht vorhanden.";
-$lng->{errTktNotFnd} = "Ticket nicht vorhanden. Tickets können nur einmal benutzt werden, verfallen nach zwei Tagen, und nur das zuletzt zugesandte Ticket ist gültig.";
+$lng->{errCatNotFnd} = "Kategorie existiert nicht.";
+$lng->{errBrdNotFnd} = "Brett existiert nicht.";
+$lng->{errTpcNotFnd} = "Thema existiert nicht.";
+$lng->{errPstNotFnd} = "Nachricht existiert nicht.";
+$lng->{errAttNotFnd} = "Dateianhang existiert nicht.";
+$lng->{errMsgNotFnd} = "Private Nachricht existiert nicht.";
+$lng->{errUsrNotFnd} = "Benutzer existiert nicht.";
+$lng->{errGrpNotFnd} = "Gruppe existiert nicht.";
+$lng->{errTktNotFnd} = "Ticket existiert nicht. Tickets können nur einmal benutzt werden, verfallen nach zwei Tagen, und nur das zuletzt zugesandte Ticket ist gültig.";
+$lng->{errUnsNotFnd} = "Abbestell-Code existiert nicht.";
 $lng->{errUsrDel}    = "Benutzerkonto existiert nicht mehr.";
 $lng->{errUsrFake}   = "Kein echtes Benutzerkonto.";
 $lng->{errSubEmpty}  = "Betreff ist leer.";
@@ -980,9 +977,8 @@ $lng->{errNamEmpty}  = "Benutzername ist leer.";
 $lng->{errPwdEmpty}  = "Passwort ist leer.";
 $lng->{errEmlEmpty}  = "Emailadresse ist leer.";
 $lng->{errEmlInval}  = "Emailadresse ist ungültig.";
-$lng->{errWordEmpty} = "Suchbegriff-Feld ist leer.";
 $lng->{errNamSize}   = "Benutzername ist zu kurz oder zu lang.";
-$lng->{errPwdSize}   = "Passwort ist zu kurz oder zu lang.";
+$lng->{errPwdSize}   = "Passwort muss min. 8 Zeichen lang sein.";
 $lng->{errEmlSize}   = "Emailadresse ist zu kurz oder zu lang.";
 $lng->{errNamChar}   = "Benutzername enthält ungültige Zeichen.";
 $lng->{errPwdChar}   = "Passwort enthält ungültige Zeichen.";
@@ -1006,24 +1002,21 @@ $lng->{errPwdDiffer} = "Passwörter sind nicht identisch.";
 $lng->{errEmlDiffer} = "Emailadressen sind nicht identisch.";
 $lng->{errDupe}      = "Nachricht ist schon eingetragen.";
 $lng->{errAttName}   = "Keine Datei oder kein Dateiname angegeben.";
-$lng->{errAttExt}    = "Dateinamen mit dieser Endung sind nicht erlaubt.";
 $lng->{errAttSize}   = "Upload fehlt, wurde abgeschnitten oder übertrifft maximale Größe.";
 $lng->{errPromoTpc}  = "Diese Nachricht ist die Basisnachricht des ganzen Themas.";
 $lng->{errPstEdtTme} = "Nachrichten können nur einen begrenzte Zeitraum nach dem Abschicken editiert werden. Dieser Zeitraum ist bereits abgelaufen.";
-$lng->{errNoEmail}   = "Das Benutzerkonto hat keine Emailadresse.";
-$lng->{errDontEmail} = "Das Senden von Emails für Ihr Konto wurde von einem Administrator deaktiviert. Typische Gründe dafür sind ungültige Emailadressen, überfüllte Postfächer oder aktivierte Autoresponder.";
+$lng->{errDontEmail} = "Das Senden von Emails für Ihr Konto wurde deaktiviert. Typische Gründe dafür sind ungültige Emailadressen, überfüllte Postfächer oder aktivierte Autoresponder.";
 $lng->{errEditAppr}  = "Das Editieren von Nachrichten in moderierten Brettern ist nicht mehr erlaubt, sobald sie von einem Administrator oder Moderator bestätigt wurden.";
-$lng->{errRepOwn}    = "Eine Beschwerde über eine eigene Nachricht macht wenig Sinn.";
-$lng->{errRepDupe}   = "Es gibt bereits eine Beschwerde über diese Nachricht.";
+$lng->{errRepDupe}   = "Es gibt bereits eine Meldung dieser Nachricht.";
 $lng->{errRepReason} = "Begründung ist leer.";
-$lng->{errSrcAuth}   = "Zugriffsauthentifizierung ist fehlgeschlagen. Entweder hat jemand versucht, Ihnen eine Aktion unterzuschieben (speziell falls Sie gerade von einer fremden Seite gekommen sind), oder Sie haben eine Forumsseite zu lange offen gelassen.";
+$lng->{errSrcAuth}   = "Zugriffsquellen-Authentifizierung ist fehlgeschlagen. Entweder hat jemand versucht, Ihnen eine Aktion unterzuschieben (speziell falls Sie gerade von einer fremden Seite gekommen sind), oder Sie haben eine Forumsseite zu lange offen gelassen.";
 $lng->{errPolExist}  = "Thema hat bereits eine Umfrage.";
 $lng->{errPolOptNum} = "Umfrage hat zuwenig oder zuviele Optionen.";
 $lng->{errPolNoDel}  = "Nur Umfragen ohne abgegebene Stimmen können gelöscht werden.";
 $lng->{errPolNoOpt}  = "Keine Option ausgewählt.";
-$lng->{errPolNotFnd} = "Umfrage nicht vorhanden.";
+$lng->{errPolNotFnd} = "Umfrage existiert nicht.";
 $lng->{errPolLocked} = "Umfrage ist beendet.";
-$lng->{errPolOpNFnd} = "Umfrageoption nicht vorhanden.";
+$lng->{errPolOpNFnd} = "Umfrageoption existiert nicht.";
 $lng->{errPolVotedP} = "Sie können nur einmal für diese Umfrage abstimmen.";
 $lng->{errAvaSizeEx} = "Maximale Dateigröße überschritten.";
 $lng->{errAvaDimens} = "Bild muss angegebene Breite und Höhe haben.";
@@ -1033,7 +1026,6 @@ $lng->{errRepostTim} = "Spamschutz aktiviert. Bitte warten Sie [[seconds]] Sekun
 $lng->{errCrnEmuBsy} = "Das Forum ist zurzeit mit Wartungsarbeiten beschäftigt. Bitte kommen Sie später wieder.";
 $lng->{errForumLock} = "Das Forum ist zurzeit geschlossen. Bitte kommen Sie später wieder.";
 $lng->{errMinRegTim} = "Sie müssen für mindestens [[hours]] Stunde(n) registriert sein, um diese Funktion benutzen zu können.";
-$lng->{errSsnTmeout} = "Anmeldung ist abgelaufen, ungültig oder gehört jemandem anders. Sie können dieses Problem vermeiden, indem Sie dieser Website das Setzen von Cookies erlauben.";
 $lng->{errDbHidden}  = "Ein Datenbankfehler ist aufgetreten und wurde geloggt.";
 $lng->{errCptTmeOut} = "Anti-Spam-Bild ist abgelaufen. Sie haben [[seconds]] Sekunden Zeit, um das Formular abzuschicken.";
 $lng->{errCptWrong}  = "Buchstaben vom Anti-Spam-Bild sind nicht korrekt. Bitte versuchen Sie es nochmal.";
@@ -1053,6 +1045,7 @@ $lng->{errRecvNum}   = "Zu viele Empfänger.";
 $lng->{errOldAgent}  = "Ihr Webbrowser ist hoffnungslos veraltet und wird von diesem Forum nicht mehr unterstützt. Bitte installieren Sie einen <a href='http://www.mozilla.org/firefox'>besseren Browser</a>.";
 $lng->{errUAFeatSup} = "Ihr Webbrowser unterstützt diese Funktion nicht.";
 $lng->{errNoCookies} = "Anmelden wird nicht funktionieren, da Browser-Cookies deaktiviert sind.";
+$lng->{errSearchLnk} = "Verlinkte Suchergebnisse sind deaktiviert.";
 
 
 #------------------------------------------------------------------------------
@@ -1137,7 +1130,7 @@ Infoseite des Forums aufgelistet.</p>
 
 <p>Die Macht von Moderatoren ist auf bestimmte Bretter beschränkt, in denen sie 
 Nachrichten editieren, sperren, löschen und bestätigen, Themen sperren und 
-löschen, sowie die Beschwerdeliste einsehen können. Die Benutzergruppen, deren 
+löschen, sowie Meldungen einsehen können. Die Benutzergruppen, deren 
 Mitglieder in einem Brett Moderator-Rechte haben, sind auf der Infoseite des 
 Brettes aufgelistet.</p>
 
@@ -1154,9 +1147,9 @@ wurde.</p>
 
 <table>
 <tr><td>
-<img class='sic sic_post_nu' src='[[dataPath]]/epx.png' alt='N/U'/>
-<img class='sic sic_topic_nu' src='[[dataPath]]/epx.png' alt='N/U'/>
-<img class='sic sic_board_nu' src='[[dataPath]]/epx.png' alt='N/U'/>
+<img class='sic sic_post_nu' src='[[dataPath]]/epx.png' alt='N/U'>
+<img class='sic sic_topic_nu' src='[[dataPath]]/epx.png' alt='N/U'>
+<img class='sic sic_board_nu' src='[[dataPath]]/epx.png' alt='N/U'>
 </td><td>
 Gelbe Icons zeigen neue Nachrichten, Themen oder Bretter mit neuen Nachrichten 
 an. In diesem Forum bedeutet neu, dass eine Nachricht seit dem letzten Besuch 
@@ -1164,9 +1157,9 @@ hinzugekommen ist. Auch wenn eine Nachricht gerade gelesen wurde, gilt sie immer
 noch als neu, und wird erst beim nächsten Forumsbesuch als alt gewertet.
 </td></tr>
 <tr><td>
-<img class='sic sic_post_or' src='[[dataPath]]/epx.png' alt='O/R'/>
-<img class='sic sic_topic_or' src='[[dataPath]]/epx.png' alt='O/R'/>
-<img class='sic sic_board_or' src='[[dataPath]]/epx.png' alt='O/R'/>
+<img class='sic sic_post_or' src='[[dataPath]]/epx.png' alt='O/R'>
+<img class='sic sic_topic_or' src='[[dataPath]]/epx.png' alt='O/R'>
+<img class='sic sic_board_or' src='[[dataPath]]/epx.png' alt='O/R'>
 </td><td>
 Abgehakte Icons bedeuten, dass eine Nachricht oder alle Nachrichten in einem
 Thema oder Brett gelesen wurden. Als gelesen werden alle Nachrichten gewertet,
@@ -1176,13 +1169,13 @@ sind, können Nachrichten auch gleichzeitig neu und gelesen sowie alt und
 ungelesen sein.
 </td></tr>
 <tr><td>
-<img class='sic sic_post_i' src='[[dataPath]]/epx.png' alt='I'/>
+<img class='sic sic_post_i' src='[[dataPath]]/epx.png' alt='I'>
 </td><td>
 Die Nachricht oder das Thema sind für andere Benutzer unsichtbar, da sie noch 
 auf Bestätigung durch einen Moderator warten.
 </td></tr>
 <tr><td>
-<img class='sic sic_topic_l' src='[[dataPath]]/epx.png' alt='L'/>
+<img class='sic sic_topic_l' src='[[dataPath]]/epx.png' alt='L'>
 </td><td>
 Die Nachricht oder das Thema sind gesperrt. Es kann weder geantwortet 
 noch editiert werden.

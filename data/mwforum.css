@@ -1,4 +1,4 @@
-/* mwForum style-independent rules 2.25.1 */
+/* mwForum style-independent rules 2.27.2 */
 /* Do not edit, use forumStyle option to include your own stylesheet */
 
 /* Force scrollbar */
@@ -90,11 +90,6 @@ div.pst.ign div.ccl, div.pst.ign div.bcl {
 /* Honeypot field */
 div.ihf { 
 	display: none;
-}
-
-/* Unobtrusive mwforum.org link */
-p.cpr a { 
-	color: inherit !important;
 }
 
 /* Configuration */
@@ -218,3 +213,38 @@ form.cfg dfn, form.cfg var {
 .bic_wipe { background-position: 0 -885px; } 
 .bic_write { background-position: 0 -902px; } 
 .bic_log { background-position: 0 -919px; } 
+
+/* Small screen */
+@media only screen and (max-device-width: 800px) {
+	div.tim, p.cpr {
+		display: none;
+	}
+}
+
+/* Autocomplete */
+.acInput {
+	width: 200px;
+}
+.acResults {
+	padding: 0px;
+	border: 1px solid WindowFrame;
+	background-color: Window;
+	overflow: hidden;
+}
+.acResults ul {
+	margin: 0px;
+	padding: 0px;
+	list-style-position: outside;
+	list-style: none;	
+}
+.acResults ul li {
+	margin: 0px;
+	padding: 2px 5px;
+	cursor: pointer;
+	display: block;
+	overflow: hidden;
+}
+.acSelect {
+	background-color: Highlight;
+	color: HighlightText;
+}

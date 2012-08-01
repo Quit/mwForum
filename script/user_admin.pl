@@ -162,7 +162,7 @@ my $views = [
 		columns => [
 			{ name => "Badges",
 				value => sub {
-					join(" ", map("<img class='uba' src='$cfg->{dataPath}/$badges{$_}' alt='$_'/>", 
+					join(" ", map("<img class='uba' src='$cfg->{dataPath}/$badges{$_}' alt='$_'>", 
 						sort(split(',', $_[0]{badges}))));
 				}
 			},
@@ -506,9 +506,9 @@ my $views = [
 					my $v = $_[0]{avatar};
 					return if !$v;
 					index($v, "gravatar:") == 0
-						? "<img src='$m->{http}://gravatar.com/avatar/" . $m->md5(substr($v, 9)) . 
-							"?s=$m->{cfg}{avatarWidth}' alt=''/>"
-						: "<img src='$m->{cfg}{attachUrlPath}/avatars/$v' alt=''/>";
+						? "<img src='//gravatar.com/avatar/" . $m->md5(substr($v, 9)) . 
+							"?s=$m->{cfg}{avatarWidth}' alt=''>"
+						: "<img src='$m->{cfg}{attachUrlPath}/avatars/$v' alt=''>";
 				},
 			},
 			{
@@ -556,7 +556,6 @@ my $views = [
 	{ name => "Birthyear", field => 'birthyear', type => 'int' },
 	{ name => "Disable Email", field => 'dontEmail', type => 'int' },
 	{ name => "Email Notifications", field => 'msgNotify', type => 'int' },
-	{ name => "Hide Email", field => 'hideEmail', type => 'int' },
 	{ name => "Reply Notifications", field => 'notify', type => 'int' },
 	{ name => "Privacy", field => 'privacy', type => 'int' },
 	{ name => "Temporary Login", field => 'tempLogin', type => 'int' },
@@ -592,7 +591,7 @@ my $views = [
 	{ name => "Font Face", field => 'fontFace' },
 	{ name => "User Agent", field => 'userAgent' },
 	{ name => "IP Address", field => 'lastIp' },
-	{ name => "GPG Key Id", field => 'gpgKeyId' },
+	{ name => "PGP Key ID", field => 'gpgKeyId' },
 	{ name => "Comments", field => 'comment' },
 ];
 
@@ -667,13 +666,9 @@ $users = $view->{fetchUsers} ? $view->{fetchUsers}({ pageUserIds => \@pageUserId
 		ORDER BY $orderStr",
 		{ pageUserIds => \@pageUserIds });
 
-# Determine listbox/checkbox status
-my %state = (
-	$sort => "selected='selected'",
-	$order => "selected='selected'",
-	"field$field" => "selected='selected'",
-	hideEmpty => $hideEmpty ? "checked='checked'" : "",
-);
+# Determine checkbox, radiobutton and listbox states
+my $hideEmptyChk = $hideEmpty ? 'checked' : "",
+my %state = ( $sort => 'selected', $order => 'selected', "field$field" => 'selected' );
 
 # Print user list form
 print
@@ -700,13 +695,11 @@ print
 	"<option value='desc' $state{desc}>Desc</option>\n",
 	"</select></label>\n",
 	"<label>Search\n",
-	"<input type='text' class='fcs' name='search'",
-	" autofocus='autofocus' style='width: 100px' value='$searchEsc'/></label>\n",
-	"<label><input type='checkbox' name='hide' value='1' $state{hideEmpty}/>Hide empty</label>\n",
+	"<input type='text' name='search' style='width: 100px' value='$searchEsc' autofocus></label>\n",
+	"<label><input type='checkbox' name='hide' value='1' $hideEmptyChk>Hide empty</label>\n",
 	$m->submitButton("List", 'search'),
 	"</div>\n",
 	$view->{notes} ? "<div>View notes: $view->{notes}</div>" : "",
-	$m->{sessionId} ? "<input type='hidden' name='sid' value='$m->{sessionId}'/>\n" : "",
 	"</div>\n",
 	"</div>\n",
 	"</form>\n\n";

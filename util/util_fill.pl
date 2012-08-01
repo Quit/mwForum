@@ -49,8 +49,8 @@ srand 42;
 
 # Shortcuts
 my $dbh = $m->{dbh};
-my $baseTime = $m->{now} - 100003600;
-my $ua = "'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.11) Gecko/20071127 Firefox/2.0.0.12'";
+my $baseTime = $m->{now} - 123003600;
+my $ua = "'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:16.0) Gecko/16.0 Firefox/16.0'";
 my $ip = "'127.0.0.1'";
 my @countries = Locale::Country::all_country_names();
 
@@ -77,11 +77,12 @@ else {
 
 # Insert admin, categories, boards and config
 print "Inserting admin, categories, boards and some options...\n";
-my $pwd = $m->md5("admin42");
+my $salt = 'lh0ojBonHYdxU4c47ktEVw';
+my $password = $m->hashPassword('admin', $salt);
 $dbh->begin_work();
 $dbh->do("
 	INSERT INTO users (admin, userName, password, salt, lastOnTime, prevOnTime, topicsPP, postsPP, indent) 
-	VALUES (1, 'admin', '$pwd', 42, $m->{now}, $m->{now}, 25, 50, 3)") 
+	VALUES (1, 'admin', $password, $salt, $m->{now}, $m->{now}, 25, 50, 3)") 
 	or die $dbh->errstr;
 $dbh->do("INSERT INTO categories (title, pos) VALUES ('Category 1', 1)") or die $dbh->errstr;
 $dbh->do("INSERT INTO categories (title, pos) VALUES ('Category 2', 2)") or die $dbh->errstr;
@@ -153,14 +154,13 @@ $dbh->do("CREATE INDEX posts_postTime ON posts (postTime)") or die $dbh->errstr;
 
 # Update board stats
 print "Updating board postNum and lastPostTime...\n";
-$m->recalcStats(1);
-$m->recalcStats(2);
+$m->recalcStats([ 1, 2 ]);
 
 # Update database stats
 print "Updating database statistics...\n";
 my @tables = qw(attachments boardAdminGroups boardHiddenFlags boardMemberGroups 
 	boards boardSubscriptions categories chat config groupMembers groups messages 
-	notes pollOptions polls pollVotes postReports posts sessions tickets 
+	notes pollOptions polls pollVotes postReports posts tickets 
 	topicReadTimes topics topicSubscriptions userBans userIgnores users 
 	userVariables variables watchUsers watchWords);
 if ($m->{mysql}) {

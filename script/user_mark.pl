@@ -61,7 +61,7 @@ if ($userId) {
 					AND (topics.lastPostTime > topicReadTimes.lastReadTime 
 					OR topicReadTimes.topicId IS NULL)",
 				{ userId => $userId, boardId => $boardId, lowestUnreadTime => $lowestUnreadTime });
-			$m->dbDo("			
+			$m->dbDo("
 				DELETE FROM topicReadTimes WHERE userId = ? AND topicId IN (SELECT id FROM $tmp)", 
 				$userId);
 			$m->dbDo("			
@@ -72,6 +72,8 @@ if ($userId) {
 		else {
 			# Mark everything read by setting fakeReadTime
 			$m->{userUpdates}{fakeReadTime} = $time;
+			$m->dbDo("
+				DELETE FROM topicReadTimes WHERE userId = ?", $userId);
 		}
 	
 		# Log action and finish

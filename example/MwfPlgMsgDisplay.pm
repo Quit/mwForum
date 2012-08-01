@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2012 Markus Wichitill
+#    Copyright © 1999-2012 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -14,10 +14,11 @@
 #------------------------------------------------------------------------------
 
 package MwfPlgMsgDisplay;
+use utf8;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine);
-our $VERSION = "2.23.0";
+our $VERSION = "2.27.0";
 
 #------------------------------------------------------------------------------
 # Replace text with image smileys
@@ -32,12 +33,12 @@ sub smileys
 	# Replace smileys
 	if ($m->{user}{showDeco}) {
 		my $text = \$post->{body};
-		$$text =~ s~(?<!\w):-?\)~<img class='sml' src='/foo/bar' alt=':-)'/>~g;
-		$$text =~ s~(?<!\w);-?\)~<img class='sml' src='/foo/bar' alt=';-)'/>~g;
-		$$text =~ s~(?<!\w):-?\(~<img class='sml' src='/foo/bar' alt=':-('/>~g;
-		$$text =~ s~(?<!\w):-?[pP]~<img class='sml' src='/foo/bar' alt=':-p'/>~g;
-		$$text =~ s~(?<!\w):-?[oO]~<img class='sml' src='/foo/bar' alt=':-o'/>~g;
-		$$text =~ s~(?<!\w):-?D~<img class='sml' src='/foo/bar' alt=':-D'/>~g;
+		$$text =~ s~(?<!\w):-?\)~<img class='sml' src='/foo/bar' alt=':-)'>~g;
+		$$text =~ s~(?<!\w);-?\)~<img class='sml' src='/foo/bar' alt=';-)'>~g;
+		$$text =~ s~(?<!\w):-?\(~<img class='sml' src='/foo/bar' alt=':-('>~g;
+		$$text =~ s~(?<!\w):-?[pP]~<img class='sml' src='/foo/bar' alt=':-p'>~g;
+		$$text =~ s~(?<!\w):-?[oO]~<img class='sml' src='/foo/bar' alt=':-o'>~g;
+		$$text =~ s~(?<!\w):-?D~<img class='sml' src='/foo/bar' alt=':-D'>~g;
 	}
 
 	return 0;
@@ -62,7 +63,7 @@ sub audio
 	# Set translated strings
 	if (!exists($lng->{audioTagUnsup})) {
 		if ($m->{lngModule} eq 'MwfGerman') {
-			$lng->{audioTagUnsup} = "Ihr Browser unterstuetzt das Audio-Element leider nicht.";
+			$lng->{audioTagUnsup} = "Ihr Browser unterstützt das Audio-Element leider nicht.";
 		}
 		else {
 			$lng->{audioTagUnsup} = "Sorry, your browser doesn't support the audio element.";
@@ -75,7 +76,7 @@ sub audio
 			if ($attach->{fileName} =~ /\.(?:ogg|wav)\z/i) {
 				my $postIdMod = $attach->{postId} % 100;
 				my $url = "$cfg->{attachUrlPath}/$postIdMod/$attach->{postId}/$attach->{fileName}";
-				$$text .= "\n<br/><br/>\n"
+				$$text .= "\n<br><br>\n"
 					. "<audio src='$url' controls='controls' title='$attach->{fileName}'>"
 					. "<p>$lng->{audioTagUnsup}</p></audio>";
 				$attach->{drop} = 1;

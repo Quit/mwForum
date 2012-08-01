@@ -80,7 +80,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='hcl'><span class='htt'>Wipe User</span></div>\n",
 		"<div class='ccl'>\n",
 		$m->submitButton("Wipe", 'wipe'),
-		"<input type='hidden' name='uid' value='$wipeUserId'/>\n",
+		"<input type='hidden' name='uid' value='$wipeUserId'>\n",
 		$m->stdFormFields(),
 		"</div>\n",
 		"</div>\n",
