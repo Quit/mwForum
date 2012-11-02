@@ -39,6 +39,8 @@ ALTER TABLE boardSubscriptions ADD CONSTRAINT boardSubscriptions_user_fk FOREIGN
 ALTER TABLE boardSubscriptions ADD CONSTRAINT boardSubscriptions_board_fk FOREIGN KEY (boardId) REFERENCES boards ON DELETE CASCADE;
 ALTER TABLE topicSubscriptions ADD CONSTRAINT topicSubscriptions_user_fk FOREIGN KEY (userId) REFERENCES users ON DELETE CASCADE;
 ALTER TABLE topicSubscriptions ADD CONSTRAINT topicSubscriptions_topic_fk FOREIGN KEY (topicId) REFERENCES topics ON DELETE CASCADE;
+ALTER TABLE postLikes ADD CONSTRAINT postLikes_post_fk FOREIGN KEY (postId) REFERENCES posts ON DELETE CASCADE;
+ALTER TABLE postLikes ADD CONSTRAINT postLikes_user_fk FOREIGN KEY (userId) REFERENCES users ON DELETE CASCADE;
 ALTER TABLE postReports ADD CONSTRAINT postReports_user_fk FOREIGN KEY (userId) REFERENCES users ON DELETE CASCADE;
 ALTER TABLE postReports ADD CONSTRAINT postReports_post_fk FOREIGN KEY (postId) REFERENCES posts ON DELETE CASCADE;
 ALTER TABLE attachments ADD CONSTRAINT attachments_post_fk FOREIGN KEY (postId) REFERENCES posts ON DELETE CASCADE;
@@ -80,6 +82,8 @@ ALTER TABLE boardSubscriptions DROP CONSTRAINT boardSubscriptions_user_fk;
 ALTER TABLE boardSubscriptions DROP CONSTRAINT boardSubscriptions_board_fk;
 ALTER TABLE topicSubscriptions DROP CONSTRAINT topicSubscriptions_user_fk;
 ALTER TABLE topicSubscriptions DROP CONSTRAINT topicSubscriptions_topic_fk;
+ALTER TABLE postLikes DROP CONSTRAINT postLikes_post_fk;
+ALTER TABLE postLikes DROP CONSTRAINT postLikes_user_fk;
 ALTER TABLE postReports DROP CONSTRAINT postReports_user_fk;
 ALTER TABLE postReports DROP CONSTRAINT postReports_post_fk;
 ALTER TABLE attachments DROP CONSTRAINT attachments_post_fk;

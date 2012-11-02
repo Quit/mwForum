@@ -16,7 +16,7 @@
 package MwfGerman;
 use utf8;
 use strict;
-our $VERSION = "2.27.3";
+our $VERSION = "2.27.4";
 our $lng = {};
 
 #------------------------------------------------------------------------------
@@ -253,6 +253,10 @@ $lng->{tpcPolShwRes} = "Ergebnis anzeigen";
 $lng->{tpcHidTtl}    = "Unsichtbare Nachricht";
 $lng->{tpcHidIgnore} = "(ignoriert) ";
 $lng->{tpcHidUnappr} = "(unbestätigt) ";
+$lng->{tpcLike}      = "Gut";
+$lng->{tpcLikeTT}    = "Nachricht als gut bewerten";
+$lng->{tpcUnlike}    = "Ungut";
+$lng->{tpcUnlikeTT}  = "Nachricht nicht mehr als gut bewerten";
 $lng->{tpcApprv}     = "Bestätigen";
 $lng->{tpcApprvTT}   = "Nachricht für alle sichtbar machen";
 $lng->{tpcLock}      = "Sperren";
@@ -294,6 +298,7 @@ $lng->{tpcAdmDelete} = "Löschen";
 $lng->{tpcBy}        = "Von";
 $lng->{tpcOn}        = "Datum";
 $lng->{tpcEdited}    = "Editiert";
+$lng->{tpcLikes}     = "Gut";
 $lng->{tpcLocked}    = "(gesperrt)";
 
 # Topic subscription page
@@ -433,6 +438,7 @@ $lng->{uifProfAvat}  = "Avatar";
 $lng->{uifBadges}    = "Abzeichen";
 $lng->{uifGrpMbrTtl} = "Gruppen";
 $lng->{uifBrdSubTtl} = "Brettabonnements";
+$lng->{uifTpcSubTtl} = "Themenabonnements";
 $lng->{uifStatTtl}   = "Statistik";
 $lng->{uifStatRank}  = "Rang";
 $lng->{uifStatPNum}  = "Nachrichten";
@@ -955,6 +961,8 @@ $lng->{msgNotesDel}  = "Benachrichtigungen entfernt";
 $lng->{msgPstLock}   = "Nachricht gesperrt";
 $lng->{msgPstUnlock} = "Nachricht entsperrt";
 $lng->{msgPstPing}   = "Hinweis gesendet";
+$lng->{msgPstLike}   = "Nachricht als gut bewertet";
+$lng->{msgPstUnlike} = "Nachricht nicht mehr als gut bewertet";
 
 # Error messages
 $lng->{errDefault}   = "[Fehlertext fehlt]";

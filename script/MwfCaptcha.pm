@@ -17,7 +17,7 @@ package MwfCaptcha;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine);
-our $VERSION = "2.27.0";
+our $VERSION = "2.27.4";
 
 #------------------------------------------------------------------------------
 # Return captcha input elements
@@ -60,9 +60,9 @@ sub captchaInputs
 		# reCAPTCHA.net service
 		eval { require Captcha::reCAPTCHA } or $m->error("Captcha::reCAPTCHA module not available.");
 		my $captcha = Captcha::reCAPTCHA->new();
-		my $html = $captcha->get_html($cfg->{reCapPubKey}, undef, 
-			$cfg->{reCapSsl} || $m->{env}{port} == 443, 
+		my $html = $captcha->get_html($cfg->{reCapPubKey}, undef, 0,
 			{ theme => $cfg->{reCapTheme} || 'white' });
+		$html =~ s!https?:!!g;
 		return "<fieldset>\n", $html, "</fieldset>\n";
 	}
 	elsif ($cfg->{captchaMethod} == 4) {

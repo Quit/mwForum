@@ -305,7 +305,7 @@ if ($cfg->{maxUnreadDays}) {
 if ($cfg->{chatMaxAge}) {
 	my $time = $m->{now} - $cfg->{chatMaxAge} * 86400;
 	$m->dbDo("
-		DELETE FROM chat WHERE postTime < ?",	$time);
+		DELETE FROM chat WHERE postTime < ?", $time);
 }
 
 #------------------------------------------------------------------------------
@@ -357,6 +357,15 @@ if ($cfg->{bounceTrshWarn} || $cfg->{bounceTrshCncl} || $cfg->{bounceTrshDsbl}) 
 	$m->dbDo("
 		UPDATE users SET dontEmail = 0 WHERE bounceNum < ?", $dsblTrsh) 
 		if $dsblTrsh;
+}
+
+#------------------------------------------------------------------------------
+# Expire log entries
+
+if ($cfg->{logExpiration}) {
+	my $time = $m->{now} - $cfg->{logExpiration} * 86400;
+	$m->dbDo("
+		DELETE FROM log WHERE logTime < ?", $time);
 }
 
 #------------------------------------------------------------------------------

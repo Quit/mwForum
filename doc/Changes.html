@@ -14,11 +14,25 @@
 <p>Credits for bug reports are in [brackets].</p>
 
 
+<h2>2.27.4 (2012-??-??)</h2>
+
+<ul>
+<li>Added: Post upvoting.</li>
+<li>Added: Log entry expiration.</li>
+<li>Added: Show subscribed topics on user info pages.</li>
+<li>Changed: Use $cfg-&gt;{dbTableOpt} instead of various options/params.</li>
+<li>Changed: Dropped Expires header to enable bfcache with Firefox/SSL.</li>
+<li>Changed: Use SSL for reCAPTCHA when forum uses it.</li>
+<li>Changed: Updated jQuery to version 1.8.2.</li>
+<li>Fixed: Keyboard navigation over topic page boundaries.</li>
+<li>Fixed: Anonymous posting request source auth error.</li>
+</ul>
+
+
 <h2>2.27.3 (2012-07-31)</h2>
 
 <ul>
 <li>Added: Safer upgrade.pl execution with fork() for shell-less admins.</li>
-<li>Added: install.pl accepts MySQL engine parameter, e.g. "-e aria".</li>
 <li>Changed: Improved read time handling when moving topic branches.</li>
 <li>Changed: Show and search usernames by default on user list page.</li>
 <li>Changed: Only accept email addresses for forgot-password requests.</li>
@@ -41,7 +55,6 @@
 <li>Changed: Security enhancements for password hashing and auth tokens.</li>
 <li>Changed: Limit forum info details page to <var>$cfg-&gt;{cfgAdmins}</var>.</li>
 <li>Changed: Remove msg params from URLs with history.replaceState.</li>
-<li>Changed: Support MySQL utf8mb4 charset with <var>$cfg-&gt;{mysqlUtf}</var> option.</li>
 <li>Changed: Improved board/topic statistics update performance.</li>
 <li>Changed: Misc. small changes.</li>
 <li>Fixed: Bounced email always gets user deleted when using cron_bounce.</li>
@@ -100,7 +113,7 @@
 <ul>
 <li>Added: Quick branch moving: Ctrl-Click post, Alt-Click new parent.</li>
 <li>Changed: Misc. small changes.</li>
-<li>Changed: Use SSL/TLS for YouTube and Vimeo when forum uses it.</li>
+<li>Changed: Use SSL for YouTube and Vimeo when forum uses it.</li>
 <li>Fixed: Embedded YouTube video when based on HTML5.</li>
 <li>Fixed: Don't stop dbToDisplay() on invalid video tag content.</li>
 <li>Fixed: Don't require country flags to use GeoIP for Google Maps.</li>
@@ -145,8 +158,8 @@
 <li>Added: Purging posts by username.</li>
 <li>Added: List matching posts when purging users.</li>
 <li>Changed: Delay watch notif. and instant subs. for unapproved posts.</li>
-<li>Changed: Use SSL/TLS for Google APIs and Gravatar when forum uses it.</li>
-<li>Changed: Frontend proxy can signal SSL/TLS usage to backend server.</li>
+<li>Changed: Use SSL for Google APIs and Gravatar when forum uses it.</li>
+<li>Changed: Frontend proxy can signal SSL usage to backend server.</li>
 <li>Changed: Adapt OpenID to changes in Net::OpenID::Consumer.</li>
 <li>Changed: Make most input field sizes CSS-based.</li>
 <li>Changed: Merged logStrings table into log table.</li>
@@ -354,7 +367,7 @@
 <li>Added: Mark Read button on board level.</li>
 <li>Added: Forum search features for attachment list.</li>
 <li>Added: Experimental DNSBL-based antispam method.</li>
-<li>Added: Forum option for sites with mandatory SSL/TLS.</li>
+<li>Added: Forum option for sites with mandatory SSL.</li>
 <li>Added: Forum options to include static HTTP headers and HTML.</li>
 <li>Added: Board and topic subscription views on user admin page.</li>
 <li>Added: Message display plugin example for embedding attachments.</li>
@@ -1828,7 +1841,7 @@
 <li>Added: <var>$cfg{'emailRegExp'}</var> to define valid email addresses.</li>
 <li>Added: topic_show can infer topic id from post id.</li>
 <li>Added: Worked around Opera bug with cell widths if not all widths are explicit.</li>
-<li>Added: Use https:// in reply notification URLs for SSL/TLS cookie users.</li>
+<li>Added: Use https:// in reply notification URLs for SSL cookie users.</li>
 <li>Changed: Update posts.userNameBaks when changing usernames.</li>
 <li>Changed: Separate username fields and text changes on login page.</li>
 <li>Changed: Remove tags before quoting text to avoid invalid HTML.</li>
@@ -1955,7 +1968,7 @@
 <li>Added: Category/board names in board/topic bars are links to the higher layers.</li>
 <li>Added: Error message if logging-in fails because of disabled cookies.</li>
 <li>Added: Login/password request possible with email address instead of username.</li>
-<li>Added: User option for limiting cookies to SSL/TLS connections.</li>
+<li>Added: User option for limiting cookies to SSL connections.</li>
 <li>Added: Link decoration (underlined or not) is configurable.</li>
 <li>Added: Show notification in empty posts_shownew list.</li>
 <li>Added: All errors are logged in webserver log.</li>

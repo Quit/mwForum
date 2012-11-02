@@ -37,7 +37,6 @@ my ($m, $cfg, $lng) = MwfMain->newShell(forumId => $forumId, spawned => $spawned
 my $dbh = $m->{dbh};
 my $pfx = $cfg->{dbPrefix};
 my $output = "";
-$citext ||= $cfg->{dbCitext};
 $| = 1;
 output("mwForum upgrade running...\n");
 
@@ -110,15 +109,18 @@ sub upgradeSchema
 	
 	# Make SQL compatible with chosen DBMS
 	if ($m->{mysql}) {
+		my $tableOpt = $cfg->{dbTableOpt} || "CHARSET=utf8";
+		$sql =~ s! TABLEOPT! $tableOpt!g;
 		$sql =~ s! TEXT ! MEDIUMTEXT !g;
 	}
 	elsif ($m->{pgsql} || $m->{sqlite}) {
+		$sql =~ s! TABLEOPT! $cfg->{dbTableOpt}!g;
 		$sql =~ s! FIRST;!;!g;
 		$sql =~ s! AFTER \w+!!g;
-		$sql =~ s! CHARSET (?:utf8|ascii)!!g;
 		$sql =~ s!(DROP INDEX \w+) ON \w+!$1!g;
 
 		if ($m->{pgsql}) {
+			$citext ||= $cfg->{dbCitext};
 			$sql =~ s! INT PRIMARY KEY AUTO_INCREMENT! SERIAL PRIMARY KEY!g;
 			$sql =~ s! TINYINT! SMALLINT!g;
 			$sql =~ s! VARCHAR\((\d+)\)| TEXT! citext!g if $citext && $1 != 22;
@@ -177,7 +179,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 			userId       INT NOT NULL DEFAULT 0,
 			lastOnTime   INT NOT NULL DEFAULT 0,
 			ip           CHAR(15) NOT NULL DEFAULT ''
-		);
+		) TABLEOPT;
 	");
 	output("$newVersion: done.\n");
 
@@ -214,22 +216,22 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 		CREATE TABLE groups (
 			id           INT PRIMARY KEY AUTO_INCREMENT,
 			title        VARCHAR(255) NOT NULL DEFAULT ''
-		);
+		) TABLEOPT;
 		CREATE TABLE groupMembers (
 			userId       INT NOT NULL DEFAULT 0,
 			groupId      INT NOT NULL DEFAULT 0,
 			PRIMARY KEY (userId, groupId)
-		);
+		) TABLEOPT;
 		CREATE TABLE boardMemberGroups (
 			groupId      INT NOT NULL DEFAULT 0,
 			boardId      INT NOT NULL DEFAULT 0,
 			PRIMARY KEY (groupId, boardId)
-		);
+		) TABLEOPT;
 		CREATE TABLE boardAdminGroups (
 			groupId      INT NOT NULL DEFAULT 0,
 			boardId      INT NOT NULL DEFAULT 0,
 			PRIMARY KEY (groupId, boardId)
-		);
+		) TABLEOPT;
 		ALTER TABLE users ADD showImages TINYINT NOT NULL DEFAULT 0 AFTER showAvatars;
 		UPDATE users SET showImages = 1;
 	");
@@ -295,13 +297,13 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 			userId       INT NOT NULL DEFAULT 0,
 			topicId      INT NOT NULL DEFAULT 0,
 			PRIMARY KEY (userId, topicId)
-		);
+		) TABLEOPT;
 		CREATE TABLE notes (
 			id           INT PRIMARY KEY AUTO_INCREMENT,
 			userId       INT NOT NULL DEFAULT 0,
 			sendTime     INT NOT NULL DEFAULT 0,
 			body         TEXT NOT NULL DEFAULT ''
-		);
+		) TABLEOPT;
 		CREATE INDEX notes_userId ON notes (userId);
 		ALTER TABLE users DROP adminMsg;
 		ALTER TABLE posts DROP notify;
@@ -325,7 +327,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 			postId       INT NOT NULL DEFAULT 0,
 			webImage     TINYINT NOT NULL DEFAULT 0,
 			fileName     VARCHAR(255) NOT NULL DEFAULT ''
-		);
+		) TABLEOPT;
 		DELETE FROM tickets WHERE type = 'cptcha';
 	");
 	output("$newVersion: done.\n");
@@ -413,7 +415,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 			userId       INT NOT NULL DEFAULT 0,
 			rating       TINYINT NOT NULL DEFAULT 0,
 			PRIMARY KEY (postId, userId)
-		);
+		) TABLEOPT;
 	");
 	output("$newVersion: done.\n");
 }
@@ -439,11 +441,11 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 		CREATE TABLE watchWords (
 			userId       INT NOT NULL DEFAULT 0,
 			word         VARCHAR(30) NOT NULL DEFAULT ''
-		);
+		) TABLEOPT;
 		CREATE TABLE watchUsers (
 			userId       INT NOT NULL DEFAULT 0,
 			watchedId    INT NOT NULL DEFAULT 0
-		);
+		) TABLEOPT;
 		CREATE INDEX watchUsers_watchedId ON watchUsers (watchedId);
 		ALTER TABLE groups ADD public TINYINT NOT NULL DEFAULT 0;
 	");
@@ -571,7 +573,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 			userId       INT NOT NULL DEFAULT 0,
 			badge        VARCHAR(20) NOT NULL DEFAULT 0,
 			PRIMARY KEY (userId, badge)
-		) CHARSET utf8;
+		) TABLEOPT;
 	");
 	output("$newVersion: done.\n");
 }
@@ -590,7 +592,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 			userId       INT NOT NULL DEFAULT 0,
 			groupId      INT NOT NULL DEFAULT 0,
 			PRIMARY KEY (userId, groupId)
-		) CHARSET utf8;
+		) TABLEOPT;
 	");
 	output("$newVersion: done.\n");
 }
@@ -703,12 +705,12 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 			name         VARCHAR(10) NOT NULL DEFAULT '',
 			value        TEXT NOT NULL DEFAULT '',
 			PRIMARY KEY (userId, name)
-		) CHARSET utf8;
+		) TABLEOPT;
 		ALTER TABLE variables RENAME TO variables_old;
 		CREATE TABLE variables (
 			name         VARCHAR(10) PRIMARY KEY,
 			value        TEXT NOT NULL DEFAULT ''
-		) CHARSET utf8;
+		) TABLEOPT;
 		INSERT INTO userVariables SELECT userId, name, value FROM variables_old WHERE userId <> 0;
 		INSERT INTO variables SELECT name, value FROM variables_old WHERE userId = 0;
 		DROP TABLE variables_old;
@@ -853,7 +855,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 				logTime      INT NOT NULL,
 				ip           VARCHAR(39) NOT NULL DEFAULT '',
 				string       TEXT NOT NULL DEFAULT ''
-			);
+			) TABLEOPT;
 		");
 	}
 	output("$newVersion: done.\n");
@@ -963,6 +965,22 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 			ALTER TABLE users ALTER password TYPE VARCHAR(22);
 		");
 	}
+	output("$newVersion: done.\n");
+}
+
+#------------------------------------------------------------------------------
+
+$newVersion = "2.27.4";
+
+if ($oldVersionDec < tripletToDecimal($newVersion)) {
+	output("$newVersion: upgrading database schema...\n");
+	upgradeSchema("
+		CREATE TABLE postLikes (
+			postId       INT NOT NULL,
+			userId       INT NOT NULL,
+			PRIMARY KEY (postId, userId)
+		) TABLEOPT;
+	");
 	output("$newVersion: done.\n");
 }
 

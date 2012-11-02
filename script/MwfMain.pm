@@ -18,7 +18,7 @@ use 5.008001;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine once);
-our $VERSION = "2.27.3";
+our $VERSION = "2.27.4";
 
 #------------------------------------------------------------------------------
 
@@ -1525,8 +1525,11 @@ sub initUser
 	$m->setLanguage();
 	
 	# Deny access if forum is in lockdown
-	!$cfg->{locked} || $user->{admin} || $env->{script} eq 'user_login' 
-		or $m->note("<p>$lng->{errForumLock}</p>\n<p>$cfg->{locked}</p>");
+	if ($cfg->{locked} && !$user->{admin} && $env->{script} ne 'user_login') {
+		$m->printHeader();
+		$m->printHints(['errForumLock', $cfg->{locked}]);
+		$m->finish();
+	}
 
 	# Deny access if IP-blocked
 	$m->checkIp() if !$m->{user}{id} && @{$cfg->{ipBlocks}};
@@ -1755,6 +1758,8 @@ sub deleteUser
 	$m->dbDo("
 		DELETE FROM messages WHERE senderId = ?", $userId);
 	$m->dbDo("
+		DELETE FROM postLikes WHERE userId = ?", $userId);
+	$m->dbDo("
 		DELETE FROM postReports WHERE userId = ?", $userId);
 	$m->dbDo("
 		DELETE FROM pollVotes WHERE userId = ?", $userId);
@@ -1831,6 +1836,7 @@ sub checkSourceAuth
 {
 	my $m = shift();
 
+	return 1 if !$m->{user}{id};
 	my $auth = $m->paramStr('auth');
 	return 0 if !length($auth);
 	return $auth eq $m->{user}{sourceAuth} || $auth eq $m->{user}{sourceAuth2};
@@ -2033,7 +2039,6 @@ sub printHttpHeader
 	# Add standard and conditional headers	
 	my $cfg = $m->{cfg};
 	$headers->{'Cache-Control'} = "private";
-	$headers->{'Expires'} = "Thu, 01 Jan 1970 00:00:00 GMT";
 	$headers->{'Strict-Transport-Security'} = "max-age=500; includeSubDomains" if $cfg->{sslOnly};
 
 	# Print headers
@@ -2791,26 +2796,6 @@ sub error
 }
 
 #------------------------------------------------------------------------------
-# Print simple note and exit, for cases that don't need real error handling
-
-sub note
-{
-	my $m = shift();
-	my $msg = shift() || $m->{lng}{errDefault};
-
-	$m->printHeader();
-	print
-		"<div class='frm hnt inf'>\n",
-		"<div class='ccl'>\n",
-		"<img class='sic sic_hint_info' src='$m->{cfg}{dataPath}/epx.png' alt=''>\n",
-		"$msg\n",
-		"</div>\n",
-		"</div>\n\n";
-	$m->printFooter();
-	$m->finish();
-}
-
-#------------------------------------------------------------------------------
 # Database error
 
 sub dbError 
@@ -3339,14 +3324,15 @@ sub dbConnect
 		$DBD::mysql::VERSION >= 2.9003 
 			or $m->error("DBD::mysql is too old, need at least 2.9003, preferably 4.0 or newer.");
 		my $dbName = $m->{gcfg}{dbName} || $cfg->{dbName};
+		my $encoding = index($cfg->{dbTableOpt}, 'utf8mb4') > -1 ? 'utf8mb4' : 'utf8';
 		$dbh = DBI->connect(
 			"dbi:mysql:database=$dbName;host=$cfg->{dbServer};$cfg->{dbParam}", 
 			$cfg->{dbUser}, $cfg->{dbPassword}, 
 			{ PrintError => 0, PrintWarn => 0, AutoCommit => 1,
-				mysql_server_prepare => 0, mysql_no_autocommit_cmd => 1 })
+				mysql_server_prepare => $cfg->{dbPrepare} || 0, mysql_no_autocommit_cmd => 1 })
 			or $m->dbError();
 		$dbh->do("USE $cfg->{dbName}") if $m->{gcfg}{dbName};
-		$dbh->do("SET NAMES '" .($cfg->{mysqlUtf} || 'utf8'). "'");
+		$dbh->do("SET NAMES '$encoding'");
 		$dbh->do("SET SESSION sql_mode = 'ANSI_QUOTES,PIPES_AS_CONCAT'");
 		$m->{mysql} = 1;
 	}
@@ -3356,7 +3342,7 @@ sub dbConnect
 			"dbi:Pg:dbname=$cfg->{dbName};host=$cfg->{dbServer};$cfg->{dbParam}",
 			$cfg->{dbUser}, $cfg->{dbPassword}, 
 			{ PrintError => 0, PrintWarn => 0, AutoCommit => 1,
-				pg_server_prepare => 0, pg_utf8_strings => 0 })
+				pg_server_prepare => $cfg->{dbPrepare} || 0, pg_utf8_strings => 0 })
 			or $m->dbError();
 		$dbh->do("SET NAMES 'utf8'");
 		$dbh->do("SET search_path = $cfg->{dbSchema}, public") if $cfg->{dbSchema};
@@ -3967,7 +3953,9 @@ sub deletePost
 			SELECT id FROM attachments WHERE postId = ?", $postId);
 		$m->deleteAttachment($_->[0]) for @$attachments;
 
-		# Delete reports
+		# Delete post likes and reports
+		$m->dbDo("
+			DELETE FROM postLikes WHERE postId = ?", $postId);
 		$m->dbDo("
 			DELETE FROM postReports WHERE postId = ?", $postId);
 
@@ -4035,7 +4023,9 @@ sub deleteTopic
 			SELECT id FROM attachments WHERE postId IN (SELECT id FROM $tmp)");
 		$m->deleteAttachment($_->[0]) for @$attachments;
 
-		# Delete post reports
+		# Delete post likes and reports
+		$m->dbDo("
+			DELETE FROM postLikes WHERE postId IN (SELECT id FROM $tmp)");
 		$m->dbDo("
 			DELETE FROM postReports WHERE postId IN (SELECT id FROM $tmp)");
 		$m->dbDo("

@@ -192,10 +192,15 @@ if (eval { require Env::C }) {
 
 # System info
 my $unameEsc = $m->escHtml(scalar qx(uname -a), 1);
+chomp $unameEsc;
 my $uptimeEsc = $m->escHtml(scalar qx(uptime), 1);
+chomp $uptimeEsc;
 my $freeEsc = $m->escHtml(scalar qx(free), 1);
+chomp $freeEsc;
 my $dfEsc = $m->escHtml(scalar qx(df), 1);
+chomp $dfEsc;
 my $psEsc = $more ? $m->escHtml(scalar qx(ps faxu), 1) : "";
+chomp $psEsc;
 
 print "<table class='tbl'>\n";
 
@@ -287,9 +292,9 @@ print
 	"<div class='frm'>\n",
 	"<div class='hcl'><span class='htt'>System Info</span></div>\n",
 	"<div class='ccl'><pre>\n",
-	$unameEsc ? "<samp>$unameEsc</samp>\n" : "",
-	$uptimeEsc ? "<samp>$uptimeEsc</samp>\n" : "",
-	$freeEsc ? "<samp>$freeEsc</samp>\n" : "",
+	$unameEsc ? "<samp>$unameEsc</samp><br>\n" : "",
+	$uptimeEsc ? "<samp>$uptimeEsc</samp><br>\n" : "",
+	$freeEsc ? "<samp>$freeEsc</samp><br>\n" : "",
 	$dfEsc ? "<samp>$dfEsc</samp>\n" : "",
 	"</pre></div>\n",
 	"</div>\n\n"

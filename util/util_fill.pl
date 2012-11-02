@@ -160,7 +160,7 @@ $m->recalcStats([ 1, 2 ]);
 print "Updating database statistics...\n";
 my @tables = qw(attachments boardAdminGroups boardHiddenFlags boardMemberGroups 
 	boards boardSubscriptions categories chat config groupMembers groups messages 
-	notes pollOptions polls pollVotes postReports posts tickets 
+	notes pollOptions polls pollVotes postLikes postReports posts tickets 
 	topicReadTimes topics topicSubscriptions userBans userIgnores users 
 	userVariables variables watchUsers watchWords);
 if ($m->{mysql}) {

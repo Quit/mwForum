@@ -98,6 +98,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 	my $output = $m->fetchArray("
 		SELECT value FROM variables WHERE name = ?", 'upgOutput');
 	my $outputEsc = $m->escHtml($output, 1);
+	$outputEsc =~ s!(Error:)!<em>$1</em>!g;
 	my $refreshUrl = $m->url('spawn_upgrade');
 	print
 		"<div class='frm'>\n",

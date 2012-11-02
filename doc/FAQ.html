@@ -507,9 +507,6 @@ push @$options, {
 <dt>postEditStTime</dt>
 <dd>Number of seconds that users can edit a post after posting without an edit timestamp showing up. Default is <code>120</code> seconds.</dd>
 
-<dt>dbSync</dt>
-<dd>Value for SQLite's "<a href='http://www.sqlite.org/pragma.html#pragma_synchronous'>synchronous</a>" pragma (default is "<code>OFF</code>"), or value of PostgreSQL's "<a href='http://www.postgresql.org/docs/current/static/runtime-config-wal.html#GUC-SYNCHRONOUS-COMMIT'>synchronous_commit</a>" parameter (default determined by cluster configuration).</dd>
-
 <dt>queryLog</dt>
 <dd>Location of a file where all performed SQL queries are logged, e.g. "<code>/var/log/forum_query.log</code>". For performance reasons, only leave this enabled while debugging.</dd>
 
@@ -525,8 +522,14 @@ push @$options, {
 <dt>relRedir</dt>
 <dd>Use relative Location header in redirections. Violates HTTP spec, but might help in some specific situations.</dd>
 
-<dt>mysqlUtf</dt>
-<dd>Overrides the default MySQL client encoding of "<code>utf8</code>". Only use for UTF variations like "<code>utf8mb4</code>", when that's used for the database tables themselves.</dd>
+<dt>dbSync</dt>
+<dd>Value for SQLite's "<a href='http://www.sqlite.org/pragma.html#pragma_synchronous'>synchronous</a>" pragma (default is "<code>OFF</code>"), or value of PostgreSQL's "<a href='http://www.postgresql.org/docs/current/static/runtime-config-wal.html#GUC-SYNCHRONOUS-COMMIT'>synchronous_commit</a>" parameter (default determined by cluster configuration).</dd>
+
+<dt>dbTableOpt</dt>
+<dd>MySQL or PostgreSQL table options used when creating tables in install.pl and upgrade.pl, e.g. "<code>CHARSET=utf8mb4 ENGINE=aria PAGE_CHECKSUM=1 TRANSACTIONAL=1</code>". Default is "<code>CHARSET=utf8</code>" for MySQL.</dd>
+
+<dt>dbHideError</dt>
+<dd>Set to <code>1</code> to hide database error message details from normal users.</dd>
 </dl>
 
 

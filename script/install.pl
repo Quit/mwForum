@@ -29,13 +29,11 @@ my %opts = ();
 Getopt::Std::getopts('if:e:', \%opts);
 my $citext = $opts{i};
 my $forumId = $opts{f};
-my $engine = lc($opts{e});
 
 # Init
 my ($m, $cfg, $lng) = MwfMain->newShell(forumId => $forumId, allowCgi => 1, upgrade => 1);
 my $dbh = $m->{dbh};
 my $pfx = $cfg->{dbPrefix};
-$citext ||= $cfg->{dbCitext};
 
 # Autoflush stdout
 $| = 1;
@@ -50,7 +48,7 @@ CREATE TABLE config (
 	name         VARCHAR(14) PRIMARY KEY,            -- Forum option name
 	value        TEXT NOT NULL DEFAULT '',           -- Forum option value
 	parse        VARCHAR(10) NOT NULL DEFAULT ''     -- ''=scalar, 'hash', 'array'
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE users (
 	id           INT PRIMARY KEY AUTO_INCREMENT,     -- User id
@@ -113,7 +111,7 @@ CREATE TABLE users (
 	renamesLeft  TINYINT NOT NULL DEFAULT 0,         -- Remaining times user can rename self
 	oldNames     TEXT NOT NULL DEFAULT '',           -- Former usernames
 	comment      TEXT NOT NULL DEFAULT ''            -- Comment field visible to admins only
-) CHARSET=utf8;
+) TABLEOPT;
 CREATE UNIQUE INDEX users_userName ON users (userName);
 
 CREATE TABLE userVariables (
@@ -121,13 +119,13 @@ CREATE TABLE userVariables (
 	name         VARCHAR(10) NOT NULL,               -- Variable name
 	value        TEXT NOT NULL DEFAULT '',           -- Value
 	PRIMARY KEY (userId, name)
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE userBadges (
 	userId       INT NOT NULL,                       -- User id
 	badge        VARCHAR(20) NOT NULL,               -- Badge id
 	PRIMARY KEY (userId, badge)
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE userBans (
 	userId       INT PRIMARY KEY,
@@ -135,13 +133,13 @@ CREATE TABLE userBans (
 	duration     SMALLINT NOT NULL DEFAULT 0,        -- Duration in days
 	reason       TEXT NOT NULL DEFAULT '',           -- Reason shown in ban error message
 	intReason    TEXT NOT NULL DEFAULT ''            -- Internal reason only shown to admins
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE userIgnores (
 	userId       INT NOT NULL,                       -- Ignoring user
 	ignoredId    INT NOT NULL,                       -- Ignored user
 	PRIMARY KEY (userId, ignoredId)
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE groups (
 	id           INT PRIMARY KEY AUTO_INCREMENT,     -- Group id
@@ -149,25 +147,25 @@ CREATE TABLE groups (
 	badge        VARCHAR(20) NOT NULL DEFAULT '',    -- User badge given to members
 	public       TINYINT NOT NULL DEFAULT 0,         -- Group info visible to non-members?
 	open         TINYINT NOT NULL DEFAULT 0          -- Can users join themselves?
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE groupMembers (
 	userId       INT NOT NULL,                       -- Member id
 	groupId      INT NOT NULL,                       -- Group id
 	PRIMARY KEY (userId, groupId)
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE groupAdmins (
 	userId       INT NOT NULL,                       -- Admin id
 	groupId      INT NOT NULL,                       -- Group id
 	PRIMARY KEY (userId, groupId)
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE categories (
 	id           INT PRIMARY KEY AUTO_INCREMENT,
 	title        VARCHAR(255) NOT NULL,              -- Category name
 	pos          SMALLINT NOT NULL                   -- Position in list
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE boards (
 	id           INT PRIMARY KEY AUTO_INCREMENT,     -- Board id
@@ -188,26 +186,26 @@ CREATE TABLE boards (
 	longDesc     TEXT NOT NULL DEFAULT '',           -- Long description for board info page
 	postNum      INT NOT NULL DEFAULT 0,             -- Number of posts (cached)
 	lastPostTime INT NOT NULL DEFAULT 0              -- Time of latest post (cached)
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE boardMemberGroups (
 	groupId      INT NOT NULL,                       -- Group id
 	boardId      INT NOT NULL,                       -- Board id
 	PRIMARY KEY (groupId, boardId)
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE boardAdminGroups (
 	groupId      INT NOT NULL,                       -- Group id
 	boardId      INT NOT NULL,                       -- Board id
 	PRIMARY KEY (groupId, boardId)
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE boardHiddenFlags (
 	userId       INT NOT NULL,                       -- User id
 	boardId      INT NOT NULL,                       -- Board id
 	manual       TINYINT NOT NULL DEFAULT 0,         -- Man. added, no remove during categ toggle
 	PRIMARY KEY (userId, boardId)
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE boardSubscriptions (
 	userId       INT NOT NULL,                       -- User id
@@ -215,7 +213,7 @@ CREATE TABLE boardSubscriptions (
 	instant      TINYINT NOT NULL DEFAULT 0,         -- Digest or instant
 	unsubAuth    VARCHAR(22) NOT NULL DEFAULT '',    -- Direct unsubscribe code
 	PRIMARY KEY (userId, boardId)
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE topics (
 	id           INT PRIMARY KEY AUTO_INCREMENT,
@@ -228,7 +226,7 @@ CREATE TABLE topics (
 	sticky       TINYINT NOT NULL DEFAULT 0,         -- Put at top of topic list?
 	postNum      INT NOT NULL DEFAULT 0,             -- Number of posts (cached)
 	lastPostTime INT NOT NULL DEFAULT 0              -- Time of latest post (cached)
-) CHARSET=utf8;
+) TABLEOPT;
 CREATE INDEX topics_lastPostTime ON topics (lastPostTime);
 
 CREATE TABLE topicReadTimes (
@@ -236,7 +234,7 @@ CREATE TABLE topicReadTimes (
 	topicId      INT NOT NULL,                       -- Topic id
 	lastReadTime INT NOT NULL,                       -- Timestamp of last visit
 	PRIMARY KEY (userId, topicId)
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE topicSubscriptions (
 	userId       INT NOT NULL,                       -- User id
@@ -244,7 +242,7 @@ CREATE TABLE topicSubscriptions (
 	instant      TINYINT NOT NULL DEFAULT 0,         -- Digest or instant
 	unsubAuth    VARCHAR(22) NOT NULL DEFAULT '',    -- Direct unsubscribe code
 	PRIMARY KEY (userId, topicId)
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE posts (
 	id           INT PRIMARY KEY AUTO_INCREMENT,     -- Post id
@@ -260,17 +258,23 @@ CREATE TABLE posts (
 	editTime     INT NOT NULL DEFAULT 0,             -- Edit timestamp
 	body         TEXT NOT NULL,                      -- Post text
 	rawBody      TEXT NOT NULL DEFAULT ''            -- Additional raw content like code
-) CHARSET=utf8;
+) TABLEOPT;
 CREATE INDEX posts_userId   ON posts (userId);
 CREATE INDEX posts_topicId  ON posts (topicId);
 CREATE INDEX posts_postTime ON posts (postTime);
+
+CREATE TABLE postLikes (
+	postId       INT NOT NULL,                       -- Liked post id
+	userId       INT NOT NULL,                       -- Liking user id
+	PRIMARY KEY (postId, userId)
+) TABLEOPT;
 
 CREATE TABLE postReports (
 	userId       INT NOT NULL,                       -- Reporting user id
 	postId       INT NOT NULL,                       -- Reported post id
 	reason       TEXT NOT NULL,                      -- Reason for appeal
 	PRIMARY KEY (userId, postId)
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE attachments (
 	id           INT PRIMARY KEY AUTO_INCREMENT,     -- Attachment id
@@ -278,7 +282,7 @@ CREATE TABLE attachments (
 	webImage     TINYINT NOT NULL DEFAULT 0,         -- 0=no, 1=web image, 2=embedded
 	fileName     VARCHAR(255) NOT NULL,              -- Filename
 	caption      VARCHAR(255) NOT NULL DEFAULT ''    -- Description
-) CHARSET=utf8;
+) TABLEOPT;
 CREATE INDEX attachments_postId ON attachments (postId);
 
 CREATE TABLE log (
@@ -294,21 +298,21 @@ CREATE TABLE log (
 	logTime      INT NOT NULL,                       -- Logging timestamp
 	ip           VARCHAR(39) NOT NULL DEFAULT '',    -- IP
 	string       TEXT NOT NULL DEFAULT ''            -- Additional info
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE polls (
 	id           INT PRIMARY KEY AUTO_INCREMENT,     -- Poll id
 	title        TEXT NOT NULL,                      -- Poll title/question
 	locked       TINYINT NOT NULL DEFAULT 0,         -- Poll ended and votes consolidated?
 	multi        TINYINT NOT NULL DEFAULT 0          -- Allow one vote per option?
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE pollOptions (
 	id           INT PRIMARY KEY AUTO_INCREMENT,     -- Poll option id
 	pollId       INT NOT NULL,                       -- Poll id
 	title        TEXT NOT NULL,                      -- Option title
 	votes        INT NOT NULL DEFAULT 0              -- Sum of votes when poll locked
-) CHARSET=utf8;
+) TABLEOPT;
 CREATE INDEX pollOptions_pollId ON pollOptions (pollId);
 
 CREATE TABLE pollVotes (
@@ -316,7 +320,7 @@ CREATE TABLE pollVotes (
 	userId       INT NOT NULL,                       -- Voter id
 	optionId     INT NOT NULL,                       -- Poll option id
 	PRIMARY KEY (pollId, userId, optionId)
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE messages (
 	id           INT PRIMARY KEY AUTO_INCREMENT,     -- Message id
@@ -328,7 +332,7 @@ CREATE TABLE messages (
 	sentbox      TINYINT NOT NULL DEFAULT 0,         -- Is in sentbox?
 	subject      TEXT NOT NULL,                      -- Message subject
 	body         TEXT NOT NULL                       -- Message text
-) CHARSET=utf8;
+) TABLEOPT;
 CREATE INDEX messages_senderId ON messages (senderId);
 CREATE INDEX messages_receiverId ON messages (receiverId);
 
@@ -338,7 +342,7 @@ CREATE TABLE notes (
 	sendTime     INT NOT NULL,                       -- Sending timestamp
 	type         VARCHAR(6) NOT NULL DEFAULT '',     -- Type
 	body         TEXT NOT NULL                       -- Message text
-) CHARSET=utf8;
+) TABLEOPT;
 CREATE INDEX notes_userId ON notes (userId);
 
 CREATE TABLE chat (
@@ -346,7 +350,7 @@ CREATE TABLE chat (
 	userId       INT NOT NULL,                       -- Poster id
 	postTime     INT NOT NULL,                       -- Timestamp
 	body         TEXT NOT NULL                       -- Chat text
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE tickets (
 	id           VARCHAR(22) PRIMARY KEY,            -- Ticket id
@@ -354,25 +358,25 @@ CREATE TABLE tickets (
 	issueTime    INT NOT NULL,                       -- Creation timestamp
 	type         VARCHAR(6) NOT NULL,                -- Type
 	data         VARCHAR(255) NOT NULL DEFAULT ''    -- Type-dependent data
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE watchWords (
 	userId       INT NOT NULL,                       -- Watcher id
 	word         VARCHAR(30) NOT NULL                -- Word to look for
-) CHARSET=utf8;
+) TABLEOPT;
 
 CREATE TABLE watchUsers (
 	userId       INT NOT NULL,                       -- Watcher id
 	watchedId    INT NOT NULL                        -- Watched user id
-) CHARSET=utf8;
+) TABLEOPT;
 CREATE INDEX watchUsers_watchedId ON watchUsers (watchedId);
 
 CREATE TABLE variables (
 	name         VARCHAR(10) PRIMARY KEY,            -- Variable name
 	value        TEXT NOT NULL DEFAULT ''            -- Value
-) CHARSET=utf8;
+) TABLEOPT;
 
-INSERT INTO variables (name, value) VALUES ('version', '2.27.2');
+INSERT INTO variables (name, value) VALUES ('version', '2.27.4');
 ";
 
 my $arcSql = "";
@@ -403,20 +407,21 @@ $sql =~ s! INTO ! INTO ${pfx}!g;
 
 # Make SQL compatible with chosen DBMS
 if ($m->{mysql}) {
+	my $tableOpt = $cfg->{dbTableOpt} || "CHARSET=utf8";
+	$sql =~ s! TABLEOPT! $tableOpt!g;
 	$sql =~ s! TEXT ! MEDIUMTEXT !g;
-	$sql =~ s! CHARSET=utf8! CHARSET=utf8 ENGINE=$engine!g if $engine;
-	$sql =~ s! ENGINE=aria! ENGINE=aria PAGE_CHECKSUM=1 TRANSACTIONAL=1!gi if $engine eq 'aria';
 }
 elsif ($m->{pgsql}) {
+	$citext ||= $cfg->{dbCitext};
+	$sql =~ s! TABLEOPT! $cfg->{dbTableOpt}!g;
 	$sql =~ s! INT PRIMARY KEY AUTO_INCREMENT! SERIAL PRIMARY KEY!g;
 	$sql =~ s! TINYINT! SMALLINT!g;
-	$sql =~ s! CHARSET=\w+!!g;
 	$sql =~ s! VARCHAR\((\d+)\)| TEXT! citext!g if $citext && $1 != 22;
 }
 elsif ($m->{sqlite}) {
+	$sql =~ s! TABLEOPT! $cfg->{dbTableOpt}!g;
 	$sql =~ s! PRIMARY KEY AUTO_INCREMENT! NOT NULL PRIMARY KEY AUTOINCREMENT!g;
 	$sql =~ s! INT ! INTEGER !g;
-	$sql =~ s! CHARSET \w+!!g;
 	$sql =~ s! VARCHAR\(\d+\)| TEXT! TEXT COLLATE mwforum!g if $cfg->{sqliteCollate};
 	$sql =~ s!\s+-- .+!!g;
 	$sql = "PRAGMA encoding = 'utf-8';\n" . $sql;	

@@ -16,7 +16,7 @@
 package MwfDefaults;
 use strict;
 use warnings;
-our $VERSION = "2.27.2";
+our $VERSION = "2.27.4";
 
 #-----------------------------------------------------------------------------
 # Configuration option defaults. Don't change.
@@ -816,8 +816,15 @@ our $options = [
 {
 	name     => 'ipExpiration',
 	type     => 'number',
-	title    => "Wipe recorded IP addresses after x days",
+	title    => "Wipe IP addresses stored in user and post entries after x days",
 	help     => "0 = never. Might be necessary for legal reasons. Also see <var>recordIp</var> option.",
+	default  => 0,
+},
+{
+	name     => 'logExpiration',
+	type     => 'number',
+	title    => "Expire log entries after x days",
+	help     => "0 = never. Might be necessary for legal reasons.",
 	default  => 0,
 },
 {
@@ -1479,6 +1486,12 @@ our $options = [
 	default  => 1,
 },
 {
+	name     => 'postLikes',
+	type     => 'checkbox',
+	title    => "Enable upvoting of posts?",
+	default  => 0,
+},
+{
 	name     => 'reports',
 	type     => 'checkbox',
 	title    => "Enable reporting of posts for rule violations?",
@@ -1700,6 +1713,7 @@ our @tables = qw(
 	pollOptions 
 	polls 
 	pollVotes 
+	postLikes
 	postReports 
 	posts 
 	tickets 

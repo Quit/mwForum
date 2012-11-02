@@ -16,7 +16,7 @@
 package MwfEnglish;
 use utf8;
 use strict;
-our $VERSION = "2.27.3";
+our $VERSION = "2.27.4";
 our $lng = {};
 
 #------------------------------------------------------------------------------
@@ -247,6 +247,10 @@ $lng->{tpcPolShwRes} = "Show results";
 $lng->{tpcHidTtl}    = "Hidden post";
 $lng->{tpcHidIgnore} = "(ignored) ";
 $lng->{tpcHidUnappr} = "(unapproved) ";
+$lng->{tpcLike}      = "Upvote";
+$lng->{tpcLikeTT}    = "Mark post as liked";
+$lng->{tpcUnlike}    = "Unvote";
+$lng->{tpcUnlikeTT}  = "Revoke previous vote";
 $lng->{tpcApprv}     = "Approve";
 $lng->{tpcApprvTT}   = "Make post visible to users";
 $lng->{tpcLock}      = "Lock";
@@ -286,6 +290,7 @@ $lng->{tpcAdmDelete} = "Delete";
 $lng->{tpcBy}        = "By";
 $lng->{tpcOn}        = "Date";
 $lng->{tpcEdited}    = "Edited";
+$lng->{tpcLikes}     = "Upvotes";
 $lng->{tpcLocked}    = "(locked)";
 
 # Topic subscription page
@@ -432,6 +437,7 @@ $lng->{uifProfAvat}  = "Avatar";
 $lng->{uifBadges}    = "Badges";
 $lng->{uifGrpMbrTtl} = "Groups";
 $lng->{uifBrdSubTtl} = "Board Subscriptions";
+$lng->{uifTpcSubTtl} = "Topic Subscriptions";
 $lng->{uifStatTtl}   = "Statistics";
 $lng->{uifStatRank}  = "Rank";
 $lng->{uifStatPNum}  = "Posts";
@@ -954,6 +960,8 @@ $lng->{msgNotesDel}  = "Notifications deleted";
 $lng->{msgPstLock}   = "Post locked";
 $lng->{msgPstUnlock} = "Post unlocked";
 $lng->{msgPstPing}   = "Post notification sent";
+$lng->{msgPstLike}   = "Post upvoted";
+$lng->{msgPstUnlike} = "Post upvote removed";
 
 # Error messages
 $lng->{errDefault}   = "[error string missing]";
@@ -1041,7 +1049,7 @@ $lng->{errWordChar}  = "Word contains illegal characters.";
 $lng->{errWatchNum}  = "Maximum number of watch entries used.";
 $lng->{errFgtPwdDuh} = "You have already used this function recently or you have only just registered. Please wait for the email to arrive, and make sure to also check your spam folder.";
 $lng->{errRecvNum}   = "Too many recipients.";
-$lng->{errOldAgent}  = "Your browser is severely outdated and is not supported by this forum anymore. Please get a <a href='http://abetterbrowser.org/'>better browser</a>.";
+$lng->{errOldAgent}  = "Your browser is severely outdated and is not supported by this forum anymore. Please get a modern browser.";
 $lng->{errUAFeatSup} = "Your browser doesn't support this feature.";
 $lng->{errNoCookies} = "Login won't work because browser cookies are disabled.";
 $lng->{errSearchLnk} = "Linked search results are disabled.";

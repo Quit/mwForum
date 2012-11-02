@@ -99,11 +99,11 @@ my $printPost = sub {
 	# Print board bar
 	if (!$boardPrinted{$boardId}) {
 		$boardPrinted{$boardId} = 1;
-		my $url = $m->url('board_show', bid => $boardId);
+		my $boardUrl = $m->url('board_show', bid => $boardId);
 		print
 			"<div class='frm'>\n",
 			"<div class='hcl'>\n",
-			"<span class='htt'>$lng->{brdTitle}</span> <a href='$url'>$board->{title}</a>\n",
+			"<span class='htt'>$lng->{brdTitle}</span> <a href='$boardUrl'>$board->{title}</a>\n",
 			"</div>\n",
 			"</div>\n\n";
 	}
@@ -113,18 +113,18 @@ my $printPost = sub {
 		$topicPrinted{$topicId} = 1;
 		my $filterStr = "";
 		if (!$onlyTopicId) {
-			my $url = $m->url('forum_overview', act => $action, tid => $topicId,
+			my $topicOvwUrl = $m->url('forum_overview', act => $action, tid => $topicId,
 				time => ($unreadMode ? $topic->{lowestUnreadTime} : ()));
 			$filterStr =
-				"<span class='nav'><a href='$url'><img class='sic sic_nav_prev' $emptyPixel" .
+				"<span class='nav'><a href='$topicOvwUrl'><img class='sic sic_nav_prev' $emptyPixel" .
 				" title='$lng->{ovwFltTpcTT}' alt='$lng->{ovwFltTpc}'></a></span>\n";
 		}
-		my $url = $m->url('topic_show', tid => $topicId);
+		my $topicUrl = $m->url('topic_show', tid => $topicId);
 		print
 			"<div class='frm' style='margin-left: $user->{indent}%'>\n",
 			"<div class='hcl'>\n",
 			$filterStr,
-			"<span class='htt'>$lng->{tpcTitle}</span> <a href='$url'>$topic->{subject}</a>\n",
+			"<span class='htt'>$lng->{tpcTitle}</span> <a href='$topicUrl'>$topic->{subject}</a>\n",
 			"</div>\n",
 			"</div>\n\n";
 	}
@@ -139,9 +139,9 @@ my $printPost = sub {
 			. " title='$lng->{tpcInvisTT}' alt='$lng->{brdInvis}'> " : "";
 
 		# Format username
+		my $userUrl = $m->url('user_info', uid => $postUserId);
 		my $userNameStr = $post->{userName} || $post->{userNameBak} || " - ";
-		my $url = $m->url('user_info', uid => $postUserId);
-		$userNameStr = "<a href='$url'>$userNameStr</a>" if $postUserId > 0;
+		$userNameStr = "<a href='$userUrl'>$userNameStr</a>" if $postUserId > 0;
 
 		# Determine variable post icon attributes
 		my ($imgName, $imgTitle, $imgAlt);
@@ -170,11 +170,11 @@ my $printPost = sub {
 		my $imgAttr = "class='sic sic_$imgName' title='$imgTitle' alt='$imgAlt'";
 
 		# Print post
-		$url = $m->url('topic_show', pid => $postId);
+		my $topicUrl = $m->url('topic_show', pid => $postId);
 		print
 			"<div class='frm pst' id='pid$postId' style='margin-left: $indent%'>\n",
 			"<div class='hcl'>\n",
-			"<a href='$url'>\n<img $emptyPixel $imgAttr></a>\n",
+			"<a href='$topicUrl'>\n<img $emptyPixel $imgAttr></a>\n",
 			$invisImg,
 			"<span class='usr'><span class='htt'>$lng->{tpcBy}</span> $userNameStr</span>\n",
 			"<span class='htt'>$lng->{tpcOn}</span> $postTimeStr\n",

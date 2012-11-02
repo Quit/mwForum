@@ -35,7 +35,9 @@ $(window).on("load", function () {
 mwf.hideMsgParam = function () {
 	var url = window.location.href;
 	url = url.replace(/(msg=[\w\-]+[&;]*)+/, "").replace(/[\?&;]$/, "");
-	if (url !== window.location.href) { window.history.replaceState(null, "", url); }
+	if (window.history.replaceState && url !== window.location.href) {
+		window.history.replaceState(null, "", url);
+	}
 };
 
 mwf.checkCookie = function () {
@@ -164,7 +166,7 @@ mwf.initTopicNavigation = function () {
 			if ((i = obs.index(currPostOb)) > 0) {
 				scrollToPost(obs.eq(i - 1));
 			}
-			else if ((obs = $(".sic_nav_prev")).length === 4) {
+			else if ((obs = $(".sic_nav_prev")).length === 2) {
 				mwf.navigate(obs.eq(1).parent().attr("href") + ";foc=last");
 			}
 		}
@@ -173,7 +175,7 @@ mwf.initTopicNavigation = function () {
 			if ((i = obs.index(currPostOb)) >= 0 && i + 1 < obs.length) {
 				scrollToPost(obs.eq(i + 1));
 			}
-			else if ((obs = $(".sic_nav_next")).length === 4) {
+			else if ((obs = $(".sic_nav_next")).length === 2) {
 				mwf.navigate(obs.eq(1).parent().attr("href"));
 			}
 		}

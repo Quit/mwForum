@@ -2,7 +2,7 @@ package MwfConfig;
 use strict;
 use warnings;
 our ($VERSION, $cfg);
-$VERSION = "2.27.2";
+$VERSION = "2.27.4";
 
 #-----------------------------------------------------------------------------
 # Basic options
@@ -30,18 +30,12 @@ $cfg->{dbPassword}     = "password";
 # Database table name prefix in MySQL (usually not required)
 $cfg->{dbPrefix}       = "";
 
-# Database schema in PgSQL (usually not required)
-$cfg->{dbSchema}       = "";
-
 # DBI driver. Either "mysql", "Pg" or "SQLite".
 $cfg->{dbDriver}       = "mysql";
 
 # Additional DBI parameters (usually not required)
-# Example: "port=321;mysql_socket=/tmp/mysql.sock;mysql_ssl=1"
+# Example: "port=321;mysql_socket=/tmp/mysql.sock"
 $cfg->{dbParam}        = "";
-
-# Hide database error message details from normal users?
-$cfg->{dbHideError}    = 0;
 
 # Max. size of attachments 
 # Also limits general CGI input. Don't set it below a few thousand byte.

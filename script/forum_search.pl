@@ -362,7 +362,7 @@ if ($cfg->{forumSearch} == 1 || $cfg->{forumSearch} == 2 && $userId || $user->{a
 
 # Print hint
 $m->printHints([$m->formatStr($lng->{seaWordsFtsT}, { expr => $wordsEsc })])
-	if $wordsChanged && ($mysqlFts || $pgsqlFts && !$fullyQuoted);
+	if $wordsChanged && $words && ($mysqlFts || $pgsqlFts && !$fullyQuoted);
 
 # Print Google search form
 my $autofocus = !$cfg->{forumSearch} ? "autofocus" : "";
@@ -385,7 +385,7 @@ if ($cfg->{googleSearch}) {
 }
 
 # Print results
-if ($submitted && !($wordsChanged && !$words)) {
+if ($submitted && @$posts) {
 	# Prepare strings for local highlighting and hl link parameters
 	my $hilite = "";
 	if ($mysqlFts) { 
@@ -450,15 +450,15 @@ if ($submitted && !($wordsChanged && !$words)) {
 			"</div>\n",
 			"</div>\n\n";
 	}
-	
+}
+elsif ($submitted) {
 	# If nothing found, display notification
 	print
 		"<div class='frm'>\n",
 		"<div class='ccl'>\n",
 		"$lng->{serNotFound}\n",
 		"</div>\n",
-		"</div>\n\n"
-		if !@$posts;
+		"</div>\n\n";
 }
 
 # Log action and finish

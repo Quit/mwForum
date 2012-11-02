@@ -238,8 +238,9 @@ if (!$gallery) {
 		my $postUrl = $m->url('topic_show', pid => $postId);
 		my $size = -s $m->encFsPath("$cfg->{attachFsPath}/$postIdMod/$postId/$fileName");
 		my $sizeStr = $m->formatSize($size);
-		my $userNameStr = $attach->{userNameBak} || " - ";
 		my $userUrl = $m->url('user_info', uid => $attach->{userId});
+		my $userNameStr = $attach->{userNameBak} || " - ";
+		$userNameStr = "<a href='$userUrl'>$userNameStr</a>" if $attach->{userId} > 0;
 		
 		print
 			"<tr class='crw'>\n",
@@ -247,7 +248,7 @@ if (!$gallery) {
 			"<td>$attach->{caption}</td>\n",
 			"<td>$sizeStr</td>\n",
 			"<td><a href='$postUrl'>$postId</a></td>\n",
-			"<td><a href='$userUrl'>$userNameStr</a></td>\n",
+			"<td>$userNameStr</td>\n",
 			"</tr>\n";
 	}
 	

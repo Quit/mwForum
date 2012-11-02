@@ -32,10 +32,6 @@ my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
 # Get CGI parameters
 my $infUserId = $m->paramInt('uid');
 
-# Handle special user IDs
-$m->note('errUsrDel') if $infUserId == 0;
-$m->note('errUsrFake') if $infUserId == -1;
-
 # Get user
 my $infUser = $m->getUser($infUserId);
 $infUser or $m->error('errUsrNotFnd');
@@ -478,6 +474,26 @@ if ($userId == $infUserId || $user->{admin}) {
 		"<div class='ccl'>\n",
 		join(",\n", map("<a href='" . $m->url('board_info', bid => $_->[0]) . "'>$_->[1]</a>", 
 			@$boards)) || " - ", "\n",
+		"</div>\n",
+		"</div>\n\n";
+
+	# Get subscribed topics
+	my $topics = $m->fetchAllArray("
+		SELECT topics.id, topics.subject 
+		FROM topicSubscriptions AS topicSubscriptions
+			INNER JOIN topics AS topics
+				ON topics.id = topicSubscriptions.topicId
+		WHERE topicSubscriptions.userId = :infUserId
+		ORDER BY topics.id DESC",
+		{ infUserId => $infUserId });
+
+	# Print subscribed topics
+	print
+		"<div class='frm'>\n",
+		"<div class='hcl'><span class='htt'>$lng->{uifTpcSubTtl}</span></div>\n",
+		"<div class='ccl'>\n",
+		join(",\n", map("<a href='" . $m->url('topic_show', tid => $_->[0]) . "'>$_->[1]</a>", 
+			@$topics)) || " - ", "\n",
 		"</div>\n",
 		"</div>\n\n";
 }

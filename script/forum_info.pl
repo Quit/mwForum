@@ -133,6 +133,12 @@ if ($user->{admin}) {
 		SELECT COUNT(DISTINCT userId) FROM boardHiddenFlags");
 	my $hiddenBoardNum = $m->fetchArray("
 		SELECT COUNT(DISTINCT boardId) FROM boardHiddenFlags");
+	my $likeNum = $m->fetchArray("
+		SELECT COUNT(*) FROM postLikes");
+	my $likeUserNum = $m->fetchArray("
+		SELECT COUNT(DISTINCT userId) FROM postLikes");
+	my $likePostNum = $m->fetchArray("
+		SELECT COUNT(DISTINCT postId) FROM postLikes");
 	my $reportNum = $m->fetchArray("
 		SELECT COUNT(*) FROM postReports");
 	my $reportUserNum = $m->fetchArray("
@@ -182,6 +188,8 @@ if ($user->{admin}) {
 		"<td>$hiddenNum entries by $hiddenUserNum users for $hiddenBoardNum boards</td></tr>\n",
 		"<tr class='crw'><td class='hco'>Attachments</td>\n",
 		"<td>$attachNum files incl. $attachImgNum web images in $attachPostNum posts</td></tr>\n",
+		"<tr class='crw'><td class='hco'>Post Likes</td>\n",
+		"<td>$likeNum likes by $likeUserNum users for $likePostNum posts</td></tr>\n",
 		"<tr class='crw'><td class='hco'>Post Reports</td>\n",
 		"<td>$reportNum reports by $reportUserNum users about $reportPostNum posts</td></tr>\n",
 		"<tr class='crw'><td class='hco'>Tickets</td>\n",

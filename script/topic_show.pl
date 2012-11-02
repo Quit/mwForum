@@ -198,6 +198,29 @@ for my $post (@$pagePosts) {
 }
 my $topicUserId = $postsById{$basePostId}{userId};
 
+# Merge post likes into page posts
+if ($cfg->{postLikes}) {
+	my $postLikes = $m->fetchAllArray("
+		SELECT posts.id,
+			COUNT(postLikes.postId) AS likes,
+			COUNT(postLiked.userId) > 0 AS liked
+		FROM posts AS posts
+			LEFT JOIN postLikes AS postLikes
+				ON postLikes.postId = posts.id
+			LEFT JOIN postLikes AS postLiked
+				ON postLiked.postId = posts.id
+				AND postLiked.userId = :userId
+		WHERE posts.id IN (:pagePostIds)
+		GROUP BY posts.id
+		HAVING COUNT(postLikes.postId) > 0
+			OR COUNT(postLiked.userId) > 0",
+		{ userId => $userId, pagePostIds => \@pagePostIds });
+	for my $like (@$postLikes) {
+		$postsById{$like->[0]}{likes} = $like->[1];
+		$postsById{$like->[0]}{liked} = $like->[2];
+	}
+}
+
 # Remove ignored and base crosslink posts from @newUnrPostIds
 @newUnrPostIds = grep(!$postsById{$_}{ignored}, @newUnrPostIds) if $userId;
 shift @newUnrPostIds if $postsById{$newUnrPostIds[0]}{userId} == -2;
@@ -691,7 +714,8 @@ my $printPost = sub {
 				$invisImg,
 				$postUserId > -2 ? "<span class='htt'>$lng->{tpcBy}</span> $userNameStr\n" : "",
 				"<span class='htt'>$lng->{tpcOn}</span> $postTimeStr\n", 
-				$editTimeStr;
+				$editTimeStr,
+				$post->{likes} ? "<span class='htt'>$lng->{tpcLikes}</span> $post->{likes}\n" : "";
 			
 			# Print IP
 			print "<span class='htt'>IP</span> $ip\n" 
@@ -752,10 +776,22 @@ my $printPost = sub {
 				push @btlLines, $m->buttonLink($url, 'tpcAttach', 'attach');
 			}
 
-			# Print report button
+			# Print notify button
 			if ($userId) {
 				my $url = $m->url('report_add', pid => $postId);
 				push @btlLines, $m->buttonLink($url, 'tpcReport', 'report');
+			}
+
+			# Print like buttons
+			if ($cfg->{postLikes} && $userId && $userId != $postUserId && $postUserId != -2) {
+				if ($post->{liked}) {
+					my $url = $m->url('post_like', pid => $postId, act => 'unlike', auth => 1);
+					push @btlLines, $m->buttonLink($url, 'tpcUnlike', 'rate');
+				}
+				else {
+					my $url = $m->url('post_like', pid => $postId, act => 'like', auth => 1);
+					push @btlLines, $m->buttonLink($url, 'tpcLike', 'rate');
+				}
 			}
 
 			# Print approve button
@@ -765,13 +801,15 @@ my $printPost = sub {
 			}
 
 			# Print lock/unlock button
-			if (!$post->{locked} && ($boardAdmin || $topicAdmin) && $postUserId != -2) {
-				my $url = $m->url('post_lock', pid => $postId, act => 'lock', auth => 1);
-				push @btlLines, $m->buttonLink($url, 'tpcLock', 'lock');
-			}
-			elsif (($boardAdmin || $topicAdmin) && $postUserId != -2) {
-				my $url = $m->url('post_lock', pid => $postId, act => 'unlock', auth => 1);
-				push @btlLines, $m->buttonLink($url, 'tpcUnlock', 'lock');
+			if (($boardAdmin || $topicAdmin) && $postUserId != -2) {
+				if ($post->{locked}) {
+					my $url = $m->url('post_lock', pid => $postId, act => 'unlock', auth => 1);
+					push @btlLines, $m->buttonLink($url, 'tpcUnlock', 'lock');
+				}
+				else {
+					my $url = $m->url('post_lock', pid => $postId, act => 'lock', auth => 1);
+					push @btlLines, $m->buttonLink($url, 'tpcLock', 'lock');
+				}
 			}
 
 			# Print branch button
