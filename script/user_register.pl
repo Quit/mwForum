@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2012 Markus Wichitill
+#    Copyright (c) 1999-2013 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -182,8 +182,9 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='frm'>\n",
 		"<div class='hcl'><span class='htt'>$lng->{regRegTtl}</span></div>\n",
 		"<div class='ccl'>\n",
-		"<label class='lbw'>$lng->{regRegName}\n",
-		"<input type='text' class='qwi' name='userName' maxlength='$cfg->{maxUserNameLen}'",
+		"<label class='lbw'>$lng->{regRegName}",
+		" <span id='userNameError' style='display: none'></span>\n",
+		"<input type='text' class='hwi' name='userName' maxlength='$cfg->{maxUserNameLen}'",
 		" value='$userNameEsc' autofocus required></label>\n";
 
 	# Print email or password fields		

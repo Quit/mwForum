@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright © 1999-2012 Markus Wichitill
+#    Copyright © 1999-2013 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 package MwfGerman;
 use utf8;
 use strict;
-our $VERSION = "2.27.4";
+our $VERSION = "2.29.0";
 our $lng = {};
 
 #------------------------------------------------------------------------------
@@ -981,14 +981,14 @@ $lng->{errUsrDel}    = "Benutzerkonto existiert nicht mehr.";
 $lng->{errUsrFake}   = "Kein echtes Benutzerkonto.";
 $lng->{errSubEmpty}  = "Betreff ist leer.";
 $lng->{errBdyEmpty}  = "Nachrichtentext ist leer.";
-$lng->{errNamEmpty}  = "Benutzername ist leer.";
+$lng->{errNamEmpty}  = "Name ist leer.";
 $lng->{errPwdEmpty}  = "Passwort ist leer.";
 $lng->{errEmlEmpty}  = "Emailadresse ist leer.";
 $lng->{errEmlInval}  = "Emailadresse ist ungültig.";
-$lng->{errNamSize}   = "Benutzername ist zu kurz oder zu lang.";
+$lng->{errNamSize}   = "Name ist zu kurz oder zu lang.";
 $lng->{errPwdSize}   = "Passwort muss min. 8 Zeichen lang sein.";
 $lng->{errEmlSize}   = "Emailadresse ist zu kurz oder zu lang.";
-$lng->{errNamChar}   = "Benutzername enthält ungültige Zeichen.";
+$lng->{errNamChar}   = "Name enthält ungültige Zeichen.";
 $lng->{errPwdChar}   = "Passwort enthält ungültige Zeichen.";
 $lng->{errPwdWrong}  = "Passwort ist falsch.";
 $lng->{errNoAccess}  = "Zugriff verweigert.";
@@ -1003,8 +1003,8 @@ $lng->{errOptLen}    = "Maximale Optionslänge überschritten.";
 $lng->{errTpcLocked} = "Thema ist gesperrt.";
 $lng->{errPstLocked} = "Nachricht ist gesperrt.";
 $lng->{errSubNoText} = "Betreff enthält keinen echten Text.";
-$lng->{errNamGone}   = "Benutzername ist schon vergeben.";
-$lng->{errNamResrvd} = "Benutzername enthält reservierten Text.";
+$lng->{errNamGone}   = "Name ist schon vergeben.";
+$lng->{errNamResrvd} = "Name enthält reservierten Text.";
 $lng->{errEmlGone}   = "Emailadresse ist schon registriert. Es ist nur ein Konto pro Adresse erlaubt.";
 $lng->{errPwdDiffer} = "Passwörter sind nicht identisch.";
 $lng->{errEmlDiffer} = "Emailadressen sind nicht identisch.";

@@ -2,7 +2,7 @@
   plusplus: true, bitwise: true, regexp: true, newcap: true, immed: true */
 /*global $, window, document, navigator, google */
 
-/* mwForum - Web-based discussion forum | Copyright 1999-2012 Markus Wichitill */
+/* mwForum - Web-based discussion forum | Copyright 1999-2013 Markus Wichitill */
 
 var mwf = { p: $("#mwfjs").data("params") };
 
@@ -23,6 +23,7 @@ $(document).on("ready", function () {
 	else if (script === "attach_show") { mwf.initShowAttach(); }
 	else if (script === "user_profile") { mwf.initGeolocate(); }
 	else if (script === "user_info") { mwf.initGoogleMaps(); }
+	else if (script === "user_register") { mwf.initCheckUserName(); }
 	else if (script === "forum_activity") { mwf.initActivityGraph(); }
 	mwf.initReveal();
 	mwf.initDataVersion();
@@ -41,7 +42,7 @@ mwf.hideMsgParam = function () {
 };
 
 mwf.checkCookie = function () {
-	$.get("ajax_checkcookie" + mwf.p.m_ext, {}, function (json) {
+	$.get("ajax_check" + mwf.p.m_ext, { act: 'cookie' }, function (json) {
 		if (!json.ok) { $("#cookieError").slideDown(); }
 	});
 };
@@ -472,4 +473,15 @@ mwf.initAutocomplete = function () {
 		matchInside: false, sortResults: false, preventDefaultTab: true, selectOnly: true };
 	$(".acu.acs").autocomplete(params);
 	$(".acu.acm").autocomplete($.extend({}, params, { useDelimiter: true, delimiterChar: ";" }));
+};
+
+mwf.initCheckUserName = function () {
+	$("[name=userName]").on("change", function () {
+		$.get("ajax_check" + mwf.p.m_ext, { act: "userName", name: $("[name=userName]").val() }, 
+			function (json) {
+				if (json.ok) { $("#userNameError").fadeOut(); }
+				else { $("#userNameError").html("<em>(" + json.error + ")</em>").fadeIn(); }
+			}
+		);
+	});
 };

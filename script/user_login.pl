@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2012 Markus Wichitill
+#    Copyright (c) 1999-2013 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -186,10 +186,10 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<div class='ccl'>\n",
 		"<fieldset>\n",
 		"<label class='lbw'>$lng->{lgiLoginName}\n",
-		"<input type='text' class='qwi' name='userName' value='$userNameEsc'",
+		"<input type='text' class='hwi' name='userName' value='$userNameEsc'",
 		" autofocus required></label>\n",
 		"<label class='lbw'>$lng->{lgiLoginPwd}\n",
-		"<input type='password' class='qwi' name='password' required>",
+		"<input type='password' class='hwi' name='password' required>",
 		"</label>\n",
 		"</fieldset>\n",
 		"<fieldset>\n",
@@ -214,7 +214,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 			"<div class='hcl'><span class='htt'>$lng->{lgiFpwTtl}</span></div>\n",
 			"<div class='ccl'>\n",
 			"<label class='lbw'>$lng->{lgiFpwEmail}\n",
-			"<input type='email' class='qwi' name='email' value='$emailEsc' required></label>\n",
+			"<input type='email' class='hwi' name='email' value='$emailEsc' required></label>\n",
 			$m->submitButton('lgiFpwB', 'subscribe'),
 			"<input type='hidden' name='act' value='forgotPwd'>\n",
 			$m->stdFormFields(),

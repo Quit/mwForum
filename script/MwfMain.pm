@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2012 Markus Wichitill
+#    Copyright (c) 1999-2013 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ use 5.008001;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine once);
-our $VERSION = "2.27.4";
+our $VERSION = "2.29.0";
 
 #------------------------------------------------------------------------------
 
@@ -820,22 +820,7 @@ sub randomId
 	my $m = shift();
 
 	my $rnd = "";
-	if ($^O eq 'MSWin32') {
-		eval { 
-			require Win32::API;
-			my $acquireCtx = Win32::API->new('advapi32', 'CryptAcquireContext', 'PPPNN', 'I') or die;
-			my $releaseCtx = Win32::API->new('advapi32', 'CryptReleaseContext', 'NN', 'I') or die;
-			my $genRandom = Win32::API->new('advapi32', 'CryptGenRandom', 'NNP', 'I') or die;
-			my $ctx = chr(0) x Win32::API::Type->sizeof('PULONG');
-			$acquireCtx->Call($ctx, 0, 0, 1, hex('40') | hex('F0000000')) or die;
-			$ctx = unpack(Win32::API::Type::packing('PULONG'), $ctx);
-			$rnd = chr(0) x 16;
-			$genRandom->Call($ctx, 16, $rnd) or die;
-			$releaseCtx->Call($ctx, 0);
-		};
-		!$@ or $rnd = "";
-	}
-	else {
+	if ($^O ne 'MSWin32') {
 		eval { 
 			open my $fh, "<", "/dev/urandom" or die;
 			read $fh, $rnd, 16;
@@ -2039,7 +2024,6 @@ sub printHttpHeader
 	# Add standard and conditional headers	
 	my $cfg = $m->{cfg};
 	$headers->{'Cache-Control'} = "private";
-	$headers->{'Strict-Transport-Security'} = "max-age=500; includeSubDomains" if $cfg->{sslOnly};
 
 	# Print headers
 	my $ap = $m->{ap};
@@ -2360,7 +2344,7 @@ sub printFooter
 	# Print copyright message
 	print
 		"<p class='cpr'>Powered by <a href='http://www.mwforum.org/'>mwForum</a>",
-		" $VERSION &#169; 1999-2012 Markus Wichitill</p>\n\n"
+		" $VERSION &#169; 1999-2013 Markus Wichitill</p>\n\n"
 		if $m->{env}{script} ne 'forum_info' && $m->{env}{script} ne 'attach_show';
 		
 	# Print includes
@@ -3189,7 +3173,7 @@ sub dbToDisplay
 	}
 	elsif ($cfg->{videoTag} && $filter) {
 		$$body =~ s!\[vid=(youtube|vimeo)\]([A-Za-z_0-9-]+)\[/vid\]!
-			if (lc($1) eq 'youtube') { "[<a href='http://www.youtube.com/watch?v=$2'>YouTube</a>]" }
+			if (lc($1) eq 'youtube') { "[<a href='https://www.youtube.com/watch?v=$2'>YouTube</a>]" }
 			else { "[<a href='http://vimeo.com/$2'>Vimeo</a>]" }
 		!egi;
 	}

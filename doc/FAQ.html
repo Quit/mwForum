@@ -103,17 +103,6 @@ shell&gt; chmod 777 /usr/local/apache/htdocs/mwf/attach
 <p>mwForum will not try to filter out malicious content, as that is a hopeless task that would just give a false sense of security.</p>
 
 
-<h2 id='innodb'>InnoDB</h2>
-
-<p>MySQL supports a useful storage engine called "InnoDB" beside MySQL's native MyISAM engine. It's basically a different database system with it's own performance and stability characteristics, running embedded in the MySQL daemon and getting its input through the MySQL frontend.</p>
-
-<p>InnoDB uses multiversioning instead of table or row locking, making it theoretically a good choice for forums with many writers, where MyISAM's table locking might lead to lock contention. InnoDB's benchmarks look great, even somewhat faster than MyISAM's for inserting and about the same speed for reading. Unfortunately, InnoDB tables don't support fulltext indexes for fast searching, which somewhat limits the scaling advantages.</p>
-
-<p>I don't recommend using InnoDB tables unless you're familiar with MySQL administration and have read the relevant documentation, since InnoDB tables require a bit more MySQL configuration file tweaking. For example, setting <var>innodb_flush_log_at_trx_commit</var> to 0 is required for full performance.</p>
-
-<p>To convert a forum to InnoDB, you can use the SQL in the file util_tables2engine.sql as a template (replace "XXXX" with "InnoDB"). Some MySQL installations may also use InnoDB as the default storage engine.</p>
-
-
 <h2 id='pgsql'>PostgreSQL</h2>
 
 <blockquote><p>"<a href='http://www.postgresql.org/'>PostgreSQL</a> is a powerful, open source relational database system. It has more than 15 years of active development and a proven architecture that has earned it a strong reputation for reliability, data integrity, and correctness."</p></blockquote>

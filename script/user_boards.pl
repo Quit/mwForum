@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2012 Markus Wichitill
+#    Copyright (c) 1999-2013 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -57,8 +57,9 @@ if ($submitted) {
 			$subscribe = 0 if !$m->boardVisible($board) || !$optUser->{email} || $optUser->{dontEmail}
 				|| ($subscribe == 2 && !$cfg->{subsInstant}) || ($subscribe == 1 && !$cfg->{subsDigest});
 			my $instant = $subscribe == 2 ? 1 : 0;
-			my $subscribed = $m->fetchArray("
-				SELECT 1 FROM boardSubscriptions WHERE userId = ? AND boardId = ?", $optUserId, $boardId);
+			my ($subscribed, $isInstant) = $m->fetchArray("
+				SELECT 1, instant FROM boardSubscriptions WHERE userId = ? AND boardId = ?", 
+				$optUserId, $boardId);
 			if ($subscribe && !$subscribed) {
 				$m->dbDo("
 					INSERT INTO boardSubscriptions (userId, boardId, instant, unsubAuth) VALUES (?, ?, ?, ?)",
@@ -67,6 +68,11 @@ if ($submitted) {
 			elsif (!$subscribe && $subscribed) {
 				$m->dbDo("
 					DELETE FROM boardSubscriptions WHERE userId = ? AND boardId = ?", $optUserId, $boardId);
+			}
+			elsif ($subscribe && ($instant && !$isInstant || !$instant && $isInstant)) {
+				$m->dbDo("
+					UPDATE boardSubscriptions SET instant = ? WHERE userId = ? AND boardId = ?", 
+					$instant, $optUserId, $boardId);
 			}
 
 			# Update hidden boards

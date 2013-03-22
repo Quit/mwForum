@@ -1,6 +1,6 @@
 #-----------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2012 Markus Wichitill
+#    Copyright (c) 1999-2013 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 package MwfDefaults;
 use strict;
 use warnings;
-our $VERSION = "2.27.4";
+our $VERSION = "2.29.0";
 
 #-----------------------------------------------------------------------------
 # Configuration option defaults. Don't change.
@@ -171,9 +171,7 @@ our $options = [
 	parse    => 'hash',
 	title    => "Options for installed styles",
 	help     => "See FAQ.html for details.",
-	example  => [
-		"Default2=buttonIcons=\"1\"",
-	],
+	example  => [ "Default2=buttonIcons=\"1\"" ],
 	default  => { Default2 => "buttonIcons=\"1\"" },
 },
 {
@@ -182,9 +180,7 @@ our $options = [
 	parse    => 'hash',
 	title    => "CSS style snippets",
 	help     => "See FAQ.html for details.",
-	example  => [
-		"styAvaLft=div.pst img.ava { float: left; margin: 0 5px 0 0; }"
-	],
+	example  => [ "styAvaLft=div.pst img.ava { float: left; margin: 0 5px 0 0; }" ],
 	default  => {},
 },
 {
@@ -582,7 +578,11 @@ our $options = [
 	type     => 'checkbox',
 	title    => "Enable video embedding tag?",
 	help     => "Warning: letting users embed videos can make you liable for copyright infringement.",
-	example  => [ "[vid=youtube]KmcPeuf5aXo[/vid]", "[vid=vimeo]2772480[/vid]", "[vid=html]http://example.org/test.webm[/vid]" ],
+	example  => [ 
+		"[vid=youtube]KmcPeuf5aXo[/vid]", 
+		"[vid=vimeo]2772480[/vid]", 
+		"[vid=html]http://example.org/test.webm[/vid]",
+	],
 	default  => 0,
 },
 {
@@ -608,7 +608,10 @@ our $options = [
 	parse    => 'hash',
 	title    => "Replace :tags: in colons with text or HTML",
 	help     => "One tag=value pair per line. If a value starts with \"?\", no insertion button will be shown for that tag. If it starts with \"!\", it will not be replaced for users with the show-decoration user option disabled. \"[[dataPath]]\" will be replaced with the configured data path value.",
-	example  => [ "readfaq=?&lt;img src='/img/readfaq.png' alt='Read the FAQ'&gt;", "eek=&lt;img class='fsm fsm_eek' src='[[dataPath]]/epx.png' title='eek' alt=':eek:'&gt;" ],
+	example  => [ 
+		"readfaq=?&lt;img src='/img/readfaq.png' alt='Read the FAQ'&gt;", 
+		"eek=&lt;img class='fsm fsm_eek' src='[[dataPath]]/epx.png' title='eek' alt=':eek:'&gt;" 
+	],
 	default  => {
 		confused => "<img class='fsm fsm_confused' src='[[dataPath]]/epx.png' title='confused' alt=':confused:'>",
 		cool => "<img class='fsm fsm_cool' src='[[dataPath]]/epx.png' title='cool' alt=':cool:'>",
@@ -638,7 +641,10 @@ our $options = [
 	parse    => 'hash',
 	title    => "Styles for the custom style tag",
 	help     => "One name=css pair per line. See FAQ.html for details.",
-	example  => [ "strk=text-decoration: line-through;", "mark=font-weight: bold; background-color: yellow" ],
+	example  => [ 
+		"strk=text-decoration: line-through;",
+		"mark=font-weight: bold; background-color: yellow",
+	],
 	default  => {},
 },
 {
@@ -1520,7 +1526,6 @@ our $options = [
 	name     => 'logLevel',
 	type     => 'radio',
 	title    => "Enable event logging?",
-	help     => "The log data is only available from the database, so leave this off unless you speak SQL.",
 	radio    => [
 		0 => "No",
 		1 => "Level 1 - Log important events only (those that usually modify the database)",
@@ -1546,7 +1551,7 @@ our $options = [
 	name     => 'sslOnly',
 	type     => 'checkbox',
 	title    => "Is SSL/TLS mandatory?",
-	help     => "Signals that only secured connections are used. mwForum will then set the secure flag for cookies and send <a href='http://en.wikipedia.org/wiki/Strict_Transport_Security'>Strict Transport Security</a> headers. Enforcement of SSL/TLS is up to the webserver. Make sure <var>\$cfg-&gt;{baseUrl}</var> starts with https.",
+	help     => "Signals that only secured connections are used. mwForum will then set the secure flag for cookies. Enforcement of SSL/TLS is up to the webserver. Make sure <var>\$cfg-&gt;{baseUrl}</var> starts with https. You might also want to configure <a href='http://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security'>Strict Transport Security</a> headers with the <var>httpHeader</var> forum option below.",
 	default  => 0,
 },
 {
@@ -1612,7 +1617,11 @@ our $options = [
 	type     => 'textarea',
 	parse    => 'array',
 	title    => "Additional static HTTP headers",
-	example  => [ "X-Content-Security-Policy: allow 'self'; frame-ancestors 'none'; img-src *" ],
+	example  => [ 
+		"Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; img-src *",
+		"Strict-Transport-Security: max-age=604800",
+		"X-Frame-Options: deny",
+	],
 	default  => [],
 },
 {

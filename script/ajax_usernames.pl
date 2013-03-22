@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2012 Markus Wichitill
+#    Copyright (c) 1999-2013 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -27,7 +27,6 @@ use MwfMain;
 my ($m, $cfg, $lng, $user, $userId) = MwfMain->new($_[0], ajax => 1);
 
 # Print header
-$m->{contentType} = "text/plain; charset=utf-8";
 $m->printHttpHeader();
 
 # Get CGI parameters

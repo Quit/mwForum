@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2012 Markus Wichitill
+#    Copyright (c) 1999-2013 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -188,8 +188,8 @@ if ($user->{admin}) {
 		"<td>$hiddenNum entries by $hiddenUserNum users for $hiddenBoardNum boards</td></tr>\n",
 		"<tr class='crw'><td class='hco'>Attachments</td>\n",
 		"<td>$attachNum files incl. $attachImgNum web images in $attachPostNum posts</td></tr>\n",
-		"<tr class='crw'><td class='hco'>Post Likes</td>\n",
-		"<td>$likeNum likes by $likeUserNum users for $likePostNum posts</td></tr>\n",
+		"<tr class='crw'><td class='hco'>Post Upvotes</td>\n",
+		"<td>$likeNum upvotes by $likeUserNum users for $likePostNum posts</td></tr>\n",
 		"<tr class='crw'><td class='hco'>Post Reports</td>\n",
 		"<td>$reportNum reports by $reportUserNum users about $reportPostNum posts</td></tr>\n",
 		"<tr class='crw'><td class='hco'>Tickets</td>\n",
@@ -230,7 +230,7 @@ print
 	"<div class='hcl'><span class='htt'>Legal</span></div>\n",
 	"<div class='ccl'>\n",
 	"<p>Powered by <a href='http://www.mwforum.org/'>mwForum</a>", 
-	" &#169; 1999-2012 Markus Wichitill</p>\n",
+	" &#169; 1999-2013 Markus Wichitill</p>\n",
 	"<p>This program is free software; you can redistribute it and/or modify",
 	" it under the terms of the GNU General Public License as published by",
 	" the Free Software Foundation; either version 3 of the License, or",

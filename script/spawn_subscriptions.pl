@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2012 Markus Wichitill
+#    Copyright (c) 1999-2013 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -56,6 +56,7 @@ $m->dbToEmail({}, $post);
 my $board = $m->fetchHash("
 	SELECT * FROM boards WHERE id = ?", $boardId);
 $board or $m->error('errBrdNotFnd');
+my $boardTitleDeesc = $m->deescHtml($board->{title});
 
 # Get board subscribers
 my $boardSubscribers = $m->fetchAllHash("
@@ -69,14 +70,14 @@ my $boardSubscribers = $m->fetchAllHash("
 		AND users.dontEmail = 0",
 	{ boardId => $boardId });
 
-# Send to subscribers if they still have board access	
+# Send to board subscribers if they still have board access	
 for my $subscriber (@$boardSubscribers) { 
 	next if !$m->boardVisible($board, $subscriber);
 	$lng = $m->setLanguage($subscriber->{language});
-	my $subject = "$lng->{subSubjBrdIn}: $board->{title}";
+	my $subject = "$lng->{subSubjBrdIn}: $boardTitleDeesc";
 	my $body = $lng->{subNoReply} . "\n\n" . "-" x 70 . "\n\n"
 		. $lng->{subLink} . "$baseUrl/topic_show$m->{ext}?pid=$post->{id}\n"
-		. $lng->{subBoard} . $board->{title} . "\n"
+		. $lng->{subBoard} . $boardTitleDeesc . "\n"
 		. $lng->{subTopic} . $post->{subject} . "\n"
 		. $lng->{subBy} . $post->{userNameBak} . "\n"
 		. $lng->{subOn} . $m->formatTime($post->{postTime}, $subscriber->{timezone}) . "\n\n"
@@ -107,7 +108,7 @@ for my $subscriber (@$topicSubscribers) {
 	my $subject = "$lng->{subSubjTpcIn}: $post->{subject}";
 	my $body = $lng->{subNoReply} . "\n\n" . "-" x 70 . "\n\n"
 		. $lng->{subLink} . "$baseUrl/topic_show$m->{ext}?pid=$post->{id}\n"
-		. $lng->{subBoard} . $board->{title} . "\n"
+		. $lng->{subBoard} . $boardTitleDeesc . "\n"
 		. $lng->{subTopic} . $post->{subject} . "\n"
 		. $lng->{subBy} . $post->{userNameBak} . "\n"
 		. $lng->{subOn} . $m->formatTime($post->{postTime}, $subscriber->{timezone}) . "\n\n"

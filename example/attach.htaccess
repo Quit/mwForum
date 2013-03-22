@@ -35,7 +35,7 @@ DefaultType application/octet-stream
 
 <Files "cache.db">
 	Deny from all
-</FilesMatch>
+</Files>
 
 # Block access to PGP user keyrings. They only contain public keys, though, 
 # so this is usually unnecessary.

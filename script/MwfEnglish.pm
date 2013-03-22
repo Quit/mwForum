@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright © 1999-2012 Markus Wichitill
+#    Copyright © 1999-2013 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 package MwfEnglish;
 use utf8;
 use strict;
-our $VERSION = "2.27.4";
+our $VERSION = "2.29.0";
 our $lng = {};
 
 #------------------------------------------------------------------------------
@@ -980,14 +980,14 @@ $lng->{errUsrDel}    = "User account doesn't exist anymore.";
 $lng->{errUsrFake}   = "Not a real user account.";
 $lng->{errSubEmpty}  = "Subject is empty.";
 $lng->{errBdyEmpty}  = "Text is empty.";
-$lng->{errNamEmpty}  = "Username is empty.";
+$lng->{errNamEmpty}  = "Name is empty.";
 $lng->{errPwdEmpty}  = "Password is empty.";
 $lng->{errEmlEmpty}  = "Email address is empty.";
 $lng->{errEmlInval}  = "Email address is invalid.";
-$lng->{errNamSize}   = "Username is too short or too long.";
+$lng->{errNamSize}   = "Name is too short or too long.";
 $lng->{errPwdSize}   = "Password needs to have at least 8 characters.";
 $lng->{errEmlSize}   = "Email address is too short or too long.";
-$lng->{errNamChar}   = "Username contains illegal characters.";
+$lng->{errNamChar}   = "Name contains illegal characters.";
 $lng->{errPwdChar}   = "Password contains illegal characters.";
 $lng->{errPwdWrong}  = "Password is wrong.";
 $lng->{errNoAccess}  = "Access denied.";
@@ -1002,8 +1002,8 @@ $lng->{errOptLen}    = "Max. option length exceeded.";
 $lng->{errTpcLocked} = "Topic is locked.";
 $lng->{errPstLocked} = "Post is locked.";
 $lng->{errSubNoText} = "Subject doesn't contain any real text.";
-$lng->{errNamGone}   = "Username is already registered.";
-$lng->{errNamResrvd} = "Username contains reserved text.";
+$lng->{errNamGone}   = "Name is already registered.";
+$lng->{errNamResrvd} = "Name contains reserved text.";
 $lng->{errEmlGone}   = "Email address is already registered. Only one account per address.";
 $lng->{errPwdDiffer} = "Passwords differ.";
 $lng->{errEmlDiffer} = "Email addresses differ.";

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2012 Markus Wichitill
+#    Copyright (c) 1999-2013 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -58,6 +58,7 @@ for my $board (@$boards) {
 		{ lastSentTime => $lastSentTime, boardId => $board->{id} });
 	next if !@$posts;
 	$m->dbToEmail({}, $_) for @$posts;
+	my $boardTitleDeesc = $m->deescHtml($board->{title});
 
 	# Get subscribers
 	my $subscribers = $m->fetchAllHash("
@@ -76,12 +77,12 @@ for my $board (@$boards) {
 	for my $subscriber (@$subscribers) { 
 		next if !$m->boardVisible($board, $subscriber);
 		$lng = $m->setLanguage($subscriber->{language});
-		my $subject = "$lng->{subSubjBrdDg}: $board->{title}";
+		my $subject = "$lng->{subSubjBrdDg}: $boardTitleDeesc";
 		my $body = $lng->{subNoReply} . "\n\n" . "-" x 70 . "\n\n";
 		for my $post (@$posts) {
 			$body = $body
 				. $lng->{subLink} . "$baseUrl/topic_show$m->{ext}?pid=$post->{id}\n"
-				. $lng->{subBoard} . $board->{title} . "\n"
+				. $lng->{subBoard} . $boardTitleDeesc . "\n"
 				. $lng->{subTopic} . $post->{subject} . "\n"
 				. $lng->{subBy} . $post->{userNameBak} . "\n"
 				. $lng->{subOn} . $m->formatTime($post->{postTime}, $subscriber->{timezone}) . "\n\n"
@@ -115,6 +116,7 @@ for my $board (@$boards) {
 			{ lastSentTime => $lastSentTime, topicId => $topic->{id} });
 		next if !@$posts;
 		$m->dbToEmail({}, $_) for @$posts;
+		my $boardTitleDeesc = $m->deescHtml($board->{title});
 	
 		# Get recipients
 		my $subscribers = $m->fetchAllHash("
@@ -138,7 +140,7 @@ for my $board (@$boards) {
 			for my $post (@$posts) {
 				$body = $body
 					. $lng->{subLink} . "$baseUrl/topic_show$m->{ext}?pid=$post->{id}\n"
-					. $lng->{subBoard} . $board->{title} . "\n"
+					. $lng->{subBoard} . $boardTitleDeesc . "\n"
 					. $lng->{subTopic} . $topic->{subject} . "\n"
 					. $lng->{subBy} . $post->{userNameBak} . "\n"
 					. $lng->{subOn} . $m->formatTime($post->{postTime}, $subscriber->{timezone}) . "\n\n"
