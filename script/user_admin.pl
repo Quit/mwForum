@@ -571,6 +571,7 @@ my $views = [
 	{ name => "Topics Per Page", field => 'topicsPP', type => 'int' },
 	{ name => "Post Number", field => 'postNum', type => 'int' },
 	{ name => "Bounce Counter", field => 'bounceNum', type => 'int' },
+	{ name => "Policy Version", field => 'policyAccept', type => 'int' },
 	{ name => "Renames Left", field => 'renamesLeft', type => 'int' },
 	{ name => "Old Usernames", field => 'oldNames' },
 	{ name => "Real Name", field => 'realName' },

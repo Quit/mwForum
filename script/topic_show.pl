@@ -295,14 +295,6 @@ if (!$geoIp && $cfg->{geoIp} && $cfg->{userFlags} && $user->{showDeco}) {
 	}
 }
 
-# Google highlighting
-my ($googleWords) = $m->{env}{referrer} =~ /www\.google.*?q=(.*?)(?:&|$)/;
-if ($googleWords && $googleWords !~ /^related:/) {
-	$googleWords =~ s!\+! !g;
-	$googleWords =~ s!%([0-9a-fA-F]{2})!chr hex $1!eg;
-	$hilite = $googleWords;
-}
-
 # Highlighting
 my @hiliteWords = ();
 if ($hilite) {
@@ -718,9 +710,7 @@ my $printPost = sub {
 				$post->{likes} ? "<span class='htt'>$lng->{tpcLikes}</span> $post->{likes}\n" : "";
 			
 			# Print IP
-			print "<span class='htt'>IP</span> $ip\n" 
-				if $cfg->{showPostIp} == 1 && $boardAdmin
-				|| $cfg->{showPostIp} == 2 && $userId;
+			print "<span class='htt'>IP</span> $ip\n" if $boardAdmin && $cfg->{showPostIp};
 			
 			# Print include plugin header items
 			$m->callPlugin($_, board => $board, topic => $topic, post => $post, 

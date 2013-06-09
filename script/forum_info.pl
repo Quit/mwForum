@@ -227,7 +227,7 @@ if ($cfg->{policy}) {
 # Doing so would be a violation of the GPL, section 2c
 print 
 	"<div class='frm'>\n",
-	"<div class='hcl'><span class='htt'>Legal</span></div>\n",
+	"<div class='hcl'><span class='htt'>Forum Software</span></div>\n",
 	"<div class='ccl'>\n",
 	"<p>Powered by <a href='http://www.mwforum.org/'>mwForum</a>", 
 	" &#169; 1999-2013 Markus Wichitill</p>\n",

@@ -1196,11 +1196,11 @@ $cfg-&gt;{captchaAnswer}  = "Chess";
 $cfg-&gt;{captchaTtf} = "/usr/local/share/ttf/VeraBd.ttf";
 </code></pre>
 
-<h3>reCAPTCHA.net Service</h3>
+<h3>reCAPTCHA Service</h3>
 
-<p>The fanciest captcha implementation uses the <a href='http://recaptcha.net/'>reCAPTCHA.net</a> web service by the inventors of the "CAPTCHA" term (now owned by Google). It provides nicely warped text images that should be hard to crack, as well as alternative audio captchas. By using it, you also help digitizing old books. Check out their site for details and terms of service. Note that due to the omnipresence of this captcha implementation all over the Web, it is under much attack, and older versions have been defeated.</p> 
+<p>The fanciest captcha implementation uses the <a href='http://www.google.com/recaptcha'>reCAPTCHA</a> web service by Google. It provides warped text images that should be hard to crack, as well as alternative audio captchas. By using it, you also help digitizing old books. Check out their site for details and terms of service.</p> 
 
-<p>To make this work in mwForum, you need to install the <a href='http://search.cpan.org/dist/Captcha-reCAPTCHA/'>Captcha::reCAPTCHA</a> module and its unfortunately somewhat extensive list of dependencies and sub-dependencies. You also need to register an account at the reCAPTCHA.net site and put the public and private keys you got from them into your MwfConfig.pm:</p>
+<p>To make this work in mwForum, you need to have the <a href='http://search.cpan.org/dist/libwww-perl/'>LWP::UserAgent</a> Perl modules (aka libwww-perl) and their dependencies installed. You also need a Google account and put the public and private keys you get from the linked site into your MwfConfig.pm:</p>
 
 <pre><code>
 $cfg-&gt;{reCapPubKey} = '01234567890abcdef';

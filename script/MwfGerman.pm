@@ -16,7 +16,7 @@
 package MwfGerman;
 use utf8;
 use strict;
-our $VERSION = "2.29.0";
+our $VERSION = "2.29.1";
 our $lng = {};
 
 #------------------------------------------------------------------------------
@@ -765,6 +765,11 @@ $lng->{hlpTitle}     = "Hilfe";
 $lng->{hlpTxtTtl}    = "Begriffe und Funktionen";
 $lng->{hlpFaqTtl}    = "Häufig gestellte Fragen";
 
+# Policy page
+$lng->{plcRead}      = "Ich habe obigen Text gelesen und verstanden";
+$lng->{plcAcceptB}   = "Akzeptieren";
+$lng->{plcRejectB}   = "Ablehnen";
+
 # Message list page
 $lng->{mslTitle}     = "Private Nachrichten";
 $lng->{mslSend}      = "Senden";
@@ -1054,6 +1059,7 @@ $lng->{errOldAgent}  = "Ihr Webbrowser ist hoffnungslos veraltet und wird von di
 $lng->{errUAFeatSup} = "Ihr Webbrowser unterstützt diese Funktion nicht.";
 $lng->{errNoCookies} = "Anmelden wird nicht funktionieren, da Browser-Cookies deaktiviert sind.";
 $lng->{errSearchLnk} = "Verlinkte Suchergebnisse sind deaktiviert.";
+$lng->{errPlcRead}   = "Der Text muss als gelesen und verstanden markiert werden.";
 
 
 #------------------------------------------------------------------------------

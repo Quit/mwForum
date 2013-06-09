@@ -986,6 +986,19 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 
 #------------------------------------------------------------------------------
 
+$newVersion = "2.29.1";
+
+if ($oldVersionDec < tripletToDecimal($newVersion)) {
+	output("$newVersion: upgrading database schema...\n");
+	upgradeSchema("
+		ALTER TABLE users ADD policyAccept TINYINT NOT NULL DEFAULT 0 AFTER gpgKeyId;
+	");
+	output("$newVersion: done.\n");
+}
+
+
+#------------------------------------------------------------------------------
+
 # Update dataVersion serial
 my $dataVersion = $m->fetchArray("
 	SELECT value FROM config WHERE name = ?", 'dataVersion');

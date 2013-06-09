@@ -161,7 +161,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 
 	# Print hints and form errors
 	$m->printHints([$m->formatStr($lng->{lgiLoginT}, { regUrl => $m->url('user_register') })])
-		if !$cfg->{authenPlg}{login};
+		if !$cfg->{adminUserReg} && !$cfg->{authenPlg}{login};
 	print
 		"<div class='frm hnt err' id='cookieError' style='display: none'>\n",
 		"<div class='ccl'>\n",

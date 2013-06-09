@@ -16,7 +16,7 @@
 package MwfDefaults;
 use strict;
 use warnings;
-our $VERSION = "2.29.0";
+our $VERSION = "2.29.1";
 
 #-----------------------------------------------------------------------------
 # Configuration option defaults. Don't change.
@@ -284,13 +284,8 @@ our $options = [
 },
 {
 	name     => 'showPostIp',
-	type     => 'radio',
-	title    => "Show IP addresses of posts?",
-	radio    => [
-		0 => "No",
-		1 => "Yes, show to admins and moderators only",
-		2 => "Yes, show to everybody",
-	],
+	type     => 'checkbox',
+	title    => "Show IP addresses of posts to admins and moderators?",
 	default  => 0,
 },
 {
@@ -326,29 +321,8 @@ our $options = [
 	default  => 0,
 },
 {
-	name     => 'policyTitle',
-	type     => 'text',
-	title    => "Forum policy title",
-	example  => [ "Forum ToS" ],
-	default  => "",
-},
-{
-	name     => 'policy',
-	type     => 'textarea',
-	title    => "Forum policy",
-	help     => "Can contain greeting/intro text, conduct rules, etc. This text is sent in registration emails and displayed on the forum info page. Don't use HTML.",
-	example  => [ "Welcome to the forum! Please follow these simple rules: blah blah ..." ],
-	default  => "",
-},
-{
 	section  => "User Display Options",
 	id       => "userdisp",
-},
-{
-	name     => 'showUserIp',
-	type     => 'checkbox',
-	title    => "Show user's last used IP on user info page to everybody?",
-	default  => 0,
 },
 {
 	name     => 'userInfoReg',
@@ -366,7 +340,6 @@ our $options = [
 	name     => 'anonName',
 	type     => 'text',
 	title    => "String to display as username for posts by unregistered guests",
-	help     => "Special string 'ip' inserts IP address as name.",
 	example  => [ "Anonymous Coward" ],
 	default  => "?",
 },
@@ -429,7 +402,7 @@ our $options = [
 {
 	name     => 'noEmailReq',
 	type     => 'checkbox',
-	title    => "Don't require and verify email address during user registration?",
+	title    => "Disable email address input and verification during user registration?",
 	help     => "Due to all the spam out there, forum emails will often get delayed or end up in spam folders.",
 	default  => 0,
 },
@@ -443,6 +416,27 @@ our $options = [
 	name     => 'tempLogin',
 	type     => 'checkbox',
 	title    => "Have login remember-me checkbox unchecked by default?",
+	default  => 0,
+},
+{
+	name     => 'policyTitle',
+	type     => 'text',
+	title    => "Forum policy title",
+	example  => [ "Terms of Service and Privacy Policy" ],
+	default  => "",
+},
+{
+	name     => 'policy',
+	type     => 'textarea',
+	title    => "Forum policy",
+	help     => "Can contain terms of service, privacy policy, etc. This text is sent in registration emails, displayed on the forum info page and can be made a mandatory click-through agreement. Don't use HTML.",
+	default  => "",
+},
+{
+	name     => 'policyVersion',
+	type     => 'number',
+	title    => "Forum policy version",
+	help     => "A number &gt; 0 forces users to accept the policy before using the forum while logged in. Increase number when policy changes to force re-acceptance.",
 	default  => 0,
 },
 {

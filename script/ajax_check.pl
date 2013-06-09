@@ -69,6 +69,6 @@ elsif ($action eq 'userName') {
 	print $errStr ? $m->json({ error => $errStr }) : $m->json({ ok => 1 });
 
 	# Log action and commit
-	$m->logAction(3, 'ajax', 'ckname');
+	$m->logAction(3, 'ajax', 'ckname', $userId, 0, 0, 0, 0, $m->escHtml($userName));
 	$m->finish();
 }

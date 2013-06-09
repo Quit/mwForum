@@ -18,7 +18,7 @@ use utf8;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine);
-our $VERSION = "2.27.0";
+our $VERSION = "2.29.1";
 
 #------------------------------------------------------------------------------
 # Replace text with image smileys
@@ -63,21 +63,21 @@ sub audio
 	# Set translated strings
 	if (!exists($lng->{audioTagUnsup})) {
 		if ($m->{lngModule} eq 'MwfGerman') {
-			$lng->{audioTagUnsup} = "Ihr Browser unterstützt das Audio-Element leider nicht.";
+			$lng->{audioTagUnsup} = "Ihr Browser unterstützt das Audio-Element nicht.";
 		}
 		else {
-			$lng->{audioTagUnsup} = "Sorry, your browser doesn't support the audio element.";
+			$lng->{audioTagUnsup} = "Your browser doesn't support the audio element.";
 		}
 	}
 	
 	# Embed attached wav and ogg audio
 	if ($attachments && @$attachments) {
 		for my $attach (@$attachments) {
-			if ($attach->{fileName} =~ /\.(?:ogg|wav)\z/i) {
+			if ($attach->{fileName} =~ /\.(?:ogg|aac|mp3|wav)\z/i) {
 				my $postIdMod = $attach->{postId} % 100;
 				my $url = "$cfg->{attachUrlPath}/$postIdMod/$attach->{postId}/$attach->{fileName}";
 				$$text .= "\n<br><br>\n"
-					. "<audio src='$url' controls='controls' title='$attach->{fileName}'>"
+					. "<audio src='$url' title='$attach->{fileName}' controls>"
 					. "<p>$lng->{audioTagUnsup}</p></audio>";
 				$attach->{drop} = 1;
 			}

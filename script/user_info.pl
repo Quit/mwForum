@@ -321,7 +321,7 @@ if ($cfg->{userInfoMap} && ($infUser->{location} || $geoLocation)) {
 		"<div id='map' style='width: 98%; height: 350px; max-width: 600px'></div>\n",
 		"</div>\n",
 		"</div>\n\n",
-		"<script src='//maps.googleapis.com/maps/api/js?v=3.9&amp;sensor=false'>",
+		"<script src='//maps.googleapis.com/maps/api/js?v=3&amp;sensor=false'>",
 		"</script>\n\n";
 }
 
@@ -362,25 +362,19 @@ if ($userId == $infUserId || $user->{admin}) {
 		"</tr>\n";
 }
 
-# Last IP address
-if ($cfg->{showUserIp} || $user->{admin}) {
-	my $lastIpStr = $infUser->{lastIp}
-		? $infUser->{lastIp} : " - ";
-	$lastIpStr .= " (" . $m->escHtml($infUser->{host}) . ")" if $infUser->{host};
-	print	
-		"<tr class='crw'>\n",
-		"<td class='hco'>$lng->{uifStatLIp}</td><td>$lastIpStr</td>\n",
-		"</tr>\n";
-}
-
 # Admin-only user stats
 if ($user->{admin}) {
+	my $lastIpStr = $infUser->{lastIp}? $infUser->{lastIp} : " - ";
+	$lastIpStr .= " (" . $m->escHtml($infUser->{host}) . ")" if $infUser->{host};
 	my $ignoredNum = $m->fetchArray("
 		SELECT COUNT(*) FROM userIgnores WHERE ignoredId = ?", $infUserId);
 	my $watchedNum = $m->fetchArray("
 		SELECT COUNT(*) FROM watchUsers WHERE watchedId = ?", $infUserId);
 	my $userAgentStr = $infUser->{userAgent} ? $infUser->{userAgent} : " - ";
 	print
+		"<tr class='crw'>\n",
+		"<td class='hco'>$lng->{uifStatLIp}</td><td>$lastIpStr</td>\n",
+		"</tr>\n",
 		"<tr class='crw'>\n",
 		"<td class='hco'>User Agent</td><td>$userAgentStr</td>\n",
 		"</tr>\n",

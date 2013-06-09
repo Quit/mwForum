@@ -108,6 +108,7 @@ CREATE TABLE users (
 	sourceAuth   VARCHAR(22) NOT NULL DEFAULT '',    -- CSRF protection token
 	sourceAuth2  VARCHAR(22) NOT NULL DEFAULT '',    -- Previous sourceAuth
 	gpgKeyId     VARCHAR(18) NOT NULL DEFAULT '',    -- OpenPGP key id
+	policyAccept TINYINT NOT NULL DEFAULT 0,         -- Version of accepted forum policy
 	renamesLeft  TINYINT NOT NULL DEFAULT 0,         -- Remaining times user can rename self
 	oldNames     TEXT NOT NULL DEFAULT '',           -- Former usernames
 	comment      TEXT NOT NULL DEFAULT ''            -- Comment field visible to admins only
@@ -376,7 +377,7 @@ CREATE TABLE variables (
 	value        TEXT NOT NULL DEFAULT ''            -- Value
 ) TABLEOPT;
 
-INSERT INTO variables (name, value) VALUES ('version', '2.27.4');
+INSERT INTO variables (name, value) VALUES ('version', '2.29.1');
 ";
 
 my $arcSql = "";

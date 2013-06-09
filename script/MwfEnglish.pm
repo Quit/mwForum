@@ -16,7 +16,7 @@
 package MwfEnglish;
 use utf8;
 use strict;
-our $VERSION = "2.29.0";
+our $VERSION = "2.29.1";
 our $lng = {};
 
 #------------------------------------------------------------------------------
@@ -764,6 +764,11 @@ $lng->{hlpTitle}     = "Help";
 $lng->{hlpTxtTtl}    = "Terms and Features";
 $lng->{hlpFaqTtl}    = "Frequently Asked Questions";
 
+# Policy page
+$lng->{plcRead}      = "I have read and understood the above";
+$lng->{plcAcceptB}   = "Accept";
+$lng->{plcRejectB}   = "Reject";
+
 # Message list page
 $lng->{mslTitle}     = "Private Messages";
 $lng->{mslSend}      = "Send";
@@ -1053,6 +1058,7 @@ $lng->{errOldAgent}  = "Your browser is severely outdated and is not supported b
 $lng->{errUAFeatSup} = "Your browser doesn't support this feature.";
 $lng->{errNoCookies} = "Login won't work because browser cookies are disabled.";
 $lng->{errSearchLnk} = "Linked search results are disabled.";
+$lng->{errPlcRead}   = "The text needs to be marked as read and understood.";
 
 
 #------------------------------------------------------------------------------

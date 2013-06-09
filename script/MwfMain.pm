@@ -18,7 +18,7 @@ use 5.008001;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine once);
-our $VERSION = "2.29.0";
+our $VERSION = "2.29.1";
 
 #------------------------------------------------------------------------------
 
@@ -1517,10 +1517,10 @@ sub initUser
 	}
 
 	# Deny access if IP-blocked
-	$m->checkIp() if !$m->{user}{id} && @{$cfg->{ipBlocks}};
+	$m->checkIp() if !$userId && @{$cfg->{ipBlocks}};
 
-	# Deny access if banned
-	if ($userId && !$m->{user}{admin} && !$m->{allowBanned}) {
+	if ($userId && !$user->{admin} && !$m->{allowBanned}) {
+		# Deny access if banned
 		my ($banTime, $reason, $duration) = $m->fetchArray("
 			SELECT banTime, reason, duration FROM userBans WHERE userId = ?", $userId);
 		if ($banTime) {
@@ -1528,6 +1528,10 @@ sub initUser
 			$m->logAction(1, 'user', 'banned', $userId);
 			$m->error("$lng->{errBannedT} $reason. $durationStr");
 		}
+	
+		# Redirect to policy page if current policy version is not accepted yet
+		$m->redirect('forum_policy') 
+			if $cfg->{policyVersion} && $cfg->{policyVersion} > $user->{policyAccept};
 	}
 }
 
@@ -2216,6 +2220,13 @@ sub printHeader
 	print $m->buttonLink($m->url('chat_show'), 'hdrChat', 'chat')
 		if $cfg->{chat} && ($cfg->{chat} < 2 || $userId);
 
+	# Print plugin links
+	if ($cfg->{includePlg}{topUserLink}) {
+		my @userLinks;
+		$m->callPlugin($_, links => \@userLinks) for @{$cfg->{includePlg}{topUserLink}};
+		print $m->buttonLink($_->{url}, $_->{txt}, $_->{ico}) for @userLinks;
+	}
+
 	# Print private messages link
 	print $m->buttonLink($m->url('message_list'), 'hdrMsgs', 'message') 
 		if $cfg->{messages} && $userId;
@@ -2246,13 +2257,6 @@ sub printHeader
 	if ($userId && !$cfg->{authenPlg}{request}) {
 		my $url = $m->url('user_logout', auth => 1);
 		print	$m->buttonLink($url, 'hdrLogout', 'logout');
-	}
-
-	# Print plugin links
-	if ($cfg->{includePlg}{topUserLink}) {
-		my @userLinks;
-		$m->callPlugin($_, links => \@userLinks) for @{$cfg->{includePlg}{topUserLink}};
-		print @userLinks;
 	}
 
 	print	"</div>\n</div>\n\n";
@@ -2585,7 +2589,7 @@ sub submitButton
 
 	$text = $m->{lng}{$text} || $text;
 	my $nameStr = $name ? "name='$name' value='1'" : "";
-	my $img = $m->{buttonIcons} 
+	my $img = $icon && $m->{buttonIcons} 
 		? "<img class='bic bic_$icon' src='$m->{cfg}{dataPath}/epx.png' alt=''> " : "";
 	return "<button type='submit' class='isb' $nameStr> $img$text</button>\n";
 }
@@ -3161,12 +3165,14 @@ sub dbToDisplay
 		$$body =~ s%\[vid=(html|youtube|vimeo)\](.+?)\[/vid\]%
 			my $srv = lc($1);	my $id = $2;
 			if ($srv eq 'html' && $id =~ m!^https?://[^\s\\\[\]{}<>)|^`'"]+\z!) {
-				"<video src='$id' controls='controls'><p>$lng->{errUAFeatSup}</p></video>"
+				"<video src='$id' controls><p>$lng->{errUAFeatSup}</p></video>"
 			}
 			elsif (($srv eq 'youtube' || $srv eq 'vimeo') && $id =~ /^[A-Za-z_0-9-]+\z/) {
 				$srv eq 'youtube' 
-					?	"<iframe class='vif' width='640' height='385' src='//www.youtube-nocookie.com/embed/$id?rel=0'></iframe>"
-					: "<iframe class='vif' width='640' height='360' src='//player.vimeo.com/video/$id'></iframe>"
+					?	"<iframe class='vif' width='640' height='385' src='//www.youtube-nocookie.com/embed/$id?rel=0'"
+					. " allowfullscreen></iframe>"
+					: "<iframe class='vif' width='640' height='360' src='//player.vimeo.com/video/$id'"
+					. " allowfullscreen></iframe>"
 			} 
 			else { "[vid=$srv]${id}[/vid]" }
 		%egi;

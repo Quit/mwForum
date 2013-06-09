@@ -17,7 +17,7 @@ package MwfCaptcha;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine);
-our $VERSION = "2.27.4";
+our $VERSION = "2.29.1";
 
 #------------------------------------------------------------------------------
 # Return captcha input elements
@@ -57,13 +57,17 @@ sub captchaInputs
 			"</fieldset>\n";
 	}
 	elsif ($cfg->{captchaMethod} == 3) {
-		# reCAPTCHA.net service
-		eval { require Captcha::reCAPTCHA } or $m->error("Captcha::reCAPTCHA module not available.");
-		my $captcha = Captcha::reCAPTCHA->new();
-		my $html = $captcha->get_html($cfg->{reCapPubKey}, undef, 0,
-			{ theme => $cfg->{reCapTheme} || 'white' });
-		$html =~ s!https?:!!g;
-		return "<fieldset>\n", $html, "</fieldset>\n";
+		# Google reCAPTCHA service
+		return 
+			"<fieldset>\n",
+			"<script src='//www.google.com/recaptcha/api/challenge?k=$cfg->{reCapPubKey}'></script>\n",
+			"<noscript>\n",
+			"<iframe width='500' height='300'",
+			" src='//www.google.com/recaptcha/api/noscript?k=$cfg->{reCapPubKey}'></iframe>\n",
+			"<textarea cols='40' rows='3' name='recaptcha_challenge_field'></textarea>\n",
+			"<input name='recaptcha_response_field' type='hidden' value='manual_challenge'>\n",
+			"</noscript>\n",
+			"</fieldset>\n";
 	}
 	elsif ($cfg->{captchaMethod} == 4) {
 		# Akismet service
@@ -121,39 +125,49 @@ sub checkCaptcha
 		lc($code) eq lc($realCode) or $m->formError('errCptWrong') if $realCode;
 	}
 	elsif ($cfg->{captchaMethod} == 3) {
-		# reCAPTCHA.net service
-		eval { require Captcha::reCAPTCHA } or $m->error("Captcha::reCAPTCHA module not available.");
-		my $captcha = Captcha::reCAPTCHA->new();
-		my $result = $captcha->check_answer($m->{cfg}{reCapPrvKey}, $m->{env}{userIp},
-			$m->paramStr('recaptcha_challenge_field'), $m->paramStr('recaptcha_response_field'));
-		$result->{is_valid} or $m->formError('errCptFail');
+		# Google reCAPTCHA service
+		eval { require LWP::UserAgent } or $m->error("LWP::UserAgent module not available.");
+		my $ua = LWP::UserAgent->new(agent => "mwForum/$MwfMain::VERSION", timeout => 3);
+		my $resp = $ua->post("http://www.google.com/recaptcha/api/verify", [ 
+			privatekey => $cfg->{reCapPrvKey}, remoteip => $env->{userIp}, 
+			challenge => $m->paramStr('recaptcha_challenge_field'), 
+			response => $m->paramStr('recaptcha_response_field') ]);
+		if ($cfg->{reCaptchaLog}) {
+			open my $fh, ">>", $cfg->{reCaptchaLog};
+			print $fh $resp->request()->as_string(), "\n", $resp->content(), "\n", "-" x 70, "\n";
+		}
+		
+		# Skip check if connection fails
+		if ($resp->is_success()) {
+			my @lines = split("\n", $resp->content());
+			$lines[0] eq 'true' or $m->formError('errCptFail');
+		}
+		else {
+			$m->logError("reCAPTCHA check failed, action allowed.");
+		}
 	}
 	elsif ($cfg->{captchaMethod} == 4) {
 		# Akismet service
 		return if !($type eq 'pstCpt' || $type eq 'msgCpt');
 		eval { require LWP::UserAgent } or $m->error("LWP::UserAgent module not available.");
-		my $ua = LWP::UserAgent->new(agent => "mwForum/$MwfMain::VERSION", timeout => 5);
-		my $resp = $ua->post(
-			"http://$cfg->{akismetKey}.rest.akismet.com/1.1/comment-check", [
+		my $ua = LWP::UserAgent->new(agent => "mwForum/$MwfMain::VERSION", timeout => 3);
+		my $resp = $ua->post("http://$cfg->{akismetKey}.rest.akismet.com/1.1/comment-check", [
 			blog => "$cfg->{baseUrl}$env->{scriptUrlPath}/forum$m->{ext}",
-			user_ip => $env->{userIp},
-			user_agent => $env->{userAgent},
-			referrer => $env->{referrer},
-			comment_type => 'comment',
-			comment_author => $m->{user}{userName},
-			comment_author_email => $m->{user}{email},
+			user_ip => $env->{userIp}, user_agent => $env->{userAgent},
+			referrer => $env->{referrer}, comment_type => 'comment',
+			comment_author => $m->{user}{userName}, comment_author_email => $m->{user}{email},
 			comment_content => $m->paramStr('body') ]);
-		if ($cfg->{akismetDebug}) {
-			open my $fh, ">>", "/tmp/akismet.log";
+		if ($cfg->{akismetLog}) {
+			open my $fh, ">>", $cfg->{akismetLog};
 			print $fh $resp->request()->as_string(), "\n", $resp->content(), "\n", "-" x 70, "\n";
 		}
+
+		# Skip check if connection fails
 		if ($resp->is_success()) {
-			if ($resp->content() eq 'true') {
-				$m->formError("Sorry, but Akismet considers this spam.");
-			}
+			$resp->content() eq 'true' or $m->formError("Sorry, but Akismet considers this spam.");
 		}
 		else {
-			$m->logError("Akismet check failed.");
+			$m->logError("reCAPTCHA check failed, action allowed.");
 		}
 	}
 	elsif ($cfg->{captchaMethod} == 5) {
@@ -168,8 +182,7 @@ sub checkCaptcha
 			$ip = gethostbyname("$revIp.$cfg->{dnsbl}.");
 			alarm 0;
 		};
-		$m->formError("Sorry, but your IP is blacklisted for spamming or being an open proxy.") 
-			if $ip;
+		$m->formError("Sorry, but your IP is blacklisted for spamming or being an open proxy.") if $ip;
 	}
 }
 

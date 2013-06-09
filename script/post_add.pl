@@ -121,8 +121,7 @@ if ($add) {
 	my $approved = !$board->{approve} || $boardAdmin || ($boardMember && $board->{private} != 1) 
 		? 1 : 0;
 	my $postUserId = $userId ? $userId : -1;
-	my $anonUserName = $cfg->{anonName} eq 'ip' ? "$m->{env}{userIp}" 
-		: $m->escHtml($unregName) || $cfg->{anonName} || "?";
+	my $anonUserName = $m->escHtml($unregName) || $cfg->{anonName} || "?";
 	my $postUserName = $userId ? $user->{userName} : $anonUserName;
 	my $ip = $cfg->{recordIp} ? $m->{env}{userIp} : "";
 	my $insertParentId = $board->{flat} ? 0 : $parentId;
