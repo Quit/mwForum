@@ -24,7 +24,7 @@ use MwfMain;
 #------------------------------------------------------------------------------
 
 # Init
-my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
+my ($m, $cfg, $lng, $user, $userId) = MwfMain->new($_[0]);
 
 # Check if access should be denied
 $cfg->{reports} or $m->error('errNoAccess');

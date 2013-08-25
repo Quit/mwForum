@@ -25,7 +25,7 @@ use List::Util qw(first);
 #------------------------------------------------------------------------------
 
 # Init
-my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
+my ($m, $cfg, $lng, $user, $userId) = MwfMain->new($_[0]);
 
 # Check if user is admin
 $user->{admin} or $m->error('errNoAccess');
@@ -497,6 +497,60 @@ my $views = [
 			{ name => "Active Time (seconds)", value => sub { $_[0]->{activeSeconds} } },
 		],
 	},
+	{ name => "Posts Existing",
+		field => '_postexist',
+		notes => "no searching",
+		searchUsers => sub { 
+			my $fldSort = $sort eq 'field' ? 'postsExist' : "users.$sort";
+			$m->fetchAllArray("
+				SELECT users.id, COUNT(posts.id) AS postsExist
+				FROM users AS users
+					$defJoin JOIN posts ON posts.userId = users.id
+				GROUP BY $defGroup
+				ORDER BY $fldSort $order", $_[0]) 
+		},
+		fetchUsers => sub { 
+			my $fldSort = $sort eq 'field' ? 'postsExist' : "users.$sort";
+			$m->fetchAllHash("
+				SELECT $defFields, COUNT(posts.id) AS postsExist
+				FROM users AS users
+					$defJoin JOIN posts AS posts ON posts.userId = users.id
+				WHERE users.id IN (:pageUserIds)
+				GROUP BY $defGroup
+				ORDER BY $fldSort $order", $_[0]) 
+		},
+		columns => [
+			{ name => "Posts Existing", value => sub { $_[0]->{postsExist} } },
+		],
+	},
+	{ name => "Post Upvotes",
+		field => '_upvotes',
+		notes => "no searching",
+		searchUsers => sub { 
+			my $fldSort = $sort eq 'field' ? 'postLikes' : "users.$sort";
+			$m->fetchAllArray("
+				SELECT users.id, COUNT(postLikes.postId) AS postLikes
+				FROM users AS users
+					$defJoin JOIN posts ON posts.userId = users.id
+					$defJoin JOIN postLikes ON postLikes.postId = posts.id
+				GROUP BY $defGroup
+				ORDER BY $fldSort $order", $_[0]) 
+		},
+		fetchUsers => sub { 
+			my $fldSort = $sort eq 'field' ? 'postLikes' : "users.$sort";
+			$m->fetchAllHash("
+				SELECT $defFields, COUNT(postLikes.postId) AS postLikes
+				FROM users AS users
+					$defJoin JOIN posts ON posts.userId = users.id
+					$defJoin JOIN postLikes ON postLikes.postId = posts.id
+				WHERE users.id IN (:pageUserIds)
+				GROUP BY $defGroup
+				ORDER BY $fldSort $order", $_[0]) 
+		},
+		columns => [
+			{ name => "Post Upvotes", value => sub { $_[0]->{postLikes} } },
+		],
+	},
 	{ name => "Avatar",
 		field => 'avatar',
 		columns => [
@@ -569,7 +623,7 @@ my $views = [
 	{ name => "Threading Indent", field => 'indent', type => 'int' },
 	{ name => "Posts Per Page", field => 'postsPP', type => 'int' },
 	{ name => "Topics Per Page", field => 'topicsPP', type => 'int' },
-	{ name => "Post Number", field => 'postNum', type => 'int' },
+	{ name => "Posts Posted", field => 'postNum', type => 'int' },
 	{ name => "Bounce Counter", field => 'bounceNum', type => 'int' },
 	{ name => "Policy Version", field => 'policyAccept', type => 'int' },
 	{ name => "Renames Left", field => 'renamesLeft', type => 'int' },

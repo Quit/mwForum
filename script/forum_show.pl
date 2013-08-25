@@ -24,7 +24,7 @@ use MwfMain;
 #------------------------------------------------------------------------------
 
 # Init
-my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
+my ($m, $cfg, $lng, $user, $userId) = MwfMain->new($_[0]);
 $m->cacheUserStatus() if $userId;
 
 # Print header
@@ -124,7 +124,7 @@ if (!$m->{archive}) {
 		if $cfg->{rssLink};
 	push @userLinks, { url => $m->url('user_mark', act => 'old', time => $m->{now}, auth => 1),
 		txt => 'frmMarkOld', ico => 'markold' }
-		if $newPostsExist || !$userId && $user->{prevOnTime} == 2147483647;
+		if $newPostsExist || (!$userId && !$cfg->{noGuestCookies} && $user->{prevOnTime} == 2147483647);
 	push @userLinks, { url => $m->url('user_mark', act => 'read', time => $m->{now}, auth => 1), 
 		txt => 'frmMarkRd', ico => 'markread' }
 		if $unreadPostsExist && $userId;

@@ -24,7 +24,7 @@ use MwfMain;
 #------------------------------------------------------------------------------
 
 # Init
-my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_, autocomplete => 1);
+my ($m, $cfg, $lng, $user, $userId) = MwfMain->new($_[0], autocomplete => 1);
 
 # Check if user is admin
 $user->{admin} or $m->error('errNoAccess');

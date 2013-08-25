@@ -126,48 +126,32 @@ sub checkCaptcha
 	}
 	elsif ($cfg->{captchaMethod} == 3) {
 		# Google reCAPTCHA service
-		eval { require LWP::UserAgent } or $m->error("LWP::UserAgent module not available.");
-		my $ua = LWP::UserAgent->new(agent => "mwForum/$MwfMain::VERSION", timeout => 3);
-		my $resp = $ua->post("http://www.google.com/recaptcha/api/verify", [ 
+		my $respBody = httpPost($m, "http://www.google.com/recaptcha/api/verify", [ 
 			privatekey => $cfg->{reCapPrvKey}, remoteip => $env->{userIp}, 
 			challenge => $m->paramStr('recaptcha_challenge_field'), 
-			response => $m->paramStr('recaptcha_response_field') ]);
-		if ($cfg->{reCaptchaLog}) {
-			open my $fh, ">>", $cfg->{reCaptchaLog};
-			print $fh $resp->request()->as_string(), "\n", $resp->content(), "\n", "-" x 70, "\n";
-		}
-		
-		# Skip check if connection fails
-		if ($resp->is_success()) {
-			my @lines = split("\n", $resp->content());
+			response => $m->paramStr('recaptcha_response_field') ]); 
+		if (defined($respBody)) {
+			my @lines = split("\n", $respBody);
 			$lines[0] eq 'true' or $m->formError('errCptFail');
 		}
 		else {
-			$m->logError("reCAPTCHA check failed, action allowed.");
+			$m->logError("reCAPTCHA request failed, action allowed.");
 		}
 	}
 	elsif ($cfg->{captchaMethod} == 4) {
 		# Akismet service
 		return if !($type eq 'pstCpt' || $type eq 'msgCpt');
-		eval { require LWP::UserAgent } or $m->error("LWP::UserAgent module not available.");
-		my $ua = LWP::UserAgent->new(agent => "mwForum/$MwfMain::VERSION", timeout => 3);
-		my $resp = $ua->post("http://$cfg->{akismetKey}.rest.akismet.com/1.1/comment-check", [
+		my $respBody = httpPost($m, "http://$cfg->{akismetKey}.rest.akismet.com/1.1/comment-check", [
 			blog => "$cfg->{baseUrl}$env->{scriptUrlPath}/forum$m->{ext}",
 			user_ip => $env->{userIp}, user_agent => $env->{userAgent},
 			referrer => $env->{referrer}, comment_type => 'comment',
 			comment_author => $m->{user}{userName}, comment_author_email => $m->{user}{email},
 			comment_content => $m->paramStr('body') ]);
-		if ($cfg->{akismetLog}) {
-			open my $fh, ">>", $cfg->{akismetLog};
-			print $fh $resp->request()->as_string(), "\n", $resp->content(), "\n", "-" x 70, "\n";
-		}
-
-		# Skip check if connection fails
-		if ($resp->is_success()) {
-			$resp->content() eq 'true' or $m->formError("Sorry, but Akismet considers this spam.");
+		if (defined($respBody)) {
+			$respBody eq 'true' or $m->formError("Sorry, but Akismet considers this spam.");
 		}
 		else {
-			$m->logError("reCAPTCHA check failed, action allowed.");
+			$m->logError("Akismet request failed, action allowed.");
 		}
 	}
 	elsif ($cfg->{captchaMethod} == 5) {
@@ -239,6 +223,39 @@ sub addGdCaptcha
 		$ticketId, 0, $m->{now}, $type, $newCaptchaStr);
 
 	return $ticketId;
+}
+
+#-----------------------------------------------------------------------------
+# Perform POST request with HTTP::Tiny or LWP::UserAgent
+
+sub httpPost
+{
+	my $m = shift();
+	my $url = shift();
+	my $params = shift();
+
+	if (eval { require HTTP::Tiny }) {
+		my $content = "";
+		for (my $i = 0; $i < @$params; $i += 2) {
+			my $value = $params->[$i + 1];
+			utf8::encode($value);
+			$value =~ s/([^A-Za-z_0-9.!~()-])/'%'.unpack("H2",$1)/eg;
+			$content .= "$params->[$i]=$value&";
+		}
+		chop $content;
+		my $ua = HTTP::Tiny->new(agent => "mwForum/$MwfMain::VERSION; $cfg->{baseUrl}", timeout => 3);
+		my $resp = $ua->request('POST', $url, { content => $content, 
+			headers => { 'content-type' => "application/x-www-form-urlencoded" } }); 
+		return $resp->{success} ? $resp->{content} : undef;
+	}
+	elsif (eval { require LWP::UserAgent }) {
+		my $ua = LWP::UserAgent->new(agent => "mwForum/$MwfMain::VERSION; $cfg->{baseUrl}", timeout => 3);
+		my $resp = $ua->post($url, $params); 
+		return $resp->is_success() ? $resp->content() : undef;
+	}
+	else {
+		$m->error("HTTP::Tiny or LWP::UserAgent modules not available.");
+	}
 }
 
 #-----------------------------------------------------------------------------

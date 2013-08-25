@@ -24,7 +24,7 @@ use MwfMain;
 #------------------------------------------------------------------------------
 
 # Init
-my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
+my ($m, $cfg, $lng, $user, $userId) = MwfMain->new($_[0]);
 
 # Check if access should be denied
 $cfg->{statUserAgent} || $user->{admin} or $m->error('errNoAccess');
@@ -49,14 +49,13 @@ my @ua = (
 	'Gecko', 'Firefox', 
 	'MSIE', 'MSIE 10.0', 'MSIE 9.0', 'MSIE 8.0', 'MSIE 7.0', 'MSIE 6.0',
 	'WebKit', 'Chrome', 'Safari', 
-	'Opera', 
 	'Other',
 );
 
 # Order of OS printed
 my @os = (
 	'Windows', 'Windows 8', 'Windows 7', 'Windows Vista', 'Windows XP',
-	'Mac', 'Linux', 'Android', 'iOS', 'Symbian', 'Windows Phone', 'Other',
+	'Mac', 'Linux', 'Android', 'iOS', 'Windows Phone', 'Other',
 );
 
 # Collect browser stats of users
@@ -76,9 +75,6 @@ while ($sth->fetch()) {
 	elsif (index($ua, 'iPhone') > -1 || index($ua, 'iPad') > -1 || index($ua, 'iPod') > -1) { 
 		$os{'iOS'}++;
 	}
-	elsif (index($ua, 'Symbian') > -1) { 
-		$os{'Symbian'}++;
-	}
 	elsif (index($ua, 'Windows Phone') > -1) { 
 		$os{'Windows Phone'}++;
 	}
@@ -93,10 +89,7 @@ while ($sth->fetch()) {
 	elsif (index($ua, 'Mac') > -1)   { $os{'Mac'}++ }
 	else { $os{'Other'}++ }
 
-	if (index($ua, 'Opera') > -1) { 
-		$ua{'Opera'}++;
-	}
-	elsif (index($ua, 'WebKit') > -1) { 
+	if (index($ua, 'WebKit') > -1) { 
 		$ua{'WebKit'}++;
 		if (index($ua, 'Chrome') > -1) { 
 			$ua{'Chrome'}++;
@@ -127,7 +120,7 @@ $m->printHints([$m->formatStr($lng->{uasUsersT}, { users => $users, days => $day
 
 # Print pie charts
 if ($users && $cfg->{uaChartType} ne 'none') {
-	my @uaLabels = qw(MSIE Gecko WebKit Opera Other);
+	my @uaLabels = qw(MSIE Gecko WebKit Other);
 	my @osLabels = qw(Windows Linux Mac Other);
 	my $printChart = undef;
 	my $clientSide = 0;

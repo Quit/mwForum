@@ -14,7 +14,20 @@
 <p>Credits for bug reports are in [brackets].</p>
 
 
-<h2>2.29.1 (2013-??-??)</h2>
+<h2>2.29.2 (2013-08-25)</h2>
+<ul>
+<li>Added: Existing post and upvote views on user admin page.</li>
+<li>Added: Support SMTP authentication and SSL with Net::SMTP.</li>
+<li>Added: Support HTTP::Tiny for reCAPTCHA.</li>
+<li>Added: Support HTTP::Tiny for attaching linked images.</li>
+<li>Changed: Misc. small changes.</li>
+<li>Fixed: Policy page redirection loop with CGI. [Andrea Bianchi]</li>
+<li>Fixed: Username autocompletion with CGI.</li>
+<li>Removed: Manual configuration of SMTP authentication mechanism.</li>
+</ul>
+
+
+<h2>2.29.1 (2013-06-08)</h2>
 
 <ul>
 <li>Added: Click-through policy agreement.</li>
@@ -49,7 +62,7 @@
 <li>Added: Post upvoting.</li>
 <li>Added: Log entry expiration.</li>
 <li>Added: Show subscribed topics on user info pages.</li>
-<li>Changed: Use $cfg-&gt;{dbTableOpt} instead of various options/params.</li>
+<li>Changed: Use <var>$cfg-&gt;{dbTableOpt}</var> instead of various options/params.</li>
 <li>Changed: Dropped Expires header to enable bfcache with Firefox/SSL.</li>
 <li>Changed: Use SSL for reCAPTCHA when forum uses it.</li>
 <li>Changed: Updated jQuery to version 1.8.2.</li>
@@ -125,7 +138,6 @@
 <li>Changed: Reset subscriptions when admin is removing user's address.</li>
 <li>Changed: Don't copy OpenID to old usernames when setting name.</li>
 <li>Changed: Don't use unreliable env vars for spawned scripts.</li>
-<li>Changed: Updated jQuery to version 1.7.2.</li>
 <li>Changed: Only sign encrypted emails.</li>
 <li>Changed: Misc. small changes.</li>
 <li>Fixed: Process spawning for emu/manual-cronjobs under CGI.</li>
@@ -941,7 +953,7 @@
 <li>Added: Microsummary support for Firefox Live Titles.</li>
 <li>Added: Optionally show post bodies in search results by default.</li>
 <li>Changed: Use main language for [deleted] messages.</li>
-<li>Changed: Sendmail options in <var>$cfg->{sendmail}</var> instead of hardcoded.</li>
+<li>Changed: Sendmail options in <var>$cfg-&gt;{sendmail}</var> instead of hardcoded.</li>
 <li>Changed: Moved captcha code to separate module for customization purposes.</li>
 </ul>
 
@@ -1233,7 +1245,7 @@
 <li>Added: Login redirects to origin page.</li>
 <li>Added: Show embedded images user option.</li>
 <li>Added: Body HTML element gets the script name as CSS class.</li>
-<li>Added: Hiding of database error messages with <var>$cfg->{dbHideError}</var>.</li>
+<li>Added: Hiding of database error messages with <var>$cfg-&gt;{dbHideError}</var>.</li>
 <li>Changed: Split attachment upload from post edit page.</li>
 <li>Changed: Improved tag insertion cursor positioning.</li>
 <li>Changed: Revised redirection to origin pages.</li>
@@ -1432,7 +1444,7 @@
 <li>Fixed: Poll buttons were shown to guests on pages > 1.</li>
 <li>Fixed: Missing config table in install-tables.sql. [alexrait]</li>
 <li>Fixed: Fatal errors during init prevented fixing of options in forum_options. [alexrait]</li>
-<li>Removed: <var>$gcfg->{ignoreModPerl}</var>.</li>
+<li>Removed: <var>$gcfg-&gt;{ignoreModPerl}</var>.</li>
 </ul>
 
 <h2>2.1.2 (2004-07-23)</h2>

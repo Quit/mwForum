@@ -18,7 +18,7 @@ use 5.008001;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine once);
-our $VERSION = "2.29.1";
+our $VERSION = "2.29.2";
 
 #------------------------------------------------------------------------------
 
@@ -3345,6 +3345,7 @@ sub dbConnect
 			{ PrintError => 0, PrintWarn => 0, AutoCommit => 1 })
 			or $m->dbError();
 		$dbh->do("PRAGMA synchronous = " . ($cfg->{dbSync} || "OFF"));
+		$dbh->do("PRAGMA mmap_size = $cfg->{dbMMapSize}") if $cfg->{dbMMapSize};
 		$dbh->func(1000, 'busy_timeout');
 		$dbh->func('mwforum', sub { my $a = shift(); my $b = shift(); 
 			utf8::decode($a); utf8::decode($b); lc($a) cmp lc($b) }, 'create_collation')
@@ -4234,6 +4235,7 @@ sub sendEmail
 
 	# Determine header values and encode where necessary
 	require MIME::QuotedPrint;
+	my $port = $cfg->{smtpPort} || 25;
 	my $from = $m->encWord($cfg->{forumName}) . " <$cfg->{forumEmail}>";
 	my $to = $params{user}{email};
 	my $subject = $m->encWord($params{subject});
@@ -4264,20 +4266,33 @@ sub sendEmail
 	if ($cfg->{mailer} eq 'SMTP') {
 		# Send via SMTP with Mail::Sendmail
 		require MwfSendmail;
-		MwfSendmail::sendmail(smtp => $cfg->{smtpServer}, From => $from, To => $to, 
-			Subject => $subject, Body => $body,
-			'Content-Type' => "text/plain; charset=utf-8", 'X-mwForum-BounceAuth' => $bounceAuth) 
+		MwfSendmail::sendmail(smtp => $cfg->{smtpServer}, port => $port,
+			from => $from, to => $to, subject => $subject, body => $body,
+			'Content-Type' => "text/plain; charset=utf-8", 'X-mwForum-BounceAuth' => $bounceAuth,
+			'X-Mailer' => "mwForum/$MwfMain::VERSION via MwfSendmail/$MwfSendmail::VERSION") 
 			or $m->logError("Send email: $MwfSendmail::error");
 	}
 	elsif ($cfg->{mailer} eq 'SMTP2') {
-		# Send via SMTP with Net::SMTP
+		# Send via SMTP with Net::SMTP(S)
 		require Net::SMTP;
+		my $module = 'Net::SMTP';
+		my @tls = ();
+		if (eval { require Net::SMTPS }) {
+			$module = 'Net::SMTPS';
+			@tls = (doSSL => $cfg->{smtpSslMode} || 'starttls');
+		}
 		$body = MIME::QuotedPrint::encode($body, "\n");
-		my $smtp = Net::SMTP->new(Host => $cfg->{smtpServer}, Timeout => 10, Debug => 0);
+		my $smtp = $module->new(Host => $cfg->{smtpServer}, Port => $port, 
+			Timeout => 10, Debug => 0, @tls);
 		my $data = "From: $from\n" . "To: $to\n" . "Subject: $subject\n" . 
 			"MIME-Version: 1.0\n" . "Content-Type: text/plain; charset=utf-8\n" . 
 			"Content-Transfer-Encoding: quoted-printable\n" . "X-mwForum-BounceAuth: $bounceAuth\n" .
+			"X-Mailer: mwForum/$MwfMain::VERSION via Net::SMTP/$Net::SMTP::VERSION\n" .
 			"\n" . $body;
+		if ($cfg->{esmtpUser}) {
+			$smtp->auth($cfg->{esmtpUser}, $cfg->{esmtpPassword}) 
+				or $m->logError("Send email: auth() failed."), return;
+		}
 		$smtp->mail($cfg->{forumEmail}) or $m->logError("Send email: mail() failed."), return;
 		$smtp->recipient($to) or $m->logError("Send email: recipient() failed."), return;
 		$smtp->data($data) or $m->logError("Send email: data() failed."), return;
@@ -4286,10 +4301,15 @@ sub sendEmail
 	elsif ($cfg->{mailer} eq 'ESMTP') {
 		# Send via ESMTP with Mail::Sender
 		eval { require Mail::Sender } or $m->error("Mail::Sender module not available.");
-		Mail::Sender->new()->MailMsg({ smtp => $cfg->{smtpServer}, from => $from, to => $to, 
-			subject => $subject, msg => $body, ctype => "text/plain", charset => "utf-8", 
-			encoding => "quoted-printable", auth => $cfg->{esmtpAuth}, authid => $cfg->{esmtpUser},
-			authpwd => $cfg->{esmtpPassword}, headers => "X-mwForum-BounceAuth: $bounceAuth" }) >= 0 
+		$Mail::Sender::NO_X_MAILER = 1;
+		my @auth = $cfg->{esmtpUser} ? (auth => $cfg->{esmtpAuthMech} || 'LOGIN', 
+			authid => $cfg->{esmtpUser}, authpwd => $cfg->{esmtpPassword}) : ();
+		Mail::Sender->new()->MailMsg({ smtp => $cfg->{smtpServer}, port => $port,
+			from => $from, to => $to, subject => $subject, msg => $body, 
+			ctype => "text/plain", charset => "utf-8", encoding => "quoted-printable",
+			headers => { 'X-mwForum-BounceAuth' => $bounceAuth,
+				'X-Mailer' => "mwForum/$MwfMain::VERSION via Mail::Sender/$Mail::Sender::VERSION"	},
+			@auth }) >= 0 
 			or $m->logError("Send email failed: $Mail::Sender::Error");
 	}
 	elsif ($cfg->{mailer} eq 'sendmail' || $cfg->{mailer} eq 'mail') {
@@ -4303,6 +4323,7 @@ sub sendEmail
 			"From: $from\n", "To: $to\n", "Subject: $subject\n",
 			"MIME-Version: 1.0\n", "Content-Type: text/plain; charset=utf-8\n",
 			"Content-Transfer-Encoding: quoted-printable\n", "X-mwForum-BounceAuth: $bounceAuth\n",
+			"X-Mailer: mwForum/$MwfMain::VERSION via sendmail\n",
 			"\n", $body;
 		close $pipe;
 	}

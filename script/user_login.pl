@@ -24,7 +24,7 @@ use MwfMain;
 #------------------------------------------------------------------------------
 
 # Init
-my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
+my ($m, $cfg, $lng, $user, $userId) = MwfMain->new($_[0]);
 
 # Don't enable when request auth plugin is used
 !$cfg->{authenPlg}{request} or $m->error("Login page n/a when request auth plugin is used.");

@@ -36,7 +36,7 @@
 <li><a href='#multi'>Multi-Forums</a></li>
 <li><a href='#polls'>Polls</a></li>
 <li><a href='#avatars'>Avatars</a></li>
-<li><a href='#smtpauth'>SMTP Authentication</a></li>
+<li><a href='#smtp'>SMTP</a></li>
 <li><a href='#bounces'>Bounced Emails</a></li>
 <li><a href='#openpgp'>OpenPGP Emails</a></li>
 <li><a href='#massmail'>Mass-Emailing</a></li>
@@ -519,6 +519,12 @@ push @$options, {
 
 <dt>dbHideError</dt>
 <dd>Set to <code>1</code> to hide database error message details from normal users.</dd>
+
+<dt>noLogUserId</dt>
+<dd>Set to the numeric ID of a user whose requests you don't want to log in the forum log.</dd>
+
+<dt>noGuestCookies</dt>
+<dd>Set to <code>1</code> to disable the feature that lets not-logged-in people use the Mark Old button the set a prevOn cookie for new/old tracking. This is for legal reasons, in case you never want to give cookies to people who haven't agreed to a forum/privacy policy. Doesn't affect guests who already have the cookie.</dd>
 </dl>
 
 
@@ -746,22 +752,15 @@ shell&gt; perl util_replace.pl -x -f /forum2 replacethis withthis
 <p>The images won't be checked for type and size, but the displayed avatars will be zoomed to the same configured dimensions as the uploaded avatars, so you'd better stick to those dimensions, since images zoomed by the browser don't look all that great. There is also a script named util_resizeavatars.pl that scales all images in the gallery directory to the configured dimensions. It also requires the GD, Imager, Graphics::Magick or Image::Magick Perl modules.</p>
 
 
-<h2 id='smtpauth'>SMTP Authentication</h2>
+<h2 id='smtp'>SMTP</h2>
 
-<p>Some CGI hosts may require SMTP authentication if a web application wants to send email. Also, some people might want to host forums on their dialup connections, but use their ISP's email server, since some providers don't accept emails from dynamic IPs.</p>
+<p>Some webspace providers may require SMTP authentication if a web application wants to send email. Also, some people might want to host forums on their home connections, but use the SMTP server of an email provider where they have an account, since most recipient's email providers don't accept emails sent directly from dynamic/home IP addresses.</p>
 
-<p>mwForum supports SMTP authentication (<a href='http://www.faqs.org/rfcs/rfc2554.html'>RFC 2554</a>) with the PLAIN, LOGIN and CRAM-MD5 methods. The <a href='http://search.cpan.org/dist/Mail-Sender/'>Mail::Sender</a> Perl module is required and used instead of the other available mailers if authentication is to be used. The CRAM-MD5 method also requires <a href='http://search.cpan.org/dist/Digest-HMAC/'>Digest::HMAC_MD5</a>. If available, CRAM-MD5 should be used, as it's the only method that doesn't transmit the password unencrypted.</p>
+<p>mwForum supports SMTP authentication and SSL/TLS connection encryption when sending emails with the <a href='http://search.cpan.org/dist/libnet/'>Net::SMTP</a> or <a href='http://search.cpan.org/dist/Mail-Sender/'>Mail::Sender</a> Perl modules. To enable authentication, Net::SMTP requires <a href='http://search.cpan.org/dist/Authen-SASL/'>Authen::SASL</a>. If the default SMTP authentication mechanism of Mail::Sender doesn't work, you can specify a different one with the <var>$cfg-&gt;{esmtpAuthMech}</var> option.</p>
 
-<p>To test which authentication methods an email server supports, use a command like the following:</p>
+<p>To enable SSL/TLS, both Net::SMTP and Mail::Sender require <a href='http://search.cpan.org/dist/IO-Socket-SSL/'>IO::Socket::SSL</a> and <a href='http://search.cpan.org/dist/Net-SSLeay/'>Net::SSLeay</a>. Net::SMTP also requires <a href='http://search.cpan.org/dist/Net-SMTPS/'>Net::SMTPS</a>.</p>
 
-<pre><kbd>
-shell&gt; perl -MMail::Sender -e "Mail::Sender-&gt;printAuthProtocols('smtp.example.com')"
-</kbd><samp>
-smtp.example.com supports: PLAIN, LOGIN, CRAM-MD5
-</samp></pre>
-
-
-<p>To enable authentication if the requirements are fulfilled, set the <var>mailer</var> option to the correct value and also configure the additional <var>estmp…</var> forum options.</p>
+<p> If the default SMTP port of 25 doesn't work, you can configure it with the <var>$cfg-&gt;{smtpPort}</var> option, usually to <code>465</code> or <code>587</code>.</p>
 
 
 <h2 id='bounces'>Bounced Emails</h2>
@@ -784,13 +783,13 @@ smtp.example.com supports: PLAIN, LOGIN, CRAM-MD5
 <li>Every day during the cronjob run, users' bounce counters are decremented. If the treshold for disabling email sending is reached, email sending to that user is re-enabled. Every received bounce internally counts as 3, whereas the daily decrement is by 1.</li>
 </ol>
 
-<p>The POP3 part of the code requires the <a href='http://search.cpan.org/dist/Mail-POP3Client/'>Mail::POP3Client</a> Perl module and is located in cron_bounce.pl. It needs to be installed similarly to the main cronjob. If you get a huge amount of bounces, you could run the script more than once daily.</p>
+<p>The POP3 part of the code requires the <a href='http://search.cpan.org/dist/Mail-POP3Client/'>Mail::POP3Client</a> Perl module and is located in cron_bounce.pl. It needs to be installed similarly to the main cronjob.</p>
 
-<p>If the POP3 account is on a remote host and you want to protect the password, you can use password hashing via APOP or CRAM-MD5. Set the <var>bouncePopAuth</var> option to the respective value (if supported by the POP3 server). Or you can use SSL, which is activated via the <var>bouncePopSsl</var> option. CRAM-MD5 requires <a href='http://search.cpan.org/dist/Digest-HMAC/'>Digest::HMAC_MD5</a> and SSL requires <a href='http://search.cpan.org/dist/IO-Socket-SSL/'>IO::Socket::SSL</a>.</p>
+<p>If the POP3 account is on a remote host and you want to protect the password, you can use password hashing via APOP or CRAM-MD5. Set the <var>$cfg-&gt;{bouncePopAuth}</var> option to the value supported by the POP3 server. CRAM-MD5 requires <a href='http://search.cpan.org/dist/Digest-HMAC/'>Digest::HMAC_MD5</a>. Or you can use SSL/TLS, which is activated via the <var>bouncePopSsl</var> option. SSL/TLS requires <a href='http://search.cpan.org/dist/IO-Socket-SSL/'>IO::Socket::SSL</a> and <a href='http://search.cpan.org/dist/Net-SSLeay/'>Net::SSLeay</a>.</p>
 
-<p>If you have problems with POP3, you can enable debug output by setting the <var>bouncePopDbg</var> option and then start cron_bounce.pl from the command line. Finally, you can set the POP3 port and timeout values with the <var>bouncePopPort</var> option and the <var>bouncePopTout</var> option, respectively.</p>
+<p>If you have problems with POP3, you can enable debug output by setting the <var>$cfg-&gt;{bouncePopDbg}</var> option to <code>1</code> and then start cron_bounce.pl from the command line. Finally, you can set the POP3 port and timeout values with the <var>$cfg-&gt;{bouncePopPort}</var> and <var>$cfg-&gt;{bouncePopTout}</var> options, respectively.</p>
 
-<p>Bounces usually go back to the address specified in the Return-Path header field, not the From header field. If you use the SMTP/ESMTP mailers, both headers should be the same, but if you use the sendmail mailer, you might have to add an <kbd>-f</kbd> parameter to <var>$cfg-&gt;{sendmail}</var> so that it looks something like "<code>/usr/sbin/sendmail -oi -oeq -t -f bounce\@example.com</code>". This might not work everywhere.</p>
+<p>Bounces usually go back to the address specified in the Return-Path header field, not the From header field. If you use any of the SMTP mailers, both headers should be the same, but if you use the sendmail mailer, you might have to add an <kbd>-f</kbd> parameter to <var>$cfg-&gt;{sendmail}</var> so that it looks something like "<code>/usr/sbin/sendmail -oi -oeq -t -f bounce\@example.com</code>". This might not work everywhere.</p>
 
 
 <h2 id='openpgp'>OpenPGP Emails</h2>
@@ -1200,7 +1199,7 @@ $cfg-&gt;{captchaTtf} = "/usr/local/share/ttf/VeraBd.ttf";
 
 <p>The fanciest captcha implementation uses the <a href='http://www.google.com/recaptcha'>reCAPTCHA</a> web service by Google. It provides warped text images that should be hard to crack, as well as alternative audio captchas. By using it, you also help digitizing old books. Check out their site for details and terms of service.</p> 
 
-<p>To make this work in mwForum, you need to have the <a href='http://search.cpan.org/dist/libwww-perl/'>LWP::UserAgent</a> Perl modules (aka libwww-perl) and their dependencies installed. You also need a Google account and put the public and private keys you get from the linked site into your MwfConfig.pm:</p>
+<p>To make this work in mwForum, you need to have the <a href='http://search.cpan.org/dist/HTTP-Tiny/'>HTTP::Tiny</a> (included with Perl 5.14 and later) or <a href='http://search.cpan.org/dist/libwww-perl/'>LWP::UserAgent</a> (aka libwww-perl, and its many dependencies) Perl modules installed. You also need a Google account and put the public and private keys you get from the linked site into your MwfConfig.pm:</p>
 
 <pre><code>
 $cfg-&gt;{reCapPubKey} = '01234567890abcdef';
@@ -1363,7 +1362,7 @@ RewriteRule ^/mwf/v\d+/(.+)  /mwf/$1
 
 <p>Admins and board moderators can transfer remote images embedded with the <code>[img]</code> tag to a post attachment by Ctrl-Clicking the image. The "<code>[img]http://example.org/example.png[/img]</code>" markup will be changed to "<code>[img thb]example.png[/img]</code>", so the image will be shown in the same place in the post, and as a thumbnail if possible. Users of this feature need to keep legal issues in mind.</p>
 
-<p>Post attachments need to be set up of course. The <var>$cfg-&gt{maxAttachLen}</var> forum option is enforced, but can be overriden with <var>$cfg-&gt{maxAttXferLen}</var>. The feature requires either the LWP (libwww-perl) set of Perl modules, or the Wget application installed. If an installed LWP should not be used (e.g. to save memory under mod_perl), <var>$cfg-&gt;{noLWP}</var> can be set to <code>1</code>. If Wget isn't located in /usr/bin/wget, its path can be set with <var>$cfg-&gt;{wgetBinary}</var>.</p>
+<p>Post attachments need to be set up of course. The <var>$cfg-&gt{maxAttachLen}</var> forum option is enforced, but can be overriden with <var>$cfg-&gt{maxAttXferLen}</var>. The feature requires either the <a href='http://search.cpan.org/dist/HTTP-Tiny/'>HTTP::Tiny</a> (included with Perl 5.14 and later) or <a href='http://search.cpan.org/dist/libwww-perl/'>LWP::UserAgent</a> (aka libwww-perl, and its many dependencies) Perl modules installed. To support SSL/TLS for https URLs, <a href='http://search.cpan.org/dist/IO-Socket-SSL/'>IO::Socket::SSL</a> and <a href='http://search.cpan.org/dist/Net-SSLeay/'>Net::SSLeay</a> are required.</p>
 
 <p>The transfer only works for unlinked images (i.e. not for "<code>[url=http://foo][img]http://bar[/img][/url]</code>"), as linked images will usually be just thumbnails, and because linked attached images don't work in mwForum for technical reasons.</p>
 

@@ -24,7 +24,7 @@ use MwfMain;
 #------------------------------------------------------------------------------
 
 # Init
-my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
+my ($m, $cfg, $lng, $user, $userId) = MwfMain->new($_[0]);
 
 # Check if user is admin
 $user->{admin} or $m->error('errNoAccess');
@@ -54,7 +54,7 @@ my $env = $m->{env};
 my ($mysqlVersion, $mysqlFork, $mysqlUser, $mysqlDatabase, $mysqlEngine,
 	$mysqlTableStatus, $mysqlVariables, $mysqlStatistics,
 	$pgsqlVersion, $pgsqlLocale, $pgsqlEncoding, $pgsqlSrchPath, $pgsqlVariables,
-	$sqliteJournalMode);
+	$sqliteJournalMode, $sqliteMMapSize, $sqliteFreePages, $sqliteIntegrity);
 my $schemaVersion = $m->getVar('version');
 if ($m->{mysql}) {
 	($mysqlVersion, $mysqlUser, $mysqlDatabase) = $m->fetchArray("
@@ -108,6 +108,9 @@ elsif ($m->{pgsql}) {
 }
 elsif ($m->{sqlite}) {
 	$sqliteJournalMode = $m->fetchArray("PRAGMA journal_mode");
+	$sqliteMMapSize = $m->fetchArray("PRAGMA mmap_size");
+	$sqliteFreePages = $m->fetchArray("PRAGMA freelist_count");
+	$sqliteIntegrity = $m->fetchArray("PRAGMA integrity_check");
 }
 
 # Perl versions
@@ -237,6 +240,9 @@ print
 	"<tr class='hrw'><th colspan='2'>SQLite</th></tr>\n",
 	"<tr class='crw'><td class='hco'>Version</td><td>$m->{dbh}{sqlite_version}</td></tr>\n",
 	"<tr class='crw'><td class='hco'>Journal Mode</td><td>$sqliteJournalMode</td></tr>\n",
+	"<tr class='crw'><td class='hco'>MMap Size</td><td>$sqliteMMapSize</td></tr>\n",
+	"<tr class='crw'><td class='hco'>Free Pages</td><td>$sqliteFreePages</td></tr>\n",
+	"<tr class='crw'><td class='hco'>Integrity</td><td>$sqliteIntegrity</td></tr>\n",
 	if $m->{sqlite};
 
 print

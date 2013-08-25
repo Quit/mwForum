@@ -24,7 +24,7 @@ use MwfMain;
 #------------------------------------------------------------------------------
 
 # Init
-my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_, allowBanned => 1);
+my ($m, $cfg, $lng, $user, $userId) = MwfMain->new($_[0], allowBanned => 1);
 
 # Check if access should be denied
 $userId or $m->error('errNoAccess');

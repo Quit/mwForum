@@ -24,7 +24,7 @@ use MwfMain;
 #------------------------------------------------------------------------------
 
 # Init
-my ($m, $cfg, $lng, $user, $userId) = MwfMain->new(@_);
+my ($m, $cfg, $lng, $user, $userId) = MwfMain->new($_[0]);
 
 # Get CGI parameters
 my $postId = $m->paramInt('pid');
@@ -58,12 +58,32 @@ $user->{admin} || $m->boardAdmin($userId, $boardId) or $m->error('errNoAccess');
 $cfg->{attachments} && $board->{attach} or $m->error("Attachments are disabled.");
 $cfg->{attachImg} && $cfg->{attachImgThb} or $m->error("Thumbnails are disabled.");
 
-# Fetch image with LWP or wget
-my $wget = $cfg->{wgetBinary} || "/usr/bin/wget";
+# Fetch image with HTTP::Tiny or LWP
 my $maxLen = $cfg->{maxAttXferLen} || $cfg->{maxAttachLen};
 my $file = "$cfg->{attachFsPath}/transfer-" . int(rand(99999)) . ".tmp";
 my $fileName = "";
-if (!$cfg->{noLWP} && eval { require LWP::UserAgent }) {
+if (eval { require HTTP::Tiny }) {
+	# Use HTTP::Tiny
+	my $ua = HTTP::Tiny->new(agent => "mwForum/$MwfMain::VERSION; $cfg->{baseUrl}",
+		timeout => 5, max_redirect => 2, max_size => $maxLen,
+		default_headers => { 'accept-language' => "en", 'accept-encoding' => "identity" });
+
+	# Check file size with HEAD request
+	my $rsp = $ua->request('HEAD', $url);
+	my $length = $rsp->{headers}{'content-length'};
+	$length <= $maxLen or error($m, "Maximum file size exceeded. ($length > $maxLen)", $file);
+	$rsp->{status} == 200 or error($m, "File size check failed. ($rsp->{reason})", $file);
+
+	# Transfer file from remote host to temp file
+	$rsp = undef;
+	eval { $rsp = $ua->mirror($url, $file); }	or error($m, "Maximum file size exceeded.", $file);
+	$length = -s $file;
+	$length <= $maxLen or error($m, "Maximum file size exceeded. ($length > $maxLen)", $file);
+	$length && $rsp->{status} == 200 or error($m, "Transfer failed. ($rsp->{status})", $file);
+	$m->setMode($file, 'file');
+	($fileName) = $url =~ m!([\w.-]+\.(?:jpg|png|gif))!i;
+}
+elsif (eval { require LWP::UserAgent }) {
 	# Use LWP (better but bloaty)
 	my $ua = LWP::UserAgent->new(agent => "mwForum/$MwfMain::VERSION; $cfg->{baseUrl}",
 		timeout => 5, parse_head => 0, max_redirect => 2, max_size => $maxLen,
@@ -80,26 +100,14 @@ if (!$cfg->{noLWP} && eval { require LWP::UserAgent }) {
 	$rsp = $ua->get($url, ':content_file' => $file);
 	!$rsp->header('Client-Aborted')
 		or error($m, "Maximum file size exceeded. (" . $rsp->content_length() . " > $maxLen)", $file);
-	$rsp->code() == 200 or error($m, "Transfer failed. (" . $rsp->status_line() . ")", $file);
+	my $length = -s $file;
+	$length <= $maxLen 	or error($m, "Maximum file size exceeded. ($length > $maxLen)", $file);
+	$length && $rsp->code() == 200 or error($m, "Transfer failed. (" . $rsp->status_line() . ")", $file);
 	$m->setMode($file, 'file');
 	$fileName = $rsp->filename();
 }
-elsif (-x $wget) {
-	# Use wget call
-	my @args = ("--user-agent=mwForum/$MwfMain::VERSION; $cfg->{baseUrl}",
-		"--no-check-certificate", "--no-verbose", "--header=Accept-Language: en",
-		"--tries=1", "--timeout=5", "--max-redirect=2",
-		"--output-file=$file.err", "--output-document=$file", $url);
-	my $rv = system($wget, @args) >> 8;
-	$rv == 0 or error($m, "Wget failed. ($rv)", $file);
-	my $size = -s $file;
-	$size or error($m, "Transfer failed.\n\n" . $m->slurpFile("$file.err"), $file);
-	$size <= $maxLen or error($m, "Maximum file size exceeded. ($size > $maxLen)", $file);
-	($fileName) = $url =~ m!([\w.-]+\.(?:jpg|png|gif))!i;
-	unlink "$file.err";
-}
 else {
-	$m->error("Neither LWP modules nor Wget are available.");
+	$m->error("Neither HTTP::Tiny nor LWP modules are available.");
 }
 
 # Remove problematic stuff from filename and make sure it doesn't clash
