@@ -234,6 +234,9 @@ sub httpPost
 	my $url = shift();
 	my $params = shift();
 
+	# Shortcuts
+	my $cfg = $m->{cfg};
+
 	if (eval { require HTTP::Tiny }) {
 		my $content = "";
 		for (my $i = 0; $i < @$params; $i += 2) {
