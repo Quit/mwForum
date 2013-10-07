@@ -95,6 +95,9 @@ push @userLinks, { url => $m->url('user_watch', userId => $infUserId),
 push @userLinks, { url => $m->url('forum_search', uid => $infUserId), 
 	txt => 'uifListPst', ico => 'search' }
 	if $cfg->{forumSearch};
+push @userLinks, { url => $m->url('user_activity', uid => $infUserId), 
+	txt => 'uifActiv', ico => 'poll' }
+	if ($cfg->{statForumActiv} || $user->{admin}) && !$m->{sqlite};
 $m->callPlugin($_, links => \@userLinks, user => $infUser)
 	for @{$cfg->{includePlg}{userUserLink}};
 

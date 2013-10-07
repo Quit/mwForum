@@ -27,7 +27,7 @@ use MwfMain;
 my ($m, $cfg, $lng, $user, $userId) = MwfMain->new($_[0]);
 
 # Load additional modules
-require MwfCaptcha if $cfg->{captcha};
+require MwfCaptcha if $cfg->{captcha} >= 2;
 
 # Get CGI parameters
 my $boardId = $m->paramInt('bid');

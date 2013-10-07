@@ -18,7 +18,7 @@ use 5.008001;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine once);
-our $VERSION = "2.29.2";
+our $VERSION = "2.29.3";
 
 #------------------------------------------------------------------------------
 
@@ -246,7 +246,7 @@ sub initEnvironment
 		$env->{accept} = lc($hi->{'Accept'});
 		$env->{acceptLang} = lc($hi->{'Accept-Language'});
 		$env->{userAgent} = $hi->{'User-Agent'};
-		$env->{userIp} = lc($ap->connection->remote_ip());
+		$env->{userIp} = eval { $ap->connection->remote_ip() } || eval { $ap->useragent_ip() } || "";
 		$env->{userAuth} = $ap->user();
 		$env->{params} = $ap->args();
 		$env->{https} = $ap->subprocess_env()->{HTTPS} eq 'on' || $env->{port} == 443;
@@ -2151,7 +2151,8 @@ sub printHeader
 	print "</style>\n";
 
 	# Include Javascript
-	my $autocomplete = $m->{autocomplete} && $userId && !$cfg->{noAutocomplete};
+	my $autocomplete = $m->{autocomplete} && !$cfg->{noAutocomplete} 
+		&& ($userId || $cfg->{userList} == 1);
 	$jsParams->{autocomplete} = $m->{autocomplete} if $autocomplete;
 	$jsParams->{m_ext} = $m->{ext};
 	$jsParams->{env_script} = $script;
@@ -2347,7 +2348,7 @@ sub printFooter
 
 	# Print copyright message
 	print
-		"<p class='cpr'>Powered by <a href='http://www.mwforum.org/'>mwForum</a>",
+		"<p class='cpr'>Powered by <a href='https://www.mwforum.org/'>mwForum</a>",
 		" $VERSION &#169; 1999-2013 Markus Wichitill</p>\n\n"
 		if $m->{env}{script} ne 'forum_info' && $m->{env}{script} ne 'attach_show';
 		

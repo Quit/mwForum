@@ -55,6 +55,7 @@ if ($submitted) {
 		if ($userNames) {
 			my @userNames = split(/\s*[;,]\s*/, $userNames);
 			@userNames or $m->formError('errUsrNotFnd');
+			$userNames = join("; ", @userNames);
 			for my $name (@userNames) {
 				if (substr($name, 0, 1) eq '!') {
 					my @ids = $m->getMemberIds($name);
@@ -67,7 +68,6 @@ if ($submitted) {
 					if ($id) { push @userIds, $id }
 					else { $m->formError("$name: $lng->{errUsrNotFnd}") }
 				}
-				$userNames = join("; ", @userNames);
 			}
 		}
 

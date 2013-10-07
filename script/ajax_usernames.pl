@@ -31,10 +31,9 @@ $m->printHttpHeader();
 
 # Get CGI parameters
 my $name = $m->paramStr('q');
-#my $limit = $m->min($m->paramInt('limit') || 10, 10);
 
 # Return empty in case of errors
-$userId or $m->finish();
+$userId || $cfg->{userList} == 1 or $m->finish();
 length($name) >= 2 or $m->finish();
 
 # Fetch names

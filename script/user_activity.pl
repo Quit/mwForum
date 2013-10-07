@@ -27,8 +27,16 @@ use MwfMain;
 my ($m, $cfg, $lng, $user, $userId) = MwfMain->new($_[0]);
 
 # Check if access should be denied
-$cfg->{statForumActiv} || $user->{admin} or $m->error('errNoAccess');
-!$m->{sqlite} or $m->error('errNoAccess');
+(!$cfg->{userInfoReg} || $userId) && ($cfg->{statForumActiv} || $user->{admin})
+	or $m->error('errNoAccess');
+
+# Get CGI parameters
+my $infUserId = $m->paramInt('uid');
+
+# Get user
+my $infUser = $m->getUser($infUserId);
+$infUser or $m->error('errUsrNotFnd');
+my $userTitle = $infUser->{title} ? $m->formatUserTitle($infUser->{title}) : "";
 
 # Get statistics
 my $query = "";
@@ -36,9 +44,14 @@ my $yearStats = undef;
 if ($m->{mysql}) {
 	$m->dbDo("
 		CREATE TEMPORARY TABLE times AS
-		SELECT FROM_UNIXTIME(postTime) AS ts FROM posts
+			SELECT FROM_UNIXTIME(postTime) AS ts 
+			FROM posts 
+			WHERE userId = ?
 		UNION ALL
-		SELECT FROM_UNIXTIME(postTime) AS ts FROM arc_posts");
+			SELECT FROM_UNIXTIME(postTime) AS ts 
+			FROM arc_posts 
+			WHERE userId = ?", 
+			$infUserId, $infUserId);
 	$m->dbDo("
 		CREATE TEMPORARY TABLE postsPerDay AS
 		SELECT YEAR(ts) AS year, DAYOFYEAR(ts) - 1 AS doy, COUNT(*) AS num
@@ -53,9 +66,14 @@ if ($m->{mysql}) {
 elsif ($m->{pgsql}) {
 	$m->dbDo("
 		CREATE TEMPORARY TABLE times AS
-		SELECT TIMESTAMP 'epoch' + INTERVAL '1 second' * postTime AS ts FROM posts
+			SELECT TIMESTAMP 'epoch' + INTERVAL '1 second' * postTime AS ts 
+			FROM posts 
+			WHERE userId = ?
 		UNION ALL
-		SELECT TIMESTAMP 'epoch' + INTERVAL '1 second' * postTime AS ts FROM arc_posts");
+			SELECT TIMESTAMP 'epoch' + INTERVAL '1 second' * postTime AS ts 
+			FROM arc_posts 
+			WHERE userId = ?", 
+			$infUserId, $infUserId);
 	$m->dbDo("
 		CREATE TEMPORARY TABLE postsPerDay AS
 		SELECT EXTRACT(YEAR FROM ts) AS year, EXTRACT(DOY FROM ts) - 1 AS doy, COUNT(*) AS num
@@ -81,16 +99,19 @@ $m->printHeader(undef, { firstYear => $firstYear, lastYear => $lastYear });
 
 # Print page bar
 my @userLinks = ();
-my @navLinks = ({ url => $m->url('forum_info'), txt => 'comUp', ico => 'up' });
-$m->printPageBar(mainTitle => $lng->{actTitle}, navLinks => \@navLinks, userLinks => \@userLinks);
+my @navLinks = ({ url => $m->url('user_info', uid => $infUserId), txt => 'comUp', ico => 'up' });
+$m->printPageBar(mainTitle => $lng->{uacTitle}, subTitle => "$infUser->{userName} $userTitle",
+	navLinks => \@navLinks, userLinks => \@userLinks);
 
 # Print hint
-$m->printHints([$lng->{actPstDayT}]);
+$m->printHints([$lng->{uacPstDayT}]);
 
 # Print posts-per-day data, canvas and script
-my $ppdJson = "{" . join(",", map("\"$_->[0].$_->[1]\":$_->[2]", @$ppdStats)) . "}";
+my $fac = 3;
+my $ppdJson = "{" . join(",", map("\"$_->[0].$_->[1]\":" 
+	. $m->min($_->[2] * $fac, 150), @$ppdStats)) . "}";
 my $ppdWidth = ($lastYear - $firstYear + 1) * 365;
-my $ppdHeight = $m->min($m->max($ppdMaxPerDay, 30), 300);
+my $ppdHeight = $m->min($m->max($ppdMaxPerDay * $fac, 30), 300);
 print
 	"<div id='postsPerDay' style='display: none'>$ppdJson</div>\n\n",
 	"<div class='frm'>\n",
@@ -112,6 +133,6 @@ $m->dbDo("DROP TABLE times");
 $m->dbDo("DROP TABLE postsPerDay");
 
 # Log action and finish
-$m->logAction(3, 'forum', 'activity', $userId);
+$m->logAction(3, 'user', 'activity', $userId, 0, 0, 0, $infUserId);
 $m->printFooter();
 $m->finish();

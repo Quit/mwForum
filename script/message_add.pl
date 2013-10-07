@@ -24,14 +24,14 @@ use MwfMain;
 #------------------------------------------------------------------------------
 
 # Init
-my ($m, $cfg, $lng, $user, $userId) = MwfMain->new($_[0], autocomplete => 1, );
+my ($m, $cfg, $lng, $user, $userId) = MwfMain->new($_[0], autocomplete => 1);
 
 # Check if access should be denied
 $cfg->{messages} or $m->error('errNoAccess');
 $userId or $m->error('errNoAccess');
 
 # Load additional modules
-require MwfCaptcha if $cfg->{captcha};
+require MwfCaptcha if $cfg->{captcha} >= 3;
 
 # Check if user has been registered for long enough
 $m->{now} > $user->{regTime} + $cfg->{minRegTime}

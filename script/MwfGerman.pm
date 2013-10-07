@@ -16,7 +16,7 @@
 package MwfGerman;
 use utf8;
 use strict;
-our $VERSION = "2.29.1";
+our $VERSION = "2.29.3";
 our $lng = {};
 
 #------------------------------------------------------------------------------
@@ -153,6 +153,10 @@ $lng->{actTitle}     = "Forumsaktivität";
 $lng->{actPstDayT}   = "Horizontale Achse: ein Pixel pro Tag, vertikale Achse: ein Pixel pro Nachricht. Nur existierende Nachrichten werden gezählt.";
 $lng->{actPstDayTtl} = "Nachrichten pro Tag";
 $lng->{actPstYrTtl}  = "Nachrichten pro Jahr";
+
+# User activity page
+$lng->{uacTitle}     = "Benutzer";
+$lng->{uacPstDayT}   = "Horizontale Achse: ein Pixel pro Tag, vertikale Achse: drei Pixel pro Nachricht. Nur existierende Nachrichten werden gezählt.";
 
 # New/unread overview page
 $lng->{ovwTitleNew}  = "Neue Nachrichten";
@@ -415,6 +419,8 @@ $lng->{attAttChgB}   = "Ändern";
 $lng->{uifTitle}     = "Benutzer";
 $lng->{uifListPst}   = "Nachrichten";
 $lng->{uifListPstTT} = "Öffentliche Nachrichten dieses Benutzers auflisten";
+$lng->{uifActiv}     = "Aktivität";
+$lng->{uifActivTT}   = "Öffentliche Nachrichten dieses Benutzers pro Tag und Jahr zeigen";
 $lng->{uifMessage}   = "Nachricht senden";
 $lng->{uifMessageTT} = "Private Nachricht an diesen Benutzer senden";
 $lng->{uifIgnore}    = "Ignorieren";
@@ -546,7 +552,7 @@ $lng->{uopProfSig}   = "Signatur";
 $lng->{uopProfSigLt} = "(max. 100 Zeichen auf 2 Zeilen)";
 $lng->{uopProfBlurb} = "Sonstiges";
 $lng->{uopOptTtl}    = "Optionen";
-$lng->{uopPrefPrivc} = "Datenschutz (Online-Status und IP-basierte Ortsinfo verstecken, Infoseite nur reg. Benutzern anzeigen)";
+$lng->{uopPrefPrivc} = "Datenschutz (Online-Status und IP-basierte Ortsinfo verstecken)";
 $lng->{uopPrefNtMsg} = "Benachrichtigungen über Antworten und private Nachrichten auch per Email empfangen";
 $lng->{uopPrefNt}    = "Benachrichtigungen über Antworten empfangen";
 $lng->{uopDispLang}  = "Sprache";

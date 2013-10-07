@@ -24,7 +24,9 @@ $(document).on("ready", function () {
 	else if (script === "user_profile") { mwf.initGeolocate(); }
 	else if (script === "user_info") { mwf.initGoogleMaps(); }
 	else if (script === "user_register") { mwf.initCheckUserName(); }
-	else if (script === "forum_activity") { mwf.initActivityGraph(); }
+	else if (script === "forum_activity" || script === "user_activity") { 
+		mwf.initActivityGraph(); 
+	}
 	mwf.initReveal();
 	mwf.initDataVersion();
 });

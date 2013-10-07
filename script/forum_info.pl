@@ -229,7 +229,7 @@ print
 	"<div class='frm'>\n",
 	"<div class='hcl'><span class='htt'>Forum Software</span></div>\n",
 	"<div class='ccl'>\n",
-	"<p>Powered by <a href='http://www.mwforum.org/'>mwForum</a>", 
+	"<p>Powered by <a href='https://www.mwforum.org/'>mwForum</a>", 
 	" &#169; 1999-2013 Markus Wichitill</p>\n",
 	"<p>This program is free software; you can redistribute it and/or modify",
 	" it under the terms of the GNU General Public License as published by",
@@ -280,9 +280,16 @@ elsif ($m->{sqlite}) {
 
 # Print webserver mini banner
 my $server = undef;
-if ($MwfMain::MP1) { $server = Apache::Constants::SERVER_VERSION() }
-elsif ($MwfMain::MP2) { $server = Apache2::ServerUtil::get_server_version() }
-else { $server = $ENV{SERVER_SOFTWARE} }
+if ($MwfMain::MP1) { 
+	$server = Apache::Constants::SERVER_VERSION();
+}
+elsif ($MwfMain::MP2) { 
+	$server = eval { Apache2::ServerUtil::get_server_description() } 
+		|| eval { Apache2::ServerUtil::get_server_version() };
+}
+else { 
+	$server = $ENV{SERVER_SOFTWARE};
+}
 my ($webserverVersion) = $server =~ /([0-9]+\.[0-9]+\.[0-9]+)/;
 if ($server =~ /Apache/) {
 	print

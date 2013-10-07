@@ -16,7 +16,7 @@
 package MwfEnglish;
 use utf8;
 use strict;
-our $VERSION = "2.29.1";
+our $VERSION = "2.29.3";
 our $lng = {};
 
 #------------------------------------------------------------------------------
@@ -147,6 +147,10 @@ $lng->{actTitle}     = "Forum Activity";
 $lng->{actPstDayT}   = "Horizontal axis: one pixel per day, vertical axis: one pixel per post. Only existing posts are counted.";
 $lng->{actPstDayTtl} = "Posts Per Day";
 $lng->{actPstYrTtl}  = "Posts Per Year";
+
+# User activity page
+$lng->{uacTitle}     = "User";
+$lng->{uacPstDayT}   = "Horizontal axis: one pixel per day, vertical axis: three pixels per post. Only existing posts are counted.";
 
 # New/unread overview page
 $lng->{ovwTitleNew}  = "New Posts";
@@ -413,7 +417,9 @@ $lng->{atsNextTT}    = "Go to next attachment";
 # User info page
 $lng->{uifTitle}     = "User";
 $lng->{uifListPst}   = "Posts";
-$lng->{uifListPstTT} = "Show posts by this user";
+$lng->{uifListPstTT} = "Show user&#39;s posts";
+$lng->{uifActiv}     = "Activity";
+$lng->{uifActivTT}   = "Show user&#39;s posts per day and year";
 $lng->{uifMessage}   = "Send Message";
 $lng->{uifMessageTT} = "Send private message to this user";
 $lng->{uifIgnore}    = "Ignore";
@@ -545,7 +551,7 @@ $lng->{uopProfSig}   = "Signature";
 $lng->{uopProfSigLt} = "(max. 100 characters, 2 lines)";
 $lng->{uopProfBlurb} = "Miscellaneous";
 $lng->{uopOptTtl}    = "Options";
-$lng->{uopPrefPrivc} = "Privacy (hide online status and IP-based location, only show info page to reg. users)";
+$lng->{uopPrefPrivc} = "Privacy (hide online status and IP-based location)";
 $lng->{uopPrefNtMsg} = "Receive reply and message notifications by email, too";
 $lng->{uopPrefNt}    = "Receive reply notifications";
 $lng->{uopDispLang}  = "Language";

@@ -16,7 +16,7 @@
 package MwfDefaults;
 use strict;
 use warnings;
-our $VERSION = "2.29.2";
+our $VERSION = "2.29.3";
 
 #-----------------------------------------------------------------------------
 # Configuration option defaults. Don't change.
@@ -303,7 +303,7 @@ our $options = [
 {
 	name     => 'statForumActiv',
 	type     => 'checkbox',
-	title    => "Enable forum activity statistics page for everybody?",
+	title    => "Enable forum and user activity statistics pages for everybody?",
 	help     => "Can be rather slow in big forums.",
 	default  => 0,
 },
