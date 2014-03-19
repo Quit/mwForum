@@ -1,8 +1,8 @@
 /*jslint browser: true, onevar: true, undef: true, nomen: true, eqeqeq: true,
   plusplus: true, bitwise: true, regexp: true, newcap: true, immed: true */
-/*global $, window, document, navigator, google */
+/*global $, window, document, navigator */
 
-/* mwForum - Web-based discussion forum | Copyright 1999-2013 Markus Wichitill */
+/* mwForum - Web-based discussion forum | Copyright 1999-2014 Markus Wichitill */
 
 var mwf = { p: $("#mwfjs").data("params") };
 
@@ -22,7 +22,6 @@ $(document).on("ready", function () {
 	else if (script === "post_attach") { mwf.initPostAttach(); }
 	else if (script === "attach_show") { mwf.initShowAttach(); }
 	else if (script === "user_profile") { mwf.initGeolocate(); }
-	else if (script === "user_info") { mwf.initGoogleMaps(); }
 	else if (script === "user_register") { mwf.initCheckUserName(); }
 	else if (script === "forum_activity" || script === "user_activity") { 
 		mwf.initActivityGraph(); 
@@ -32,7 +31,11 @@ $(document).on("ready", function () {
 });
 
 $(window).on("load", function () {
-	if (mwf.p.env_script === "topic_show") { mwf.initTopicNavigation(); }
+	var script = mwf.p.env_script;
+	if (script === "topic_show") { mwf.initTopicNavigation(); }
+	else if (script === "user_info") { mwf.initGoogleMaps(); }
+	else if (script === "user_agents") { mwf.initAgentCharts(); }
+	else if (script === "user_countries") { mwf.initCountryChart(); }
 });
 
 mwf.hideMsgParam = function () {
@@ -299,39 +302,6 @@ mwf.initGeolocate = function () {
 			$("[name=location]").val(p.coords.latitude + " " + p.coords.longitude);
 		});
 	});
-};
-
-mwf.initGoogleMaps = function () {
-	var map, viewport, geocoder,
-		markers = [];
-	if (!mwf.p.location) { return; }
-	geocoder = new google.maps.Geocoder();
-	geocoder.geocode({ address: mwf.p.location, country: mwf.p.countryCode,
-		language: mwf.p.uaLangCode }, function (results, status) {
-			var txt, i, result,
-				mapOb = $("#map");
-			if (status !== google.maps.GeocoderStatus.OK) {
-				mapOb.closest(".frm").hide();
-				return;
-			}
-			viewport = results[0].geometry.viewport;
-			if (mwf.p.location.match(/^[\s\d\.\-]+$/)) { results = results.slice(0, 1); }
-			if (results[0].formatted_address) {
-				txt = results[0].formatted_address;
-				if (results.length > 1) {
-					txt += " (" + (results.length - 1) + " " + mwf.p.lng_uifMapOthrMt + ")";
-				}
-				$("#loc").append(txt);
-			}
-			map = new google.maps.Map(mapOb[0], { mapTypeId: google.maps.MapTypeId.ROADMAP,
-				center: results[0].geometry.location, zoom: 4 });
-			for (i = 0; (result = results[i]); i += 1) {
-				markers.push(new google.maps.Marker({ map: map, position: result.geometry.location,
-					title: result.formatted_address + " [" + result.geometry.location_type + "]" }));
-			}
-		}
-	);
-	$("#loc").on("click", function () { map.fitBounds(viewport); });
 };
 
 mwf.initDataVersion = function () {

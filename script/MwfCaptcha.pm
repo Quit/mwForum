@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2013 Markus Wichitill
+#    Copyright (c) 1999-2014 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by

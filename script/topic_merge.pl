@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2013 Markus Wichitill
+#    Copyright (c) 1999-2014 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -90,7 +90,7 @@ if ($submitted) {
 		if ($m->{mysql}) {
 			# Special treatment for users who have both topics completely read
 			$m->dbDo("
-				UPDATE topicReadTimes 
+				UPDATE topicReadTimes AS topicReadTimes
 				INNER JOIN (
 					SELECT oldTimes.userId
 					FROM topicReadTimes AS oldTimes 

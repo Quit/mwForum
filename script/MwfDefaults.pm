@@ -1,6 +1,6 @@
 #-----------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2013 Markus Wichitill
+#    Copyright (c) 1999-2014 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 package MwfDefaults;
 use strict;
 use warnings;
-our $VERSION = "2.29.3";
+our $VERSION = "2.29.4";
 
 #-----------------------------------------------------------------------------
 # Configuration option defaults. Don't change.
@@ -290,14 +290,14 @@ our $options = [
 	name     => 'statUserAgent',
 	type     => 'checkbox',
 	title    => "Enable user agent statistics page for everybody?",
-	help     => "Uses the <a href='http://code.google.com/apis/chart/'>Google Chart API</a> (<a href='http://code.google.com/apis/chart/terms.html'>Terms of Use</a>) to generate chart images by default.",
+	help     => "Uses the <a href='https://developers.google.com/chart/'>Google Chart API</a> (<a href='https://developers.google.com/chart/terms'>Terms of Use</a>) to generate pie charts by default. See <var>uaGraphType</var> in FAQ.html for alternatives.",
 	default  => 1,
 },
 {
 	name     => 'statUserCntry',
 	type     => 'checkbox',
 	title    => "Enable user country statistics page for everybody?",
-	help     => "Uses the <a href='http://code.google.com/apis/chart/'>Google Chart API</a> (<a href='http://code.google.com/apis/chart/terms.html'>Terms of Use</a>) to generate map image. Requires GeoIP, see FAQ.html for details.",
+	help     => "Uses the <a href='https://developers.google.com/chart/'>Google Chart API</a> (<a href='https://developers.google.com/chart/terms'>Terms of Use</a>) to generate map image. Requires GeoIP, see FAQ.html for details.",
 	default  => 0,
 },
 {
@@ -1210,7 +1210,7 @@ our $options = [
 	name     => 'blockExtSearch',
 	type     => 'checkbox',
 	title    => "Block forum searches not coming from the built-in search form?",
-	help     => "It can be rather expensive if URLs like \"forum_search.pl?words=blah\" get posted somewhere and tons of people and bots visit them, performing the search all the time. Can only block searches from external POST forms if forum search is limited to registered users above.",
+	help     => "If URLs like \"forum_search.pl?words=blah\" get posted somewhere and lots of people and bots visit them, executing the search every time, it can cause a lot of work for the server. Can't block external searches through POST forms and links including page numbers.",
 	default  => 0,
 },
 {

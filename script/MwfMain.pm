@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2013 Markus Wichitill
+#    Copyright (c) 1999-2014 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ use 5.008001;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine once);
-our $VERSION = "2.29.3";
+our $VERSION = "2.29.4";
 
 #------------------------------------------------------------------------------
 
@@ -2349,7 +2349,7 @@ sub printFooter
 	# Print copyright message
 	print
 		"<p class='cpr'>Powered by <a href='https://www.mwforum.org/'>mwForum</a>",
-		" $VERSION &#169; 1999-2013 Markus Wichitill</p>\n\n"
+		" $VERSION &#169; 1999-2014 Markus Wichitill</p>\n\n"
 		if $m->{env}{script} ne 'forum_info' && $m->{env}{script} ne 'attach_show';
 		
 	# Print includes

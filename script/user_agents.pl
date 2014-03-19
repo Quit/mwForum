@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2013 Markus Wichitill
+#    Copyright (c) 1999-2014 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -46,15 +46,15 @@ $m->printPageBar(mainTitle => $lng->{uasTitle}, navLinks => \@navLinks, userLink
 
 # Order of UA printed
 my @ua = (
-	'Gecko', 'Firefox', 
-	'MSIE', 'MSIE 10.0', 'MSIE 9.0', 'MSIE 8.0', 'MSIE 7.0', 'MSIE 6.0',
-	'WebKit', 'Chrome', 'Safari', 
+	'Gecko', '- Firefox',
+	'WebKit', '- Chrome', '- Safari', 
+	'MSIE', '- MSIE 11', '- MSIE 10', '- MSIE 9', '- MSIE 8', '- MSIE 7',
 	'Other',
 );
 
 # Order of OS printed
 my @os = (
-	'Windows', 'Windows 8', 'Windows 7', 'Windows Vista', 'Windows XP',
+	'Windows', '- Windows 8', '- Windows 7', '- Windows Vista', '- Windows XP',
 	'Mac', 'Linux', 'Android', 'iOS', 'Windows Phone', 'Other',
 );
 
@@ -80,10 +80,11 @@ while ($sth->fetch()) {
 	}
 	elsif (index($ua, 'Windows') > -1) { 
 		$os{'Windows'}++;
-		if    (index($ua, 'Windows NT 6.2') > -1) { $os{'Windows 8'}++ }
-		elsif (index($ua, 'Windows NT 6.1') > -1) { $os{'Windows 7'}++ }
-		elsif (index($ua, 'Windows NT 6.0') > -1) { $os{'Windows Vista'}++ }
-		elsif (index($ua, 'Windows NT 5.1') > -1) { $os{'Windows XP'}++ }
+		if    (index($ua, 'Windows NT 6.3') > -1) { $os{'- Windows 8'}++ }
+		elsif (index($ua, 'Windows NT 6.2') > -1) { $os{'- Windows 8'}++ }
+		elsif (index($ua, 'Windows NT 6.1') > -1) { $os{'- Windows 7'}++ }
+		elsif (index($ua, 'Windows NT 6.0') > -1) { $os{'- Windows Vista'}++ }
+		elsif (index($ua, 'Windows NT 5.1') > -1) { $os{'- Windows XP'}++ }
 	}
 	elsif (index($ua, 'Linux') > -1) { $os{'Linux'}++ }
 	elsif (index($ua, 'Mac') > -1)   { $os{'Mac'}++ }
@@ -92,25 +93,28 @@ while ($sth->fetch()) {
 	if (index($ua, 'WebKit') > -1) { 
 		$ua{'WebKit'}++;
 		if (index($ua, 'Chrome') > -1) { 
-			$ua{'Chrome'}++;
+			$ua{'- Chrome'}++;
 		}
 		elsif (index($ua, 'Safari') > -1) { 
-			$ua{'Safari'}++;
+			$ua{'- Safari'}++;
 		}
+	}
+	elsif ($ua =~ /Trident\/(\d+)\.\d+/) { 
+		$ua{'MSIE'}++;
+		if    ($1 == 7) { $ua{'- MSIE 11'}++ }
+		elsif ($1 == 6) { $ua{'- MSIE 10'}++ }
+		elsif ($1 == 5) { $ua{'- MSIE 9'}++ }
+	}
+	elsif ($ua =~ /MSIE (\d+)\.\d+/) { 
+		$ua{'MSIE'}++;
+		if    ($1 == 8) { $ua{'- MSIE 8'}++ }
+		elsif ($1 == 7) { $ua{'- MSIE 7'}++ }
 	}
 	elsif ($ua =~ /(?<!like )Gecko/) { 
 		$ua{'Gecko'}++;
 		if ($ua =~ /Firefox\/(\d+\.\d+)/) {
-			$ua{'Firefox'}++;
+			$ua{'- Firefox'}++;
 		}
-	}
-	elsif ($ua =~ /MSIE (\d+)\.\d+/) { 
-		$ua{'MSIE'}++;
-		if    ($1 == 10) { $ua{'MSIE 10.0'}++ }
-		elsif ($1 == 9)  { $ua{'MSIE 9.0'}++ }
-		elsif ($1 == 8)  { $ua{'MSIE 8.0'}++ }
-		elsif ($1 == 7)  { $ua{'MSIE 7.0'}++ }
-		elsif ($1 == 6)  { $ua{'MSIE 6.0'}++ }
 	}
 	else { $ua{'Other'}++ }
 }
@@ -122,15 +126,15 @@ $m->printHints([$m->formatStr($lng->{uasUsersT}, { users => $users, days => $day
 if ($users && $cfg->{uaChartType} ne 'none') {
 	my @uaLabels = qw(MSIE Gecko WebKit Other);
 	my @osLabels = qw(Windows Linux Mac Other);
-	my $printChart = undef;
-	my $clientSide = 0;
 	print
 		"<div class='frm'>\n",
 		"<div class='hcl'><span class='htt'>$lng->{uasChartTtl}</span></div>\n",
-		"<div class='ccl'>\n";
+		"<div class='ccl'>\n",
+		"<div class='pie'>\n";
+		
 	if ($cfg->{uaChartType} eq 'GD::Graph') {
 		# GD::Graph: old-school, but good enough with supersampling
-		$printChart = sub {
+		my $chart = sub {
 			my ($labels, $values) = @_;
 			eval { require GD::Graph::pie } or $m->error("GD::Graph module not available.");
 			require MIME::Base64;
@@ -150,10 +154,12 @@ if ($users && $cfg->{uaChartType} ne 'none') {
 				"<img src='data:image/png;base64,", MIME::Base64::encode_base64($bin, ''), 
 				"' style='margin: 10px' title='$size' alt='$lng->{errUAFeatSup}'>\n";
 		};
+		$chart->(\@uaLabels, [ map(($ua{$_} / $users) * 100, @uaLabels) ]);
+		$chart->(\@osLabels, [ map(($os{$_} / $users) * 100, @osLabels) ]);
 	}
 	elsif ($cfg->{uaChartType} eq 'Imager::Graph') {
-		# Imager::Graph: nice 
-		$printChart = sub {
+		# Imager::Graph: prettier, but uncommon module requirements 
+		my $chart = sub {
 			my ($labels, $values) = @_;
 			eval { require Imager::Graph::Pie } or $m->error("Imager::Graph module not available.");
 			require MIME::Base64;
@@ -170,63 +176,25 @@ if ($users && $cfg->{uaChartType} ne 'none') {
 				"<img src='data:image/png;base64,", MIME::Base64::encode_base64($bin, ''), 
 				"' title='$size' alt='$lng->{errUAFeatSup}'>\n";
 		};
+		$chart->(\@uaLabels, [ map(($ua{$_} / $users) * 100, @uaLabels) ]);
+		$chart->(\@osLabels, [ map(($os{$_} / $users) * 100, @osLabels) ]);
 	}
-	elsif ($cfg->{uaChartType} eq 'GoogleChart' || !$cfg->{uaChartType}) {
-		# Google Chart API: nice, no modules, no incompat, but images from Google servers
-		$printChart = sub {
-			my ($labels, $values) = @_;
-			$labels = join("|", @$labels);
-			$values = "t:" . join(",", map(int($_ + .5), @$values));
-			my $url = "//chart.googleapis.com/chart?";
-			my %params = (chs => "350x150", cht => "p3", chf => "bg,s,00000000", 
-				chl => $labels, chd => $values);
-			for my $key (keys %params) {
-				my $value = $params{$key};
-				$value =~ s/([^A-Za-z_0-9.!~()|,-])/'%'.unpack("H2",$1)/eg;
-				$url .= "$key=$value&amp;";
-			}
-			print "<img src='$url' width='350' height='150' alt=''>\n";
+	elsif ($cfg->{uaChartType} eq 'GoogleVis' || !$cfg->{uaChartType}) {
+		# Google Charts/Visualization API: SVG/VML generated by JS from Google's servers
+		my $chart = sub {
+			my ($labels, $values, $id) = @_;
+			my $json = "[" . join(",", map("[\"$_\"," . ($values->{$_} || 0) . "]", @$labels)) . "]";
+			print "<span id='${id}Pie' data-array='$json' style='display: inline-block'></span>\n",
 		};
+		$chart->(\@uaLabels, \%ua, 'ua');
+		$chart->(\@osLabels, \%os, 'os');
+		print 
+			"<script src='//www.google.com/jsapi?autoload={\"modules\":[{\"name\":\"visualization\",",
+			"\"version\":\"1\",\"packages\":[\"corechart\"]}]}'></script>\n",
+			"<script src='$cfg->{dataPath}/google.js'></script>\n";
 	}
-	elsif ($cfg->{uaChartType} eq 'GoogleVis') {
-		# Google Visualizaton API: SVG/VML generated by JS
-		# Using deprecated 'piechart' package because 'corechart' lacks features
-		$clientSide = 1;
-		my $uaLabels = "'" . join("','", @uaLabels) . "'";
-		my $osLabels = "'" . join("','", @osLabels) . "'";
-		my $uaValues = join(",", map($ua{$_} || 0, @uaLabels));
-		my $osValues = join(",", map($os{$_} || 0, @osLabels));
-		print <<"EOHTML";
-			<span id='uaPie' style='display: inline-block; margin-top: 10px'></span>
-			<span id='osPie' style='display: inline-block; margin-top: 10px'></span>
-			<script src='//www.google.com/jsapi'></script>
-			<script>
-			google.load('visualization', '1', { packages: ['piechart'] });
-			\$(window).load(function () {
-				function printChart(id, labels, values) {
-					var i,
-						data = new google.visualization.DataTable(),
-						chart = new google.visualization.PieChart(\$('#' + id + 'Pie')[0]);
-					data.addColumn('string');
-					data.addColumn('number');
-					for (i = 0; i < labels.length; i++) { data.addRow([ labels[i], values[i] ]); }
-					chart.draw(data, { width: 450, height: 250, is3D: true, legend: 'label' });
-				}
-				printChart('ua', [$uaLabels], [$uaValues]);
-				printChart('os', [$osLabels], [$osValues]);
-			});
-			</script>
-EOHTML
-	}
-	if (!$clientSide) {
-		print "<div class='pie'>\n";
-		my @values = map(($ua{$_} / $users) * 100, @uaLabels);
-		$printChart->(\@uaLabels, \@values);
-		@values = map(($os{$_} / $users) * 100, @osLabels);
-		$printChart->(\@osLabels, \@values);
-		print "</div>\n\n";
-	}
-	print "</div>\n</div>\n\n";
+
+	print "</div>\n</div>\n</div>\n\n",
 }
 
 # Print stats tables

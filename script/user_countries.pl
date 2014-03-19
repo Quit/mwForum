@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2013 Markus Wichitill
+#    Copyright (c) 1999-2014 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -72,43 +72,34 @@ while ($sth->fetch()) {
 	my ($code, $name);
 	if ($city) {
 		if (my $rec = $geoIp->record_by_addr($ip)) {
-			$code = lc($rec->country_code());
+			$code = $rec->country_code();
 			$name = $rec->country_name();
 		}
 	}
 	else {
-		$code = lc($geoIp->country_code_by_addr($ip));
+		$code = $geoIp->country_code_by_addr($ip);
 		$name = $geoIp->country_name_by_addr($ip);
 	}
-	next if $code !~ /^[a-z]{2}\z/;
+	next if $code !~ /^[A-Z]{2}\z/;
 	if ($countries{$code}) { $countries{$code}[1]++ }
 	else { $countries{$code} = [ $name, 1 ] }
 }
+my @codes = sort keys %countries;
+my $json = "[" . join(",", map("[\"$_\",$countries{$_}[1]]", @codes)) . "]";
 
 # Print hint
 $m->printHints([$m->formatStr($lng->{uasUsersT}, { users => $users, days => $days })]);
-
-# Assemble URL
-my @codes = sort keys %countries;
-my @numbers = map($countries{$_}[1], @codes);
-my $factor = 100 / $m->max(@numbers, 1);
-my $codes = join("|", map(uc, @codes));
-my $numbers = "t:" . join(",", map(int($_ * $factor + .5), @numbers));
-my $url = "//chart.googleapis.com/chart?";
-my %params = (cht => "map:fixed=-50,-129,73,180", chs => "740x400",
-	chf => "bg,s,e6efff", chco => "ffffff,ddffdd,00aa00", chld => $codes, chd => $numbers);
-for my $key (keys %params) {
-	my $value = $params{$key};
-	$value =~ s/([^A-Za-z_0-9.!~()|,-])/'%'.unpack("H2",$1)/eg;
-	$url .= "$key=$value&amp;";
-}
 
 # Print map
 print
 	"<div class='frm'>\n",
 	"<div class='hcl'><span class='htt'>$lng->{ucoMapTtl}</span></div>\n",
 	"<div class='ccl'>\n",
-	"<img src='$url' width='740' height='400' alt='$lng->{ucoMapTtl}'>\n",
+	"<div id='map' data-array='$json'>\n",
+	"<script src='//www.google.com/jsapi?autoload={\"modules\":[{\"name\":\"visualization\",",
+	"\"version\":\"1\",\"packages\":[\"geochart\"]}]}'></script>\n",
+	"<script src='$cfg->{dataPath}/google.js'></script>\n",
+	"</div>\n",
 	"</div>\n",
 	"</div>\n\n";
 
@@ -119,7 +110,6 @@ print
 for my $code (sort { $countries{$b}[1] <=> $countries{$a}[1] } @codes) {
 	print 
 		"<tr class='crw'><td class='hco'>",
-		#"<img class='flg' src='$cfg->{dataPath}/flags/$code.png' title='$code' alt='$code'> ",
 		"$countries{$code}[0]</td><td>$countries{$code}[1]</td></tr>\n";
 }
 print "</table>\n\n";

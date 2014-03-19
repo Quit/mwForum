@@ -478,6 +478,9 @@ push @$options, {
 <dt>attachImgRszQ</dt>
 <dd>JPEG quality of thumbnails for resized images. <code>1</code> = min. quality, <code>100</code> = max. quality. Default is <code>80</code>.</dd>
 
+<dt>attachImgDef</dt>
+<dd>Set to <code>1</code> to embed attached images by default.</dd>
+
 <dt>noGd, noImager, noGMagick, noIMagick</dt>
 <dd>Set either to <code>1</code> to disable the use of the GD, Imager, Graphics::Magick or Image::Magick Perl modules, e.g. for debugging purposes or if an installed module version is buggy. Normally, mwForum will try to use the listed modules in that order.</dd>
 
@@ -488,7 +491,7 @@ push @$options, {
 <dd>Caching mode of Geo::IP module, GEOIP_STANDARD = <code>0</code>, GEOIP_MEMORY_CACHE = <code>1</code>, GEOIP_INDEX_CACHE = <code>4</code>, GEOIP_MMAP_CACHE = <code>8</code>. You have to specify the number, as the constants are unavailable. Some modes may fail without a useful error message. Default is GEOIP_MEMORY_CACHE.</dd>
 
 <dt>uaGraphType</dt>
-<dd>"<code>none</code>" = hide the pie charts on the user agent statistics page. "<code>GD::Graph</code>" = use that Perl module to generate images. "<code>Imager::Graph</code>" = use that module to generate images. Both these methods include their output inline as data URLs and require a readable font configured with the <var>ttf</var> option below. "<code>GoogleVis</code>" = use the <a href='http://code.google.com/apis/visualization/'>Google Visualization API</a> (<a href='http://code.google.com/apis/visualization/terms.html'>Terms of Use</a>) to generate SVG (VML for MSIE) pie charts with Javascript. "<code>GoogleChart</code>" (the default) = use the <a href='http://code.google.com/apis/chart/'>Google Chart API</a> (<a href='http://code.google.com/apis/chart/terms.html'>Terms of Use</a>) to generate PNG images. Neither Google-provided method requires any Perl modules and both also work in outdated browsers. They do however include Javascript resp. images from Google's servers, which may not be acceptable for security reasons.</dd>
+<dd>Method of showing pie charts on the browser (user agent) statistics page. "<code>none</code>" = disable pie charts. "<code>GD::Graph</code>" = use that Perl module to generate images. "<code>Imager::Graph</code>" = use that module to generate images. Both these methods include their output inline as data URLs and require a readable font configured with the <var>ttf</var> option below. "<code>GoogleVis</code>" (the default) = use the <a href='https://developers.google.com/chart/'>Google Chart API</a> (<a href='https://developers.google.com/chart/terms'>Terms of Use</a>) to generate SVG pie charts with Javascript. This method doesn't require any Perl modules, but includes Javascript from Google, which may not be acceptable for security reasons.</dd>
 
 <dt>ttf</dt>
 <dd>Set to the filesystem path of a TrueType font file for any features that might require one and use this option (currently only the GD::Graph and Imager::Graph flavors of the chart feature above).</dd>
@@ -794,7 +797,7 @@ shell&gt; perl util_replace.pl -x -f /forum2 replacethis withthis
 
 <h2 id='openpgp'>OpenPGP Emails</h2>
 
-<p>With this feature you can sign all outgoing emails in Inline-PGP format via GnuPG, and users can optionally upload their public keys to encrypt them, too. This text assumes that you're familiar with <a href='http://www.ietf.org/rfc/rfc4880.txt'>(Open)PGP</a> and <a href='http://gnupg.org/'>GnuPG</a>.</p>
+<p>With this feature users can upload their public keys to have their forum emails encrypted and signed. This text assumes that you're familiar with <a href='http://www.ietf.org/rfc/rfc4880.txt'>(Open)PGP</a> and <a href='http://gnupg.org/'>GnuPG</a>.</p>
 
 <h3>Installation</h3>
 

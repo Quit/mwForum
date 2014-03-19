@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2013 Markus Wichitill
+#    Copyright (c) 1999-2014 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -324,8 +324,8 @@ if ($cfg->{userInfoMap} && ($infUser->{location} || $geoLocation)) {
 		"<div id='map' style='width: 98%; height: 350px; max-width: 600px'></div>\n",
 		"</div>\n",
 		"</div>\n\n",
-		"<script src='//maps.googleapis.com/maps/api/js?v=3&amp;sensor=false'>",
-		"</script>\n\n";
+		"<script src='//maps.googleapis.com/maps/api/js?v=3&amp;sensor=false'></script>\n",
+		"<script src='$cfg->{dataPath}/google.js'></script>\n\n";
 }
 
 # Print public user stats	

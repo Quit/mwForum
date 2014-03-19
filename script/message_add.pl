@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2013 Markus Wichitill
+#    Copyright (c) 1999-2014 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -37,6 +37,9 @@ require MwfCaptcha if $cfg->{captcha} >= 3;
 $m->{now} > $user->{regTime} + $cfg->{minRegTime}
 	or $m->error($m->formatStr($lng->{errMinRegTim}, { hours => $cfg->{minRegTime} / 3600 }))
 	if $cfg->{minRegTime};
+
+# Check authorization
+$m->checkAuthz($user, 'newMessage');
 
 # Get CGI parameters
 my $recvId = $m->paramInt('uid');
