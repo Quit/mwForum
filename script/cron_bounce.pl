@@ -66,13 +66,11 @@ for my $email (@emails) {
 	$auth or $m->logAction(3, 'bounce', 'noauth'), next;
 
 	# Get user with auth value
-	my $cs = 'BINARY';
-	if ($m->{pgsql}) { $cs = 'TEXT' }
-	elsif ($m->{sqlite}) { $cs = 'BLOB' }
+	my $caseSensitive = $m->{mysql} ? 'BINARY' : 'TEXT';
 	my $authUser = $m->fetchHash("
 		SELECT id, bounceNum, dontEmail, regTime, lastOnTime 
 		FROM users 
-		WHERE bounceAuth = CAST(? AS $cs)", 
+		WHERE bounceAuth = CAST(? AS $caseSensitive)", 
 		$auth);
 	$authUser or $m->logAction(2, 'bounce', 'nouser'), next;
 	my $authUserId = $authUser->{id};

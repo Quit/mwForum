@@ -35,8 +35,7 @@ use DBI ();
 
 # Get arguments
 my %opts = ();
-Getopt::Std::getopts('ct', \%opts);
-my $sqliteCollate = $opts{c};
+Getopt::Std::getopts('t', \%opts);
 my $truncate = $opts{t};
 @ARGV == 2 or die "Not enough parameters.";
 my $srcDsn = $ARGV[0];
@@ -55,26 +54,18 @@ my $dstDriver = lc($dstDbh->{Driver}{Name});
 $srcDbh->do("SET NAMES 'utf8'") if $srcDriver eq 'mysql' || $srcDriver eq 'pg';
 $dstDbh->do("SET NAMES 'utf8'") if $dstDriver eq 'mysql' || $dstDriver eq 'pg';
 
-# Custom collation for SQLite
-if ($sqliteCollate) {
-	my $func = sub { my $a = shift(); my $b = shift(); 
-		utf8::decode($a); utf8::decode($b); lc($a) cmp lc($b) };
-	$srcDbh->func('mwforum', $func, 'create_collation') if $srcDriver eq 'sqlite';
-	$dstDbh->func('mwforum', $func, 'create_collation') if $dstDriver eq 'sqlite';
-}
-
 # Parse schema
 open my $fh, "install.pl" or die "Opening install.pl failed";
 my @schema = ();
 my @serials = ();
-while (<$fh>) {
-	if (my ($name) = /^CREATE TABLE (\w+)/) {
+while (my $line = <$fh>) {
+	if (my ($name) = $line =~ /^CREATE TABLE (\w+)/) {
 		my $table = [ $name ];
-		while (<$fh>) {
-			last if /^\)/;
-			my ($col) = /^\t(\w+)/;
+		while ($line = <$fh>) {
+			last if $line =~ /^\)/;
+			my ($col) = $line =~ /^\t(\w+)/;
 			push @$table, $col if $col ne 'PRIMARY';
-			push @serials, $name if /AUTO_INCREMENT/;
+			push @serials, $name if $line =~ /AUTO_INCREMENT/;
 		}
 		push @schema, $table;
 		if ($dstDriver ne 'sqlite' && $name =~ /^(?:boards|topics|posts)\z/) {
@@ -115,13 +106,17 @@ for my $table (@schema) {
 	my $placeholders = $fields;
 	$placeholders =~ s!\w+!?!g;
 	my $insSth = $dstDbh->prepare("INSERT INTO $name ($fields) VALUES ($placeholders)");
-	$insSth->execute(@$_) while $_ = $selSth->fetchrow_arrayref();
+	while (my $row = $selSth->fetchrow_arrayref()) {
+		$insSth->execute(@$row);
+	}
 }
 
 # Set sequences
 if ($dstDriver eq 'pg') {
 	print "Setting sequences...\n";
-	$dstDbh->do("SELECT SETVAL('${_}_id_seq', MAX(id)) FROM $_") for @serials;
+	for my $serial (@serials) {
+		$dstDbh->do("SELECT SETVAL('${serial}_id_seq', MAX(id)) FROM $serial");
+	}
 }
 
 # Commit and vacuum
@@ -130,10 +125,14 @@ $srcDbh->commit();
 $dstDbh->commit();
 print "Optimizing...\n";
 if ($dstDriver eq 'mysql') {
-	$dstDbh->do("OPTIMIZE TABLE $_->[0]") for @schema;
+	for my $table (@schema) {
+		$dstDbh->do("OPTIMIZE TABLE $table->[0]");
+	}
 }
 elsif ($dstDriver eq 'pg') {
-	$dstDbh->do("VACUUM FULL ANALYZE $_->[0]") for @schema;
+	for my $table (@schema) {
+		$dstDbh->do("VACUUM FULL ANALYZE $table->[0]");
+	}
 }
 elsif ($dstDriver eq 'sqlite') {
 	$dstDbh->do("VACUUM");

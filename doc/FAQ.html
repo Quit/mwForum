@@ -160,7 +160,7 @@ shell&gt; chmod 777 /usr/local/apache/htdocs/mwf/attach
 
 <h3>Notes</h3>
 
-<p>String comparisons are case-sensitive in SQLite, which means that for example usernames have to be spelled with the correct case wherever usernames need to be typed in. If you put the option "<code>$cfg-&gt;{sqliteCollate} = 1;</code>" into your MwfConfig.pm before running install.pl, mwForum provides a custom function to SQLite that makes comparisons and ordering case-insensitive. This requires at least DBD::SQLite 1.20, has a performance impact and has the additional disadvantage of making many queries on the database outside of mwForum impossible.</p>
+<p>String comparisons are case-sensitive in SQLite, which means that for example usernames have to be spelled with the correct case wherever usernames need to be typed in.</p>
 
 <p>Substring searching with the LIKE operator, used for e.g. the forum search, is also case-sensitive for non-ASCII characters, which can be a real problem for non-English languages. If you enable the <var>sqliteLike</var> forum option, the forum provides a custom function to SQLite that makes forum search and user admin page search case-insensitive, but has a serious performance impact.</p>     
 
@@ -346,7 +346,7 @@ sql&gt; ORDER BY log.logTime;
 
 <h3>MySQL</h3>
 
-<p>As of MySQL 5.5, Full-Text Search can only be used with the MyISAM and Aria engines. Starting with 5.6, InnoDB may also be supported.</p>
+<p>Up to MySQL 5.5, Full-Text Search can only be used with the MyISAM and Aria storage engines. Starting with MySQL 5.6 and MariaDB 10, InnoDB is also supported.</p>
 
 <p>Activate the indexed search mode with the <var>advSearch</var> forum option. The SQL commands for creating and removing full-text indexes for post bodies are:</p>
 

@@ -187,9 +187,9 @@ if ($submitted && !($wordsChanged && !$words)) {
 	my @wordValues = ();
 	if ($mysqlFts && $words) {
 		# Search with MySQL fulltext search
-		for (@words) { 
-			$_ = "$_*" if !/^"/;
-			$_ = "+$_" if !/^-/;
+		for my $wrd (@words) { 
+			$wrd = "$wrd*" if $wrd !~ /^"/;
+			$wrd = "+$wrd" if $wrd !~ /^-/;
 		}
 		$wordStr = "AND (MATCH posts.body AGAINST (:word0 IN BOOLEAN MODE))";
 		push @wordValues, "word0" => join(" ", @words);

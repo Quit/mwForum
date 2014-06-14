@@ -149,8 +149,9 @@ if (!$submitted || @{$m->{formErrors}}) {
 	push @userLinks, { url => $m->url('user_badges', $admin ? (uid => $optUserId) : ()), 
 		txt => 'uopBadges', ico => 'tag' } 
 		if @{$cfg->{badges}} && ($selfBadge || $admin);
-	$m->callPlugin($_, links => \@userLinks, user => $optUser)
-		for @{$cfg->{includePlg}{userProfileLink}};
+	for my $plugin (@{$cfg->{includePlg}{userProfileLink}}) {
+		$m->callPlugin($plugin, links => \@userLinks, user => $optUser);
+	}
 
 	# Print page bar
 	my @navLinks = ({ url => $m->url('forum_show'), txt => 'comUp', ico => 'up' });

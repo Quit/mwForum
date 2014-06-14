@@ -38,8 +38,8 @@ output("mwForum long-running script test running...\n");
 
 # Simulate work
 output("Pretending to do work that takes 20 minutes...\n");
-for (1 .. 20) {
-	output("Sleeping $_...\n");
+for my $minute (1 .. 20) {
+	output("Sleeping $minute...\n");
 	sleep 60;
 }
 

@@ -98,8 +98,9 @@ push @userLinks, { url => $m->url('forum_search', uid => $infUserId),
 push @userLinks, { url => $m->url('user_activity', uid => $infUserId), 
 	txt => 'uifActiv', ico => 'poll' }
 	if ($cfg->{statForumActiv} || $user->{admin}) && !$m->{sqlite};
-$m->callPlugin($_, links => \@userLinks, user => $infUser)
-	for @{$cfg->{includePlg}{userUserLink}};
+for my $plugin (@{$cfg->{includePlg}{userUserLink}}) {
+	$m->callPlugin($plugin, links => \@userLinks, user => $infUser);
+}
 
 # Admin button links
 my @adminLinks = ();
@@ -123,8 +124,9 @@ if ($user->{admin}) {
 		txt => "Wipe", ico => 'wipe' };
 	push @adminLinks, { url => $m->url('user_confirm', uid => $infUserId, script => 'user_delete',
 		name => $infUser->{userName}), txt => "Delete", ico => 'delete' };
-	$m->callPlugin($_, links => \@userLinks, user => $infUser)
-		for @{$cfg->{includePlg}{userAdminLink}};
+	for my $plugin (@{$cfg->{includePlg}{userAdminLink}}) {
+		$m->callPlugin($plugin, links => \@userLinks, user => $infUser);
+	}
 }
 
 # Print page bar
@@ -310,7 +312,9 @@ if ($infUser->{blurb}) {
 print "</table>\n\n";
 
 # Call user info include plugin
-$m->callPlugin($_, user => $infUser) for @{$cfg->{includePlg}{userInfo}};
+for my $plugin (@{$cfg->{includePlg}{userInfo}}) {
+	$m->callPlugin($plugin, user => $infUser);
+}
 
 # Google map
 if ($cfg->{userInfoMap} && ($infUser->{location} || $geoLocation)) {

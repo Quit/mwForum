@@ -133,8 +133,8 @@ sub upgradeSchema
 	}
 
 	# Execute separate queries
-	for (grep(/\w/, split(";", $sql))) {
-		my $rv = $dbh->do($_);
+	for my $query (grep(/\w/, split(";", $sql))) {
+		my $rv = $dbh->do($query);
 		output("Error: $DBI::errstr\n") if !$rv && !$ignoreError;
 	}
 }

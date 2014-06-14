@@ -188,7 +188,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 				my $text = "";
 				my $rows = 0;
 				for my $key (sort keys %$value) { 
-					$text .= join("\n", map("$key=$_\n", @{$value->{$key}}));
+					$text .= join("\n", map("$key=$_", @{$value->{$key}}));
 					$rows += @{$value->{$key}};
 				}
 				$rows = $m->min($m->max(4, $rows), 15);

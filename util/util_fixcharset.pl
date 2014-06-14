@@ -43,11 +43,11 @@ $charset or usage();
 my ($m, $cfg, $lng) = MwfMain->newShell(forumId => $forumId);
 
 open my $fh, "install.pl" or $m->error("Opening install.pl failed");
-while (<$fh>) {
-	if (my ($table) = /^CREATE TABLE (\w+)/) {
-		while (<$fh>) {
-			last if /^\)/;
-			my ($col, $type) = /^\t(\w+)\s+((?:TEXT|VARCHAR\([0-9]+\)) NOT NULL DEFAULT '')/;
+while (my $line = <$fh>) {
+	if (my ($table) = $line =~ /^CREATE TABLE (\w+)/) {
+		while ($line = <$fh>) {
+			last if $line =~ /^\)/;
+			my ($col, $type) = $line =~ /^\t(\w+)\s+((?:TEXT|VARCHAR\([0-9]+\)) NOT NULL DEFAULT '')/;
 			if ($type =~ /^(?:TEXT|VARCHAR)/) {
 				my $blob = $type;
 				$blob =~ s!VARCHAR!VARBINARY!;

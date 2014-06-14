@@ -30,11 +30,9 @@ my ($m, $cfg, $lng, $user, $userId) = MwfMain->new($_[0]);
 my $ticketId = $m->paramStr('t');
 
 # Get ticket
-my $cs = 'BINARY';
-if ($m->{pgsql}) { $cs = 'TEXT' }
-elsif ($m->{sqlite}) { $cs = 'BLOB' }
+my $caseSensitive = $m->{mysql} ? 'BINARY' : 'TEXT';
 my $ticket = $m->fetchHash("
-	SELECT * FROM tickets WHERE id = CAST(? AS $cs) AND issueTime > ? - 2 * 86400", 
+	SELECT * FROM tickets WHERE id = CAST(? AS $caseSensitive) AND issueTime > ? - 2 * 86400", 
 	$ticketId, $m->{now});
 $ticket or $m->error('errTktNotFnd');
 

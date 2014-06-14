@@ -174,10 +174,11 @@ if (!$add || @{$m->{formErrors}}) {
 	$m->printFormErrors();
 
 	# Prepare preview body
+	my $previewPost = undef;
 	if ($preview) {
-		$preview = { body => $body, rawBody => $rawBody };
-		$m->editToDb({}, $preview);
-		$m->dbToDisplay($board, $preview);
+		$previewPost = { body => $body, rawBody => $rawBody };
+		$m->editToDb({}, $previewPost);
+		$m->dbToDisplay($board, $previewPost);
 	}
 
 	# Escape submitted values
@@ -242,7 +243,7 @@ if (!$add || @{$m->{formErrors}}) {
 		"<div class='frm'>\n",
 		"<div class='hcl'><span class='htt'>$lng->{ntpPrvTtl}</span></div>\n",
 		"<div class='ccl'>\n",
-		$preview->{body}, "\n",
+		$previewPost->{body}, "\n",
 		"</div>\n",
 		"</div>\n\n"
 		if $preview;

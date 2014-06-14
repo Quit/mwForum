@@ -18,7 +18,7 @@ use 5.008001;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine once);
-our $VERSION = "2.29.4";
+our $VERSION = "2.29.5";
 
 #------------------------------------------------------------------------------
 
@@ -128,8 +128,10 @@ sub new
 	$m->authenticateUser();
 	$m->initUser();
 
-	# Call early include plugin	
-	$m->callPlugin($_) for @{$cfg->{includePlg}{early}};
+	# Call early include plugin
+	for my $plugin (@{$cfg->{includePlg}{early}}) {
+		$m->callPlugin($plugin);
+	}
 	
 	# Cron emulation
 	$m->cronEmulation();
@@ -2051,7 +2053,9 @@ sub printHttpHeader
 	}
 
 	# Call include plugin
-	$m->callPlugin($_) for @{$cfg->{includePlg}{httpHeader}};
+	for my $plugin (@{$cfg->{includePlg}{httpHeader}}) {
+		$m->callPlugin($plugin);
+	}
 
 	# End HTTP header
 	if ($MP1) { $ap->send_http_header() }
@@ -2166,7 +2170,9 @@ sub printHeader
 	
 	# Print header includes
 	print $cfg->{htmlHeader}, "\n" if $cfg->{htmlHeader};
-	$m->callPlugin($_) for @{$cfg->{includePlg}{htmlHeader}};
+	for my $plugin (@{$cfg->{includePlg}{htmlHeader}}) {
+		$m->callPlugin($plugin);
+	}
 
 	# End head, start body
 	$title ||= $cfg->{forumName};
@@ -2177,7 +2183,9 @@ sub printHeader
 
 	# Print top includes
 	print $cfg->{htmlTop}, "\n\n" if $cfg->{htmlTop};
-	$m->callPlugin($_) for @{$cfg->{includePlg}{top}};
+	for my $plugin (@{$cfg->{includePlg}{top}}) {
+		$m->callPlugin($plugin);
+	}
 
 	# Print title image
 	my $topUrl = $m->url('forum_show');
@@ -2224,8 +2232,12 @@ sub printHeader
 	# Print plugin links
 	if ($cfg->{includePlg}{topUserLink}) {
 		my @userLinks;
-		$m->callPlugin($_, links => \@userLinks) for @{$cfg->{includePlg}{topUserLink}};
-		print $m->buttonLink($_->{url}, $_->{txt}, $_->{ico}) for @userLinks;
+		for my $plugin (@{$cfg->{includePlg}{topUserLink}}) {
+			$m->callPlugin($plugin, links => \@userLinks);
+		}
+		for my $link (@userLinks) {
+			print $m->buttonLink($link->{url}, $link->{txt}, $link->{ico});
+		}
 	}
 
 	# Print private messages link
@@ -2288,7 +2300,9 @@ sub printHeader
 		
 	# Print includes
 	print $cfg->{htmlMiddle}, "\n\n" if $cfg->{htmlMiddle};
-	$m->callPlugin($_) for @{$cfg->{includePlg}{middle}};
+	for my $plugin (@{$cfg->{includePlg}{middle}}) {
+		$m->callPlugin($plugin);
+	}
 
 	$m->{printPhase} = 2;
 }
@@ -2354,7 +2368,9 @@ sub printFooter
 		
 	# Print includes
 	print $cfg->{htmlBottom}, "\n\n" if $cfg->{htmlBottom};
-	$m->callPlugin($_) for @{$cfg->{includePlg}{bottom}};
+	for my $plugin (@{$cfg->{includePlg}{bottom}}) {
+		$m->callPlugin($plugin);
+	}
 	
 	# Print page creation time
 	if ($m->{gcfg}{pageTime}) {
@@ -2546,9 +2562,10 @@ sub pageLinks
 		$pageNum - 1,
 		$pageNum);
 	my @pageLinks = ();
-	push @pageLinks, $_ == 0 ? { txt => "&#8230;" }
-		: { url => $m->url($script, @$params, pg => $_), txt => $_, dsb => $_ == $page }
-		for @pages;
+	for my $pg (@pages) {
+		push @pageLinks, $pg == 0 ? { txt => "&#8230;" }
+			: { url => $m->url($script, @$params, pg => $pg), txt => $pg, dsb => $pg == $page };
+	}
 
 	# Previous and next nav buttons
 	push @pageLinks, { url => $m->url($script, @$params, pg => $page - 1), 
@@ -2652,7 +2669,9 @@ sub tagButtons
 	}
 
 	# Call include plugin for additional buttons
-	$m->callPlugin($_, lines => \@lines) for @{$cfg->{includePlg}{tagButton}};
+	for my $plugin (@{$cfg->{includePlg}{tagButton}}) {
+		$m->callPlugin($plugin, lines => \@lines);
+	}
 
 	# Print text snippet list
 	if ($cfg->{textSnippets}) {
@@ -3048,7 +3067,9 @@ sub editToDb
 			my $close = $1; my $name = $2; my $attr = $3;
 			if ($pass == 1 && $name eq 'blockquote' && !$close && @stack) {
 				my $closeAll = "";
-				$closeAll .= "</$_>" while $_ = pop(@stack);
+				while (my $tag = pop(@stack)) {
+					$closeAll .= "</$tag>";
+				}
 				push @stack, $name;
 				"$closeAll<br/><$name>";
 			}
@@ -3060,7 +3081,9 @@ sub editToDb
 			}
 		%eg;
 		if ($pass == 1) {
-			$$body .= "</$_>" while $_ = pop(@stack);
+			while (my $tag = pop(@stack)) {
+				$$body .= "</$tag>";
+			}
 		}
 		elsif ($dropped || @stack) {
 			$$body =~ s!<!(!g;
@@ -3333,7 +3356,7 @@ sub dbConnect
 			"dbi:Pg:dbname=$cfg->{dbName};host=$cfg->{dbServer};$cfg->{dbParam}",
 			$cfg->{dbUser}, $cfg->{dbPassword}, 
 			{ PrintError => 0, PrintWarn => 0, AutoCommit => 1,
-				pg_server_prepare => $cfg->{dbPrepare} || 0, pg_utf8_strings => 0 })
+				pg_server_prepare => $cfg->{dbPrepare} || 0, pg_enable_utf8 => 0 })
 			or $m->dbError();
 		$dbh->do("SET NAMES 'utf8'");
 		$dbh->do("SET search_path = $cfg->{dbSchema}, public") if $cfg->{dbSchema};
@@ -3348,9 +3371,6 @@ sub dbConnect
 		$dbh->do("PRAGMA synchronous = " . ($cfg->{dbSync} || "OFF"));
 		$dbh->do("PRAGMA mmap_size = $cfg->{dbMMapSize}") if $cfg->{dbMMapSize};
 		$dbh->func(1000, 'busy_timeout');
-		$dbh->func('mwforum', sub { my $a = shift(); my $b = shift(); 
-			utf8::decode($a); utf8::decode($b); lc($a) cmp lc($b) }, 'create_collation')
-			if $cfg->{sqliteCollate};
 		$m->{sqlite} = 1;
 	}
 	else { 
@@ -3607,7 +3627,9 @@ sub dbDo
 	# Prepare query	
 	my $sth = $m->{dbh}->prepare($query) or $m->dbError();
 	if ($mwfPlaceholders && $m->{pgsql}) { 
-		$sth->bind_param(":$_", $values->{$_}) for @pgPlaceholders;
+		for my $placeholder (@pgPlaceholders) {
+			$sth->bind_param(":$placeholder", $values->{$placeholder});
+		}
 		@values = ();
 	}
 
@@ -3650,7 +3672,9 @@ sub fetchSth
 	# Prepare query
 	my $sth = $m->{dbh}->prepare($query) or $m->dbError();
 	if ($mwfPlaceholders && $m->{pgsql}) {
-		$sth->bind_param(":$_", $values->{$_}) for @pgPlaceholders;
+		for my $placeholder (@pgPlaceholders) {
+			$sth->bind_param(":$placeholder", $values->{$placeholder});
+		}
 		@values = ();
 	}
 
@@ -3867,9 +3891,11 @@ sub logAction
 
 	# Call event plugins
 	my $cfg = $m->{cfg};
-	$m->callPlugin($_, level => $level, entity => $entity, action => $action,
-		userId => $userId, boardId => $boardId, topicId => $topicId,
-		postId => $postId, extraId => $extraId, string => $string) for @{$cfg->{logPlg}};
+	for my $plugin (@{$cfg->{logPlg}}) {
+		$m->callPlugin($plugin, level => $level, entity => $entity, action => $action,
+			userId => $userId, boardId => $boardId, topicId => $topicId,
+			postId => $postId, extraId => $extraId, string => $string);
+	}
 
 	return if $userId == $cfg->{noLogUserId};
 	return if $level > $cfg->{logLevel};
@@ -3943,7 +3969,9 @@ sub deletePost
 		# Delete attachments
 		my $attachments = $m->fetchAllArray("
 			SELECT id FROM attachments WHERE postId = ?", $postId);
-		$m->deleteAttachment($_->[0]) for @$attachments;
+		for my $attachment (@$attachments) {
+			$m->deleteAttachment($attachment->[0]);
+		}
 
 		# Delete post likes and reports
 		$m->dbDo("
@@ -4013,7 +4041,9 @@ sub deleteTopic
 		# Delete post attachments
 		my $attachments = $m->fetchAllArray("
 			SELECT id FROM attachments WHERE postId IN (SELECT id FROM $tmp)");
-		$m->deleteAttachment($_->[0]) for @$attachments;
+		for my $attachment (@$attachments) {
+			$m->deleteAttachment($attachment->[0]);
+		}
 
 		# Delete post likes and reports
 		$m->dbDo("
@@ -4143,18 +4173,19 @@ sub notifyPost
 		if ($recvUser && $recvUser->{notify} && $recvUser->{id} != $postUserId && !$ignored
 			&& $m->boardVisible($board, $recvUser)) {
 			$m->addNote('pstAdd', $recvUser->{id}, 'notPstAdd', usrNam => $postUserName, pstUrl => $url);
-			$post->{subject} = $topic->{subject};
-			$m->dbToEmail({}, $post);
+			my $emailPost = { subject => $topic->{subject}, 
+				body => $post->{body}, rawBody => $post->{rawBody} };
+			$m->dbToEmail({}, $emailPost);
 			$lng = $m->setLanguage($recvUser->{language});
-			my $subject = "$lng->{rplEmailSbPf} $postUserName: $post->{subject}";
+			my $subject = "$lng->{rplEmailSbPf} $postUserName: $emailPost->{subject}";
 			my $body = $lng->{rplEmailT2} . "\n\n" . "-" x 70 . "\n\n"
 				. $lng->{subLink} . "$cfg->{baseUrl}$m->{env}{scriptUrlPath}/$url\n"
 				. $lng->{subBoard} . $board->{title} . "\n"
-				. $lng->{subTopic} . $post->{subject} . "\n"
+				. $lng->{subTopic} . $emailPost->{subject} . "\n"
 				. $lng->{subBy} . $postUserName . "\n"
 				. $lng->{subOn} . $m->formatTime($post->{postTime}, $recvUser->{timezone}) . "\n\n"
-				. $post->{body} . "\n\n"
-				. ($post->{rawBody} ? $post->{rawBody} . "\n\n" : "")
+				. $emailPost->{body} . "\n\n"
+				. ($emailPost->{rawBody} ? $emailPost->{rawBody} . "\n\n" : "")
 				. "-" x 70 . "\n\n";
 			$lng = $m->setLanguage();
 			$m->sendEmail(user => $recvUser, subject => $subject, body => $body)

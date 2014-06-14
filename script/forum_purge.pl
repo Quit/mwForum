@@ -93,11 +93,15 @@ if ($submitted) {
 						WHERE posts.userId IN (:userIds)
 						ORDER BY topics.id",
 						{ userIds => \@userIds });
-					$m->deleteTopic($_->[0]) for @$topics;
+					for my $topic (@$topics) {
+						$m->deleteTopic($topic->[0]);
+					}
 				}
 
 				# Delete posts
-				$m->deletePost($_->[0]) for @$posts;
+				for my $post (@$posts) {
+					$m->deletePost($post->[0]);
+				}
 
 				# Update statistics
 				my %topics = ();
@@ -108,7 +112,9 @@ if ($submitted) {
 				$m->recalcStats([ map($_->[0], @$boards) ]) if @$boards;
 				
 				# Delete users
-				$m->deleteUser($_) for @userIds;
+				for my $id (@userIds) {
+					$m->deleteUser($id);
+				}
 			}
 	
 			# Log action
@@ -149,11 +155,15 @@ if ($submitted) {
 								ON posts.id = topics.basePostId
 						WHERE posts.id IN (:postIds)",
 						{ postIds => \@postIds });
-					$m->deleteTopic($_->[0]) for @$topics;
+					for my $topic (@$topics) {
+						$m->deleteTopic($topic->[0]);
+					}
 				}
 
 				# Delete posts
-				$m->deletePost($_->[0]) for @$posts;
+				for my $post (@$posts) {
+					$m->deletePost($post->[0]);
+				}
 
 				# Update statistics
 				my %topics = ();

@@ -156,8 +156,9 @@ if (!$submitted || @{$m->{formErrors}}) {
 	push @userLinks, { url => $m->url('user_topics', $admin ? (uid => $optUserId) : ()), 
 		txt => 'uopTopics', ico => 'topic' }
 		if $cfg->{subsInstant} || $cfg->{subsDigest};
-	$m->callPlugin($_, links => \@userLinks, user => $optUser)
-		for @{$cfg->{includePlg}{userOptionsLink}};
+	for my $plugin (@{$cfg->{includePlg}{userOptionsLink}}) {
+		$m->callPlugin($plugin, links => \@userLinks, user => $optUser);
+	}
 
 	# Print page bar
 	my @navLinks = ({ url => $m->url('forum_show'), txt => 'comUp', ico => 'up' });
@@ -263,8 +264,8 @@ if (!$submitted || @{$m->{formErrors}}) {
 		"<option value='SVR' $state{zoneSVR}>$lng->{uopDispTimeS}</option>\n";
 
 	# Print timezone list
-	for (-28 .. 28) {
-		my $zone  = $_ / 2;
+	for my $number (-28 .. 28) {
+		my $zone  = $number / 2;
 		$zone = "+$zone" if $zone > 0;
 		my $name = "GMT" . ($zone ? $zone : "");
 		print "<option value='$zone' $state{\"zone$zone\"}>$name</option>\n";

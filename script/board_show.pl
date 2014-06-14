@@ -167,8 +167,9 @@ if (!$m->{archive}) {
 	push @userLinks, { url => $m->url('forum_overview', act => 'unread', bid => $boardId), 
 		txt => 'comShowUnr', ico => 'showunread' }
 		if $userId && $unreadPostsExist;
-	$m->callPlugin($_, links => \@userLinks, board => $board)
-		for @{$cfg->{includePlg}{boardUserLink}};
+	for my $plugin (@{$cfg->{includePlg}{boardUserLink}}) {
+		$m->callPlugin($plugin, links => \@userLinks, board => $board);
+	}
 }
 
 # Admin button links

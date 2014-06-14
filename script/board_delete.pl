@@ -55,7 +55,9 @@ $m->dbDo("
 # Delete topics
 my $topics = $m->fetchAllArray("
 	SELECT id FROM topics WHERE boardId = ?", $boardId);
-$m->deleteTopic($_->[0]) for @$topics;
+for my $topic (@$topics) {
+	$m->deleteTopic($topic->[0]);
+}
 
 # Delete board
 $m->dbDo("

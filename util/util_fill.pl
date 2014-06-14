@@ -164,10 +164,14 @@ my @tables = qw(attachments boardAdminGroups boardHiddenFlags boardMemberGroups
 	topicReadTimes topics topicSubscriptions userBans userIgnores users 
 	userVariables variables watchUsers watchWords);
 if ($m->{mysql}) {
-	$dbh->do("ANALYZE TABLE $_") for @tables;
+	for my $table (@tables) {
+		$dbh->do("ANALYZE TABLE $table");
+	}
 }
 elsif ($m->{pgsql}) {
-	$dbh->do("VACUUM ANALYZE $_") for @tables;
+	for my $table (@tables) {
+		$dbh->do("VACUUM ANALYZE $table");
+	}
 }
 elsif ($m->{sqlite}) {
 	$dbh->do("ANALYZE");

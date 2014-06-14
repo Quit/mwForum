@@ -26,7 +26,7 @@ require MwfMain;
 
 # Get arguments
 my %opts = ();
-Getopt::Std::getopts('if:e:', \%opts);
+Getopt::Std::getopts('if:', \%opts);
 my $citext = $opts{i};
 my $forumId = $opts{f};
 
@@ -423,18 +423,17 @@ elsif ($m->{sqlite}) {
 	$sql =~ s! TABLEOPT! $cfg->{dbTableOpt}!g;
 	$sql =~ s! PRIMARY KEY AUTO_INCREMENT! NOT NULL PRIMARY KEY AUTOINCREMENT!g;
 	$sql =~ s! INT ! INTEGER !g;
-	$sql =~ s! VARCHAR\(\d+\)| TEXT! TEXT COLLATE mwforum!g if $cfg->{sqliteCollate};
 	$sql =~ s!\s+-- .+!!g;
 	$sql = "PRAGMA encoding = 'utf-8';\n" . $sql;	
 }
 
 # Execute separate queries
-for (grep(/\w/, split(";", $sql))) { 
-	$dbh->do($_) or print "$DBI::errstr ($_)";
+for my $query (grep(/\w/, split(";", $sql))) { 
+	$dbh->do($query) or print "$DBI::errstr ($query)";
 }
 if ($m->{mysql} || $m->{pgsql}) {
-	for (grep(/\w/, split(";", $arcSql))) { 
-		$dbh->do($_) or print "$DBI::errstr ($_)";
+	for my $query (grep(/\w/, split(";", $arcSql))) { 
+		$dbh->do($query) or print "$DBI::errstr ($query)";
 	}
 }
 

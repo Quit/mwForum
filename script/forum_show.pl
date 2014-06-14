@@ -134,7 +134,9 @@ if (!$m->{archive}) {
 	push @userLinks, { url => $m->url('forum_overview', act => 'unread'), 
 		txt => 'comShowUnr', ico => 'showunread' }
 		if $userId && $unreadPostsExist;
-	$m->callPlugin($_, links => \@userLinks) for @{$cfg->{includePlg}{forumUserLink}};
+	for my $plugin (@{$cfg->{includePlg}{forumUserLink}}) {
+		$m->callPlugin($plugin, links => \@userLinks);
+	}
 }
 
 # Admin button links
@@ -155,7 +157,9 @@ if ($user->{admin} && !$m->{archive}) {
 	push @adminLinks, { url => $m->url('report_list'), 
 		txt => "<em class='eln'>Reports ($reportNum)</em>", ico => 'report' } 
 		if $reportNum;
-	$m->callPlugin($_, links => \@adminLinks) for @{$cfg->{includePlg}{forumAdminLink}};
+	for my $plugin (@{$cfg->{includePlg}{forumAdminLink}}) {
+		$m->callPlugin($plugin, links => \@adminLinks);
+	}
 }
 elsif (@adminBoardIds && !$m->{archive}) {
 	my $reportNum = $m->fetchArray("
@@ -168,7 +172,9 @@ elsif (@adminBoardIds && !$m->{archive}) {
 		push @adminLinks, { url => $m->url('report_list'), 
 			txt => "<em class='eln'>$lng->{brdAdmRep} ($reportNum)</em>", ico => 'report' }
 			if $reportNum;
-	$m->callPlugin($_, links => \@adminLinks) for @{$cfg->{includePlg}{forumAdminLink}};
+	for my $plugin (@{$cfg->{includePlg}{forumAdminLink}}) {
+		$m->callPlugin($plugin, links => \@adminLinks);
+	}
 }
 
 # Print page bar
@@ -360,7 +366,9 @@ if ($cfg->{showBdayUsers} && ($userId || $cfg->{showBdayUsers} == 2) && !$m->{ar
 		FROM users
 		WHERE birthday = :day", 
 		{ year => $year, day => $day });
-	for (@$bdayUsers) { $_->[1] .= " ($_->[3])" if $_->[2] }
+	for my $bdayUser (@$bdayUsers) { 
+		$bdayUser->[1] .= " ($bdayUser->[3])" if $bdayUser->[2] 
+	}
 }
 
 # Print statistics

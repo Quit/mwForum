@@ -151,7 +151,9 @@ if ($submitted) {
 			# Delete all attachments
 			my $attachments = $m->fetchAllArray("
 				SELECT id FROM attachments WHERE postId = ?", $postId);
-			$m->deleteAttachment($_->[0]) for @$attachments;
+			for my $attachment (@$attachments) {
+				$m->deleteAttachment($attachment->[0]);
+			}
 	
 			# Log action and finish
 			$m->logAction(1, 'post', 'attdlall', $userId, $boardId, $topicId, $postId);

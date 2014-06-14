@@ -111,11 +111,9 @@ sub checkCaptcha
 		unlink grep((stat($_))[9] < $m->{now} - $timeout, glob("$cfg->{attachFsPath}/captchas/*"));
 		
 		# Get and delete current captcha ticket
-		my $cs = 'BINARY';
-		if ($m->{pgsql}) { $cs = 'TEXT' }
-		elsif ($m->{sqlite}) { $cs = 'BLOB' }
+		my $caseSensitive = $m->{mysql} ? 'BINARY' : 'TEXT';
 		my ($id, $realCode) = $m->fetchArray("
-			SELECT id, data FROM tickets WHERE id = CAST(? AS $cs)", $ticketId);
+			SELECT id, data FROM tickets WHERE id = CAST(? AS $caseSensitive)", $ticketId);
 		$m->dbDo("
 			DELETE FROM tickets WHERE id = ?", $ticketId) 
 			if $realCode;

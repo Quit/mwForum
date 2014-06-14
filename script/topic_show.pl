@@ -151,7 +151,9 @@ my $preparePost = sub {
 		$self->($self, $child->{id});
 	}
 };
-$preparePost->($preparePost, $_->{id}) for @rootPosts;
+for my $rootPost (@rootPosts) {
+	$preparePost->($preparePost, $rootPost->{id});
+}
 $page = $firstUnrPostPage || $firstNewPostPage if !$page;
 my $scrollPostId = $targetPostId || $firstUnrPostId || $firstNewPostId || 0;
 $scrollPostId = 0 if $scrollPostId == $basePostId || $showResults;
@@ -227,8 +229,8 @@ shift @newUnrPostIds if $postsById{$newUnrPostIds[0]}{userId} == -2;
 
 # Mark branches that shouldn't be auto-collapsed
 if ($autoCollapsing) {
-	for (@newUnrPostIds) {
-		my $post = $postsById{$_};
+	for my $id (@newUnrPostIds) {
+		my $post = $postsById{$id};
 		while ($post = $postsById{$post->{parentId}}) {
 			last if $post->{noCollapse};
 			$post->{noCollapse} = 1;
@@ -334,8 +336,9 @@ if (!$m->{archive}) {
 	push @userLinks, { url => $m->url('forum_overview', act => 'unread', tid => $topicId, 
 		time => $lowestUnreadTime), txt => 'comShowUnr', ico => 'showunread' }
 		if $userId && $unreadPostsExist;
-	$m->callPlugin($_, links => \@userLinks, board => $board, topic => $topic)
-		for @{$cfg->{includePlg}{topicUserLink}};
+	for my $plugin (@{$cfg->{includePlg}{topicUserLink}}) {
+		$m->callPlugin($plugin, links => \@userLinks, board => $board, topic => $topic);
+	}
 }
 	
 # Admin button links	
@@ -357,8 +360,9 @@ if (($boardAdmin || $topicAdmin) && !$m->{archive}) {
 	push @adminLinks, { url => $m->url('user_confirm', script => 'topic_delete', tid => $topicId,
 		notify => ($topicUserId != $userId ? 1 : 0), name => $topic->{subject}), 
 		txt => 'tpcAdmDelete', ico => 'delete' };
-	$m->callPlugin($_, links => \@adminLinks, board => $board, topic => $topic)
-		for @{$cfg->{includePlg}{topicAdminLink}};
+	for my $plugin (@{$cfg->{includePlg}{topicAdminLink}}) {
+		$m->callPlugin($plugin, links => \@adminLinks, board => $board, topic => $topic);
+	}
 }
 
 # Print page bar
@@ -502,9 +506,10 @@ my $firstPostPos = $postsPP * ($page - 1);
 my $lastPostPos = $postsPP ? $postsPP * $page - 1 : @$posts - 1;
 
 # Call plugin that can process data for various purposes
-$m->callPlugin($_, board => $board, topic => $topic, pagePosts => $pagePosts, 
-	postsById => \%postsById, boardAdmin => $boardAdmin, topicAdmin => $topicAdmin) 
-	for @{$cfg->{includePlg}{topicData}};
+for my $plugin (@{$cfg->{includePlg}{topicData}}) {
+	$m->callPlugin($plugin, board => $board, topic => $topic, pagePosts => $pagePosts, 
+		postsById => \%postsById, boardAdmin => $boardAdmin, topicAdmin => $topicAdmin);
+}
 
 # Recursively print posts
 $postPos = 0;
@@ -713,9 +718,10 @@ my $printPost = sub {
 			print "<span class='htt'>IP</span> $ip\n" if $boardAdmin && $cfg->{showPostIp};
 			
 			# Print include plugin header items
-			$m->callPlugin($_, board => $board, topic => $topic, post => $post, 
-				boardAdmin => $boardAdmin, topicAdmin => $topicAdmin) 
-				for @{$cfg->{includePlg}{postHeader}};
+			for my $plugin (@{$cfg->{includePlg}{postHeader}}) {
+				$m->callPlugin($plugin, board => $board, topic => $topic, post => $post, 
+					boardAdmin => $boardAdmin, topicAdmin => $topicAdmin);
+			}
 			
 			print "</div>\n<div class='ccl'>\n";
 
@@ -820,9 +826,10 @@ my $printPost = sub {
 			}
 
 			# Print include plugin buttons
-			$m->callPlugin($_, lines => \@btlLines, board => $board, topic => $topic, post => $post, 
-				boardAdmin => $boardAdmin, topicAdmin => $topicAdmin) 
-				for @{$cfg->{includePlg}{postLink}};
+			for my $plugin (@{$cfg->{includePlg}{postLink}}) {
+				$m->callPlugin($plugin, lines => \@btlLines, board => $board, topic => $topic, post => $post, 
+					boardAdmin => $boardAdmin, topicAdmin => $topicAdmin);
+			}
 
 			# Print button cell if there're button links
 			print "<div class='bcl'>\n", @btlLines, "</div>\n" if @btlLines && !$m->{archive};
@@ -856,7 +863,9 @@ my $printPost = sub {
 
 	print "</div>\n" if $printBranchToggle;
 };
-$printPost->($printPost, $_->{id}, 0) for @rootPosts;
+for my $rootPost (@rootPosts) {
+	$printPost->($printPost, $rootPost->{id}, 0);
+}
 
 # Repeat page bar
 $m->printPageBar(repeat => 1);

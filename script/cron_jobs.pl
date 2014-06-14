@@ -98,7 +98,9 @@ for my $board (@$boards) {
 		DROP TABLE $tmp");
 
 	# Delete topics
-	$m->deleteTopic($_->[0]) for @$topics;
+	for my $topic (@$topics) {
+		$m->deleteTopic($topic->[0]);
+	}
 }
 
 #------------------------------------------------------------------------------
@@ -149,9 +151,10 @@ if ($cfg->{polls} && $cfg->{pollLocking}) {
 			SELECT optionId, COUNT(*) FROM pollVotes WHERE pollId = ? GROUP BY optionId", $topic->[0]);
 		
 		# Set option sums
-		$m->dbDo("
-			UPDATE pollOptions SET votes = ? WHERE id = ?", $_->[1], $_->[0])
-			for @$voteSums;
+		for my $voteSum (@$voteSums) {
+			$m->dbDo("
+				UPDATE pollOptions SET votes = ? WHERE id = ?", $voteSum->[1], $voteSum->[0]);
+		}
 		
 		# Mark poll as locked
 		$m->dbDo("
@@ -184,9 +187,10 @@ if ($cfg->{polls} && $cfg->{pollLockTime}) {
 			SELECT optionId, COUNT(*) FROM pollVotes WHERE pollId = ? GROUP BY optionId", $topic->[0]);
 		
 		# Set option sums
-		$m->dbDo("
-			UPDATE pollOptions SET votes = ? WHERE id = ?", $_->[1], $_->[0])
-			for @$voteSums;
+		for my $voteSum (@$voteSums) {
+			$m->dbDo("
+				UPDATE pollOptions SET votes = ? WHERE id = ?", $voteSum->[1], $voteSum->[0]);
+		}
 		
 		# Mark poll as locked
 		$m->dbDo("
@@ -229,7 +233,9 @@ if ($cfg->{userExpiration}) {
 		GROUP BY users.id
 		$havingStr", 
 		{ time => $time });
-	$m->deleteUser($_->[0]) for @$users;
+	for my $user (@$users) {
+		$m->deleteUser($user->[0]);
+	}
 }
 
 #------------------------------------------------------------------------------
@@ -239,7 +245,9 @@ if ($cfg->{acctExpiration}) {
 	my $time = $m->{now} - $cfg->{acctExpiration} * 86400;
 	my $users = $m->fetchAllArray("
 		SELECT id FROM users WHERE regTime = lastOnTime AND regTime < ?", $time);
-	$m->deleteUser($_->[0]) for @$users;
+	for my $user (@$users) {
+		$m->deleteUser($user->[0]);
+	}
 }
 
 #------------------------------------------------------------------------------
@@ -391,10 +399,14 @@ system $^X, "cron_jobs_local$m->{ext}", $m->{forumId} ? ("-f" => $m->{forumId}) 
 my @tables = grep(!/^log/, @MwfDefaults::tables);
 
 if ($m->{mysql}) {
-	$m->dbDo("OPTIMIZE TABLE $pfx$_") for @tables;
+	for my $table (@tables) {
+		$m->dbDo("OPTIMIZE TABLE $pfx$table");
+	}
 }
 elsif ($m->{pgsql}) {
-	$m->dbDo("VACUUM ANALYZE $pfx$_") for @tables;
+	for my $table (@tables) {
+		$m->dbDo("VACUUM ANALYZE $pfx$table");
+	}
 }	
 elsif ($m->{sqlite}) {
 	$m->dbDo("VACUUM");

@@ -57,7 +57,9 @@ for my $board (@$boards) {
 		ORDER BY posts.topicId, posts.postTime",
 		{ lastSentTime => $lastSentTime, boardId => $board->{id} });
 	next if !@$posts;
-	$m->dbToEmail({}, $_) for @$posts;
+	for my $post (@$posts) {
+		$m->dbToEmail({}, $post);
+	}
 	my $boardTitleDeesc = $m->deescHtml($board->{title});
 
 	# Get subscribers
@@ -115,7 +117,9 @@ for my $board (@$boards) {
 			ORDER BY postTime",
 			{ lastSentTime => $lastSentTime, topicId => $topic->{id} });
 		next if !@$posts;
-		$m->dbToEmail({}, $_) for @$posts;
+		for my $post (@$posts) {
+			$m->dbToEmail({}, $post);
+		}
 		my $boardTitleDeesc = $m->deescHtml($board->{title});
 	
 		# Get recipients

@@ -59,16 +59,19 @@ if ($boardAdmin && !$m->{archive}) {
 			if !$m->{sqlite};
 		push @adminLinks, { url => $m->url('user_confirm', bid => $boardId, script => 'board_delete', 
 			name => $board->{title}), txt => "Delete", ico => 'delete' };
-		$m->callPlugin($_, links => \@adminLinks, board => $board) 
-			for @{$cfg->{includePlg}{boardAdminLink}};
+		for my $plugin (@{$cfg->{includePlg}{boardAdminLink}}) {
+			$m->callPlugin($plugin, links => \@adminLinks, board => $board);
+		}
+			
 	}
 	else {
 		push @adminLinks, { url => $m->url('board_groups', bid => $boardId, ori => 1), 
 			txt => 'brdAdmGrp', ico => 'group' };
 		push @adminLinks, { url => $m->url('board_split', bid => $boardId), 
 			txt => 'brdAdmSpl', ico => 'split' };
-		$m->callPlugin($_, links => \@adminLinks, board => $board)
-			for @{$cfg->{includePlg}{boardAdminLink}};
+		for my $plugin (@{$cfg->{includePlg}{boardAdminLink}}) {
+			$m->callPlugin($plugin, links => \@adminLinks, board => $board)
+		}
 	}
 }
 

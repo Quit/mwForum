@@ -70,9 +70,10 @@ my $voteSums = $m->fetchAllArray("
 	SELECT optionId, COUNT(*) FROM pollVotes WHERE pollId = ? GROUP BY optionId", $pollId);
 
 # Set option sums
-$m->dbDo("
-	UPDATE pollOptions SET votes = ? WHERE id = ?", $_->[1], $_->[0])
-	for @$voteSums;
+for my $voteSum (@$voteSums) {
+	$m->dbDo("
+		UPDATE pollOptions SET votes = ? WHERE id = ?", $voteSum->[1], $voteSum->[0]);
+}
 
 # Delete individual votes
 $m->dbDo("
