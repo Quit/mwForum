@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2014 Markus Wichitill
+#    Copyright (c) 1999-2015 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -230,7 +230,7 @@ print
 	"<div class='hcl'><span class='htt'>Forum Software</span></div>\n",
 	"<div class='ccl'>\n",
 	"<p>Powered by <a href='https://www.mwforum.org/'>mwForum</a>", 
-	" &#169; 1999-2014 Markus Wichitill</p>\n",
+	" &#169; 1999-2015 Markus Wichitill</p>\n",
 	"<p>This program is free software; you can redistribute it and/or modify",
 	" it under the terms of the GNU General Public License as published by",
 	" the Free Software Foundation; either version 3 of the License, or",

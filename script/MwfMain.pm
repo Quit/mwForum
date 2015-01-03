@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2014 Markus Wichitill
+#    Copyright (c) 1999-2015 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ use 5.008001;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine once);
-our $VERSION = "2.29.5";
+our $VERSION = "2.29.6";
 
 #------------------------------------------------------------------------------
 
@@ -2363,7 +2363,7 @@ sub printFooter
 	# Print copyright message
 	print
 		"<p class='cpr'>Powered by <a href='https://www.mwforum.org/'>mwForum</a>",
-		" $VERSION &#169; 1999-2014 Markus Wichitill</p>\n\n"
+		" $VERSION &#169; 1999-2015 Markus Wichitill</p>\n\n"
 		if $m->{env}{script} ne 'forum_info' && $m->{env}{script} ne 'attach_show';
 		
 	# Print includes
@@ -3185,27 +3185,34 @@ sub dbToDisplay
 	}
 
 	# Embed videos
-	if ($cfg->{videoTag} && $embed && $filter) {
-		$$body =~ s%\[vid=(html|youtube|vimeo)\](.+?)\[/vid\]%
-			my $srv = lc($1);	my $id = $2;
-			if ($srv eq 'html' && $id =~ m!^https?://[^\s\\\[\]{}<>)|^`'"]+\z!) {
-				"<video src='$id' controls><p>$lng->{errUAFeatSup}</p></video>"
+	if ($cfg->{videoTag} && $filter) {
+		$$body =~ s%\[vid=(youtube|vimeo|html|vgf)\](.+?)\[/vid\]%
+			my $type = lc($1);	
+			my $id = $2;
+			if ($type eq 'youtube' && $id =~ /^[A-Za-z_0-9-]+\z/) { 
+				$embed 
+					? "<iframe class='vif' src='//www.youtube-nocookie.com/embed/$id?rel=0' width='640' height='385' allowfullscreen></iframe>"
+					: "[<a href='https://www.youtube.com/watch?v=$id'>YouTube</a>]"
 			}
-			elsif (($srv eq 'youtube' || $srv eq 'vimeo') && $id =~ /^[A-Za-z_0-9-]+\z/) {
-				$srv eq 'youtube' 
-					?	"<iframe class='vif' width='640' height='385' src='//www.youtube-nocookie.com/embed/$id?rel=0'"
-					. " allowfullscreen></iframe>"
-					: "<iframe class='vif' width='640' height='360' src='//player.vimeo.com/video/$id'"
-					. " allowfullscreen></iframe>"
+			elsif ($type eq 'vimeo' && $id =~ /^[A-Za-z_0-9-]+\z/) { 
+				$embed
+					? "<iframe class='vif' src='//player.vimeo.com/video/$id' width='640' height='360' allowfullscreen></iframe>"
+					: "[<a href='http://vimeo.com/$id'>Vimeo</a>]" 
 			} 
-			else { "[vid=$srv]${id}[/vid]" }
+			elsif ($type eq 'html' && $id =~ m!^https?://[^\s\\\[\]{}<>)|^`'"]+\z!) {
+				$embed
+					? "<video class='vht' src='$id' controls></video>"
+					: "[<a href='$id'>$lng->{tbbVideo}</a>]"
+			}
+			elsif ($type eq 'vgf' && $id =~ m!^https?://[^\s\\\[\]{}<>)|^`'"]+\z!) {
+				$embed
+					? "<video class='vgf' src='$id' muted autoplay loop controls></video>"
+					: "[<a href='$id'>$lng->{tbbVideo}</a>]"
+			}
+			else { 
+				"[vid=$type]${id}[/vid]" 
+			}
 		%egi;
-	}
-	elsif ($cfg->{videoTag} && $filter) {
-		$$body =~ s!\[vid=(youtube|vimeo)\]([A-Za-z_0-9-]+)\[/vid\]!
-			if (lc($1) eq 'youtube') { "[<a href='https://www.youtube.com/watch?v=$2'>YouTube</a>]" }
-			else { "[<a href='http://vimeo.com/$2'>Vimeo</a>]" }
-		!egi;
 	}
 
 	# Append attachments

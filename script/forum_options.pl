@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2014 Markus Wichitill
+#    Copyright (c) 1999-2015 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -180,7 +180,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 				my $rows = $m->min($m->max(4, scalar keys %$value), 10);
 				print 
 					"<fieldset><textarea name='$name' rows='$rows'>",
-					$m->escHtml(join("\n", map("$_=$value->{$_}", sort keys %$value)), 1), 
+					$m->escHtml(join("", map("$_=$value->{$_}\n", sort keys %$value)), 1), 
 					"</textarea></fieldset>\n";
 			}
 			elsif ($opt->{parse} eq 'arrayhash') {
@@ -188,7 +188,7 @@ if (!$submitted || @{$m->{formErrors}}) {
 				my $text = "";
 				my $rows = 0;
 				for my $key (sort keys %$value) { 
-					$text .= join("\n", map("$key=$_", @{$value->{$key}}));
+					$text .= join("", map("$key=$_\n", @{$value->{$key}}));
 					$rows += @{$value->{$key}};
 				}
 				$rows = $m->min($m->max(4, $rows), 15);

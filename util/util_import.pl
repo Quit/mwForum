@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2014 Markus Wichitill
+#    Copyright (c) 1999-2015 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -67,7 +67,7 @@ while (my $line = <STDIN>) {
 				# Insert board
 				$impCategId or $m->error("Category ID not specified.");
 				my $pos = $m->fetchArray("
-					SELECT MAX(pos) + 1 FROM boards WHERE categoryId = ?", $impCategId);
+					SELECT COALESCE(MAX(pos), 0) + 1 FROM boards WHERE categoryId = ?", $impCategId);
 				$m->dbDo("
 					INSERT INTO boards (categoryId, pos, title, shortDesc, longDesc, expiration, locking,
 						topicAdmins, approve, private, list, unregistered, announce, flat, attach,
@@ -100,7 +100,7 @@ while (my $line = <STDIN>) {
 					$userId = $userMap{$email};
 					if (!defined($userId)) {
 						$userId = $m->fetchArray("
-							SELECT id FROM users WHERE email = ?", $email) || 0;
+							SELECT COALESCE(id, 0) FROM users WHERE email = ?", $email);
 						$userMap{$email} = $userId;
 					}
 				}
@@ -172,8 +172,8 @@ sub usage
 {
 	print
 		"Import a board or topic exported from another mwForum.\n\n",
-		"Usage: util_export.pl [-f forum] -c categId < board.dat\n",
-		"       util_export.pl [-f forum] -b boardId < topic.dat\n",
+		"Usage: util_import.pl [-f forum] -c categId < board.dat\n",
+		"       util_import.pl [-f forum] -b boardId < topic.dat\n",
 		"  -f   Forum hostname or URL path when using a multi-forum installation.\n",
 		"  -c   ID of a category to import an exported board into.\n",
 		"  -b   ID of a board to import an exported topic into.\n",

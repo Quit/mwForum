@@ -2,7 +2,7 @@
   plusplus: true, bitwise: true, regexp: true, newcap: true, immed: true */
 /*global $, window, document, navigator */
 
-/* mwForum - Web-based discussion forum | Copyright 1999-2014 Markus Wichitill */
+/* mwForum - Web-based discussion forum | Copyright 1999-2015 Markus Wichitill */
 
 var mwf = { p: $("#mwfjs").data("params") };
 

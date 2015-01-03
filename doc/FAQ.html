@@ -342,7 +342,7 @@ sql&gt; ORDER BY log.logTime;
 
 <h2 id='search'>Indexed Search</h2>
 
-<p>mwForum's indexed search mode uses <a href='http://dev.mysql.com/doc/mysql/en/fulltext-search.html'>MySQL's Boolean Full-Text Search</a> or <a href='http://www.postgresql.org/docs/9.0/static/textsearch.html'>PostgreSQL's Full Text Search</a> feature to speed up searching compared to the normal search mode. More details can be found in the linked MySQL/PgSQL documentation.</p>
+<p>mwForum's indexed search mode uses <a href='http://dev.mysql.com/doc/mysql/en/fulltext-search.html'>MySQL's Boolean Full-Text Search</a> or <a href='http://www.postgresql.org/docs/9.4/static/textsearch.html'>PostgreSQL's Full Text Search</a> feature to speed up searching compared to the normal search mode. More details can be found in the linked MySQL/PgSQL documentation.</p>
 
 <h3>MySQL</h3>
 
@@ -365,11 +365,11 @@ mysql&gt; DROP INDEX posts_body ON posts;
 
 <p>There are various limitations, some of which lie in the nature of full-text indexes, some in MySQL's implementation. It only works for word-like strings, not any random strings with special characters etc. It's therefore not ideal for forums where people often search for technical expressions, like programming or Web design forums. It will only find words that start with the typed characters, not words that have those characters in the middle or end.</p>
 
-<p>For those familiar with mwForum's previous advanced search mode or MySQL's boolean search operators: in mwForum 2.7.3, indexed search mode replaced the advanced search mode, since the latter required explicit use of + and * operators to get useful results, which was too complicated for most users, and inconvenient even for experienced users. mwForum now automatically prefixes all words and quoted phrases with + operators, and postfixes all words with * operators. It removes all special characters outside of quoted phrases, except for the - prefix operator, which is passed on to MySQL. Users will see the stripped search string in the input field, which should hopefully tell them something about what kind of strings MySQL can't find anyway. Advanced users can't manually use any additional operators like &lt;&gt;~() anymore, but those are seldomly useful anyway.</p>
+<p>For those familiar with mwForum's previous advanced search mode or MySQL's boolean search operators: in mwForum 2.7.3, indexed search mode replaced the advanced search mode, since the latter required explicit use of + and * operators to get useful results, which was too complicated for most users, and inconvenient even for experienced users. mwForum now automatically prefixes all words and quoted phrases with + operators, and postfixes all words with * operators. It removes all special characters outside of quoted phrases, except for the - prefix operator, which is passed on to MySQL. Users will see the stripped search string in the input field, which should hopefully tell them something about what kind of strings MySQL can't find anyway. Advanced users can't manually use any additional operators like &lt;&gt;~() anymore, but those are rarely useful anyway.</p>
 
 <h3>PostgreSQL</h3>
 
-<p>PostgreSQL's Full Text Search is more advanced than MySQL's. The main advantage worth mentioning here is the built-in support for word stemming in various languages. Some reading of the PostgreSQL documentation linked above is recommended. At a minimum, read about the available "configurations", and choose one ("english" is used below as an example).</p>
+<p>PostgreSQL's Full Text Search is more advanced than MySQL's. The main advantage worth mentioning here is the built-in support for word stemming in various languages. Some reading of the PostgreSQL documentation linked above is recommended. At a minimum, read about the available "configurations", and choose one ("english" is used as the default).</p>
 
 <p>Activate the indexed search mode with the <var>advSearch</var> forum option. The SQL commands for creating and removing full-text indexes for post bodies are:</p>
 
@@ -378,13 +378,13 @@ psql&gt; CREATE INDEX posts_body ON posts USING gin(to_tsvector('<i>english</i>'
 psql&gt; DROP INDEX posts_body;
 </kbd></pre>
 
-<p>Put the name of the chosen configuration into <var>$cfg-&gt;{pgFtsConfig}</var> in MwfConfig.pm if it's different from "english". Make sure the configuration name is the same as during index creation, or the index won't be used.</p>
+<p>Put the name of the chosen configuration into <var>$cfg-&gt;{pgFtsConfig}</var> in MwfConfig.pm if it's different from the default "english". Make sure the configuration name is the same as during index creation, or the index won't be used by PostgreSQL.</p>
 
 <p>The typed search expression is parsed with <code>plainto_tsquery()</code>, which doesn't support any operators. If the whole expression is placed in quotes though, mwForum will make an additional filter pass which removes any results that don't contain the exact (but case-independent) expression.</p>
 
 <h3>Notes for both DBMS</h3>
 
-<p>The search expression used internally (the input stripped of special characters and stopwords, with words stemmed in the case of PostgreSQL) is shown in an info box below the search form, unless it is identical to the input. Both words from the input and this expression are highlighted in the found posts. mwForum doesn't highlight exactly the same words that the DBMS have actually found, since they don't give us that information.</p>
+<p>The search expression used internally (the input stripped of special characters and stopwords, with words stemmed in the case of PostgreSQL) is shown in an info box below the search form, unless it is identical to the input. Words from both the input and this expression are highlighted in the found posts. mwForum doesn't highlight exactly the same words that the DBMS have actually found, since they don't give us that information.</p>
 
 <p>Indexed search is only used for normal post bodies. Raw post bodies and topic subjects are searched with the standard LIKE-based method. In the case of raw post bodies, this makes it possible to find "technical" content that couldn't be found easily or at all with full-text search geared towards human language.</p>
 

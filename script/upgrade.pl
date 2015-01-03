@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright (c) 1999-2014 Markus Wichitill
+#    Copyright (c) 1999-2015 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -623,8 +623,7 @@ if ($oldVersionDec < tripletToDecimal($newVersion)) {
 		my $firstCatId = $m->fetchArray("
 			SELECT MIN(id) FROM categories");
 		my $pos = $m->fetchArray("
-			SELECT MAX(pos) + 1 FROM boards WHERE categoryId = ?", $firstCatId);
-		$pos ||= 1;
+			SELECT COALESCE(MAX(pos), 0) + 1 FROM boards WHERE categoryId = ?", $firstCatId);
 		my $private = $cfg->{blogs} == 2 ? 2 : 0;
 		$m->dbDo("
 			INSERT INTO boards (title, categoryId, pos, private, topicAdmins) 

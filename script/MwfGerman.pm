@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------
 #    mwForum - Web-based discussion forum
-#    Copyright © 1999-2014 Markus Wichitill
+#    Copyright © 1999-2015 Markus Wichitill
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 package MwfGerman;
 use utf8;
 use strict;
-our $VERSION = "2.29.3";
+our $VERSION = "2.29.6";
 our $lng = {};
 
 #------------------------------------------------------------------------------
@@ -308,7 +308,7 @@ $lng->{tpcLocked}    = "(gesperrt)";
 # Topic subscription page
 $lng->{tsbTitle}     = "Thema";
 $lng->{tsbSubTtl}    = "Thema abonnieren";
-$lng->{tsbSubT2}     = "Sofort-Abonnements senden Ihnen neue Nachrichten im gewählten Thema sofort per Email zu. Sammel-Abonnements senden die Nachrichten gesammelt in regelmäßigen Abständen (üblicherweise täglich).";
+$lng->{tsbSubT2}     = "Bei Sofort-Abonnements werden Ihnen neue Nachrichten sofort per Email zugesendet. Bei Sammel-Abonnements werden die Nachrichten gesammelt in regelmäßigen Abständen gesendet (üblicherweise täglich).";
 $lng->{tsbInstant}   = "Sofort-Abonnement";
 $lng->{tsbDigest}    = "Sammel-Abonnement";
 $lng->{tsbSubB}      = "Abonnieren";
@@ -1266,11 +1266,8 @@ können. Danach können Sie dann ein neues Passwort setzen.</p>
 
 <h3>Wann muss man sich abmelden?</h3>
 
-<p>Man braucht sich nur abzumelden, wenn der benutzte Computer auch von nicht
-vertrauenswürdigen Personen benutzt wird. Wie oben geschrieben werden
-Benutzer-ID und Passwort per Cookie auf dem Computer gespeichert. Diese werden
-beim Abmelden entfernt, so dass sie nicht von einer anderen Person missbraucht
-werden können.</p>
+<p>Man braucht sich nur abzumelden, wenn das benutzte Gerät auch von nicht
+vertrauenswürdigen Personen benutzt wird.</p>
 
 <h3>Wie kann man Bilder und andere Dateien an Nachrichten anhängen?</h3>
 
