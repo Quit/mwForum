@@ -1198,15 +1198,26 @@ $cfg-&gt;{captchaAnswer}  = "Chess";
 $cfg-&gt;{captchaTtf} = "/usr/local/share/ttf/VeraBd.ttf";
 </code></pre>
 
-<h3>reCAPTCHA Service</h3>
+<h3>reCAPTCHA 1.0 Service</h3>
 
-<p>The fanciest captcha implementation uses the <a href='http://www.google.com/recaptcha'>reCAPTCHA</a> web service by Google. It provides warped text images that should be hard to crack, as well as alternative audio captchas. By using it, you also help digitizing old books. Check out their site for details and terms of service.</p> 
+<p>This captcha implementation uses the <a href='http://www.google.com/recaptcha'>reCAPTCHA</a> web service by Google. This version is obsolete and may be removed by Google before long. It's only included for existing installations that don't have the required SSL/TLS Perl modules required to upgrade to version 2.0.</p> 
 
 <p>To make this work in mwForum, you need to have the <a href='http://search.cpan.org/dist/HTTP-Tiny/'>HTTP::Tiny</a> (included with Perl 5.14 and later) or <a href='http://search.cpan.org/dist/libwww-perl/'>LWP::UserAgent</a> (aka libwww-perl, and its many dependencies) Perl modules installed. You also need a Google account and put the public and private keys you get from the linked site into your MwfConfig.pm:</p>
 
 <pre><code>
 $cfg-&gt;{reCapPubKey} = '01234567890abcdef';
 $cfg-&gt;{reCapPrvKey} = '01234567890abcdef';
+</code></pre>
+
+<h3>reCAPTCHA 2.0 Service</h3>
+
+<p>The new version of Google's <a href='http://www.google.com/recaptcha'>reCAPTCHA</a> web service.</p>
+
+<p>Similarly to the 1.0 version, you need to have the <a href='http://search.cpan.org/dist/HTTP-Tiny/'>HTTP::Tiny</a> (included with Perl 5.14 and later) or <a href='http://search.cpan.org/dist/libwww-perl/'>LWP::UserAgent</a> (aka libwww-perl, and its many dependencies) Perl modules installed. Since Google requires SSL/TLS for this version, <a href='http://search.cpan.org/dist/IO-Socket-SSL/'>IO::Socket::SSL</a> and <a href='http://search.cpan.org/dist/Net-SSLeay/'>Net::SSLeay</a> are required, too. You also need a Google account and put the site and secret keys you get from the linked site into your MwfConfig.pm:</p>
+
+<pre><code>
+$cfg-&gt;{reCapSiteKey} = '01234567890abcdef';
+$cfg-&gt;{reCapSecKey}  = '01234567890abcdef';
 </code></pre>
 
 <h3>Akismet Service</h3>

@@ -17,7 +17,7 @@ package MwfCaptcha;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine);
-our $VERSION = "2.29.1";
+our $VERSION = "2.29.7";
 
 #------------------------------------------------------------------------------
 # Return captcha input elements
@@ -57,7 +57,7 @@ sub captchaInputs
 			"</fieldset>\n";
 	}
 	elsif ($cfg->{captchaMethod} == 3) {
-		# Google reCAPTCHA service
+		# Google reCAPTCHA 1.0 service
 		return 
 			"<fieldset>\n",
 			"<script src='//www.google.com/recaptcha/api/challenge?k=$cfg->{reCapPubKey}'></script>\n",
@@ -67,6 +67,14 @@ sub captchaInputs
 			"<textarea cols='40' rows='3' name='recaptcha_challenge_field'></textarea>\n",
 			"<input name='recaptcha_response_field' type='hidden' value='manual_challenge'>\n",
 			"</noscript>\n",
+			"</fieldset>\n";
+	}
+	elsif ($cfg->{captchaMethod} == 6) {
+		# Google reCAPTCHA 2.0 service
+		return 
+			"<fieldset>\n",
+			"<script src='https://www.google.com/recaptcha/api.js'></script>\n",
+			"<div class='g-recaptcha' data-sitekey='$cfg->{reCapSiteKey}'/>\n",
 			"</fieldset>\n";
 	}
 	elsif ($cfg->{captchaMethod} == 4) {
@@ -134,6 +142,19 @@ sub checkCaptcha
 		}
 		else {
 			$m->logError("reCAPTCHA request failed, action allowed.");
+		}
+	}
+	elsif ($cfg->{captchaMethod} == 6) {
+		# Google reCAPTCHA 2.0 service
+		my $respBody = httpPost($m, "https://www.google.com/recaptcha/api/siteverify", [ 
+			secret => $cfg->{reCapSecKey}, remoteip => $env->{userIp}, 
+			response => $m->paramStr('g-recaptcha-response') ]); 
+		if (defined($respBody)) {
+			$respBody =~ /"success":\s*true/ or $m->formError('errCptFail');
+		}
+		else {
+			$respBody =~ s/[\s\r\n]+/ /g;
+			$m->logError("reCAPTCHA 2.0 request failed, action allowed. $respBody");
 		}
 	}
 	elsif ($cfg->{captchaMethod} == 4) {

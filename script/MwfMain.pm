@@ -18,7 +18,7 @@ use 5.008001;
 use strict;
 use warnings;
 no warnings qw(uninitialized redefine once);
-our $VERSION = "2.29.6";
+our $VERSION = "2.29.7";
 
 #------------------------------------------------------------------------------
 
@@ -4187,7 +4187,7 @@ sub notifyPost
 			my $subject = "$lng->{rplEmailSbPf} $postUserName: $emailPost->{subject}";
 			my $body = $lng->{rplEmailT2} . "\n\n" . "-" x 70 . "\n\n"
 				. $lng->{subLink} . "$cfg->{baseUrl}$m->{env}{scriptUrlPath}/$url\n"
-				. $lng->{subBoard} . $board->{title} . "\n"
+				. $lng->{subBoard} . $m->deescHtml($board->{title}) . "\n"
 				. $lng->{subTopic} . $emailPost->{subject} . "\n"
 				. $lng->{subBy} . $postUserName . "\n"
 				. $lng->{subOn} . $m->formatTime($post->{postTime}, $recvUser->{timezone}) . "\n\n"
@@ -4330,7 +4330,7 @@ sub sendEmail
 			"\n" . $body;
 		if ($cfg->{esmtpUser}) {
 			$smtp->auth($cfg->{esmtpUser}, $cfg->{esmtpPassword}) 
-				or $m->logError("Send email: auth() failed."), return;
+				or $m->logError("Send email: auth() failed. (" . $smtp->message() . ")"), return;
 		}
 		$smtp->mail($cfg->{forumEmail}) or $m->logError("Send email: mail() failed."), return;
 		$smtp->recipient($to) or $m->logError("Send email: recipient() failed."), return;

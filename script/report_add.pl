@@ -97,7 +97,7 @@ if ($submitted) {
 					my $subject = "$lng->{arpPngMlSbPf} $user->{userName}: $emailPost->{subject}";
 					my $body = $lng->{arpPngMlT} . "\n\n" . "-" x 70 . "\n\n"
 						. $lng->{subLink} . "$cfg->{baseUrl}$m->{env}{scriptUrlPath}/$url\n"
-						. $lng->{subBoard} . $board->{title} . "\n"
+						. $lng->{subBoard} . $m->deescHtml($board->{title}) . "\n"
 						. $lng->{subTopic} . $emailPost->{subject} . "\n"
 						. $lng->{subBy} . $post->{userNameBak} . "\n"
 						. $lng->{subOn} . $m->formatTime($post->{postTime}, $pingUser->{timezone}) . "\n\n"

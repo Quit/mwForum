@@ -48,13 +48,13 @@ $m->printPageBar(mainTitle => $lng->{uasTitle}, navLinks => \@navLinks, userLink
 my @ua = (
 	'Gecko', '- Firefox',
 	'WebKit', '- Chrome', '- Safari', 
-	'MSIE', '- MSIE 11', '- MSIE 10', '- MSIE 9', '- MSIE 8', '- MSIE 7',
+	'MSIE', '- Edge', '- MSIE 11', '- MSIE 10', '- MSIE 9', '- MSIE 8',
 	'Other',
 );
 
 # Order of OS printed
 my @os = (
-	'Windows', '- Windows 8', '- Windows 7', '- Windows Vista', '- Windows XP',
+	'Windows', '- Windows 10', '- Windows 8', '- Windows 7', '- Windows Vista', '- Windows XP',
 	'Mac', 'Linux', 'Android', 'iOS', 'Windows Phone', 'Other',
 );
 
@@ -80,7 +80,8 @@ while ($sth->fetch()) {
 	}
 	elsif (index($ua, 'Windows') > -1) { 
 		$os{'Windows'}++;
-		if    (index($ua, 'Windows NT 6.3') > -1) { $os{'- Windows 8'}++ }
+		if    (index($ua, 'Windows NT 10.') > -1) { $os{'- Windows 10'}++ }
+		elsif (index($ua, 'Windows NT 6.3') > -1) { $os{'- Windows 8'}++ }
 		elsif (index($ua, 'Windows NT 6.2') > -1) { $os{'- Windows 8'}++ }
 		elsif (index($ua, 'Windows NT 6.1') > -1) { $os{'- Windows 7'}++ }
 		elsif (index($ua, 'Windows NT 6.0') > -1) { $os{'- Windows Vista'}++ }
@@ -99,6 +100,10 @@ while ($sth->fetch()) {
 			$ua{'- Safari'}++;
 		}
 	}
+	elsif ($ua =~ /Edge\//) { 
+		$ua{'MSIE'}++;
+		$ua{'- Edge'}++;
+	}
 	elsif ($ua =~ /Trident\/(\d+)\.\d+/) { 
 		$ua{'MSIE'}++;
 		if    ($1 == 7) { $ua{'- MSIE 11'}++ }
@@ -108,7 +113,6 @@ while ($sth->fetch()) {
 	elsif ($ua =~ /MSIE (\d+)\.\d+/) { 
 		$ua{'MSIE'}++;
 		if    ($1 == 8) { $ua{'- MSIE 8'}++ }
-		elsif ($1 == 7) { $ua{'- MSIE 7'}++ }
 	}
 	elsif ($ua =~ /(?<!like )Gecko/) { 
 		$ua{'Gecko'}++;

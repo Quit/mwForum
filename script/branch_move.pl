@@ -56,6 +56,24 @@ if ($newParentId) {
 	$newBoardId or $m->error('errPstNotFnd');
 }
 
+# Get IDs of posts that belong to branch and check for illegal moves
+my %postsByParent = ();
+my @branchPostIds = ();
+my $posts = $m->fetchAllHash("
+	SELECT id, parentId FROM posts WHERE topicId = ?", $oldTopicId);
+push @{$postsByParent{$_->{parentId}}}, $_ for @$posts;
+my $getBranchPostIds = sub {
+	my $self = shift();
+	my $pid = shift();
+	$pid != $newParentId or $m->error("Can't move branch into itself.");
+	push @branchPostIds, $pid;
+	for my $child (@{$postsByParent{$pid}}) { 
+		$child->{id} != $pid or $m->error("Post is its own parent?!");
+		$self->($self, $child->{id});
+	}
+};
+$getBranchPostIds->($getBranchPostIds, $postId);
+
 # Move inside topic or to other topic and maybe board
 if ($oldTopicId == $newTopicId) {
 	# Only update post
@@ -66,24 +84,6 @@ else {
 	# Check if user is admin or moderator in destination board
 	$user->{admin} || $m->boardAdmin($userId, $newBoardId) or $m->error('errNoAccess')
 		if $oldBoardId != $newBoardId;
-
-	# Get IDs of posts that belong to branch
-	my %postsByParent = ();
-	my @branchPostIds = ();
-	my $posts = $m->fetchAllHash("
-		SELECT id, parentId FROM posts WHERE topicId = ?", $oldTopicId);
-	push @{$postsByParent{$_->{parentId}}}, $_ for @$posts;
-	my $getBranchPostIds = sub {
-		my $self = shift();
-		my $pid = shift();
-		$pid != $newParentId or $m->error("Can't move branch into itself.");
-		push @branchPostIds, $pid;
-		for my $child (@{$postsByParent{$pid}}) { 
-			$child->{id} != $pid or $m->error("Post is its own parent?!");
-			$self->($self, $child->{id});
-		}
-	};
-	$getBranchPostIds->($getBranchPostIds, $postId);
 
 	# Update posts, topics and boards
 	$m->dbDo("
